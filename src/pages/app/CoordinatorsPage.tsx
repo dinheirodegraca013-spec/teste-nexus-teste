@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UsersRound, Plus, Phone, Mail, MapPin, Edit2, Trash2, Eye, UserCheck, Share2, Copy, Check, MessageSquare } from 'lucide-react';
+import { UsersRound, Plus, Phone, Mail, MapPin, Edit2, Trash2, Eye, UserCheck, Share2, Copy, Check, MessageSquare, ExternalLink, Link } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { localStore } from '../../lib/supabase';
@@ -31,7 +31,9 @@ export const CoordinatorsPage: React.FC = () => {
   // Invite Modal state
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [inviteCoord, setInviteCoord] = useState<Coordinator | null>(null);
-  const [copiedLink, setCopiedLink] = useState(false);
+  const [activeInviteTab, setActiveInviteTab] = useState<'coord_access' | 'polo_leaders'>('coord_access');
+  const [copiedRegLink, setCopiedRegLink] = useState(false);
+  const [copiedPoloLink, setCopiedPoloLink] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -48,7 +50,23 @@ export const CoordinatorsPage: React.FC = () => {
     setCoordinators(localStore.getCoordinators(orgId));
   };
 
-  const getCoordInviteLink = (coord: Coordinator) => {
+  // Link for the coordinator themselves to create password and sign up as Coordinator
+  const getCoordinatorRegistrationLink = (coord: Coordinator) => {
+    const origin = window.location.origin;
+    const params = new URLSearchParams({
+      convite: 'coordenador',
+      coord_id: coord.id,
+      org: orgId,
+      nome: coord.name,
+      territorio: coord.territory,
+    });
+    if (coord.email) params.set('email', coord.email);
+    if (coord.phone) params.set('telefone', coord.phone);
+    return `${origin}/cadastro?${params.toString()}`;
+  };
+
+  // Link for leaders to register under this coordinator
+  const getCoordPoloLink = (coord: Coordinator) => {
     const origin = window.location.origin;
     const params = new URLSearchParams({
       convite: 'lider',
@@ -70,18 +88,41 @@ export const CoordinatorsPage: React.FC = () => {
     return `${origin}/cadastro?${params.toString()}`;
   };
 
-  const handleOpenCoordInvite = (coord: Coordinator) => {
+  const handleOpenCoordInvite = (coord: Coordinator, tab: 'coord_access' | 'polo_leaders' = 'coord_access') => {
     setInviteCoord(coord);
-    setCopiedLink(false);
+    setActiveInviteTab(tab);
+    setCopiedRegLink(false);
+    setCopiedPoloLink(false);
     setIsInviteModalOpen(true);
   };
 
-  const handleCopyCoordLink = (coord: Coordinator) => {
-    const link = getCoordInviteLink(coord);
+  const handleCopyCoordRegLink = (coord: Coordinator) => {
+    const link = getCoordinatorRegistrationLink(coord);
     navigator.clipboard.writeText(link);
-    setCopiedLink(true);
-    success('Link de indicação do coordenador copiado!');
-    setTimeout(() => setCopiedLink(false), 2500);
+    setCopiedRegLink(true);
+    success('Link de cadastro do coordenador copiado!');
+    setTimeout(() => setCopiedRegLink(false), 2500);
+  };
+
+  const handleCopyCoordPoloLink = (coord: Coordinator) => {
+    const link = getCoordPoloLink(coord);
+    navigator.clipboard.writeText(link);
+    setCopiedPoloLink(true);
+    success('Link do polo (para lideranças) copiado!');
+    setTimeout(() => setCopiedPoloLink(false), 2500);
+  };
+
+  const handleSendWhatsAppCoordinator = (coord: Coordinator) => {
+    const link = getCoordinatorRegistrationLink(coord);
+    const cleanPhone = (coord.phone || '').replace(/\D/g, '');
+    const orgName = organization?.name || 'NEXUS';
+    const text = `Olá ${coord.name}! Você foi cadastrado(a) como Coordenador(a) na campanha ${orgName} (Polo/Território: ${coord.territory}). Acesse o link abaixo para concluir seu cadastro e criar sua senha de acesso ao sistema de gestão e articulação:\n\n${link}`;
+
+    const waUrl = cleanPhone 
+      ? `https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${encodeURIComponent(text)}`
+      : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+
+    window.open(waUrl, '_blank');
   };
 
   const handleSendWhatsAppLeader = (lead: Leader, coord?: Coordinator) => {
@@ -146,7 +187,14 @@ export const CoordinatorsPage: React.FC = () => {
     localStore.saveCoordinator(newCoord);
     reloadData();
     setIsCreateModalOpen(false);
-    success(selectedCoord ? 'Coordenador atualizado!' : 'Coordenador cadastrado com sucesso!');
+    success(selectedCoord ? 'Coordenador atualizado!' : 'Coordenador cadastrado! Gerando link de acesso...');
+
+    // Automatically prompt registration link modal when creating a new coordinator
+    if (!selectedCoord) {
+      setTimeout(() => {
+        handleOpenCoordInvite(newCoord, 'coord_access');
+      }, 350);
+    }
   };
 
   const handleDelete = (id: string) => {
@@ -189,7 +237,7 @@ export const CoordinatorsPage: React.FC = () => {
             Coordenadores de Articulação
           </h2>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Gestão dos líderes de polo, zonas eleitorais e links de indicação para cadastro de novas lideranças
+            Gestão dos líderes de polo, zonas eleitorais e links de acesso e cadastro
           </p>
         </div>
 
@@ -243,7 +291,7 @@ export const CoordinatorsPage: React.FC = () => {
               <TableHead>Nome & Contato</TableHead>
               <TableHead>Território / Região</TableHead>
               <TableHead>Lideranças</TableHead>
-              <TableHead>Link do Polo</TableHead>
+              <TableHead>Link de Cadastro</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -284,12 +332,12 @@ export const CoordinatorsPage: React.FC = () => {
                 <TableCell>
                   <button
                     type="button"
-                    onClick={() => handleOpenCoordInvite(coord)}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition-colors cursor-pointer"
-                    title="Link de cadastro direto para este coordenador"
+                    onClick={() => handleOpenCoordInvite(coord, 'coord_access')}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border border-indigo-800 transition-colors cursor-pointer"
+                    title="Gerar e enviar link de cadastro para este coordenador"
                   >
-                    <Share2 className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Link do Polo</span>
+                    <Share2 className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>Convidar Coordenador</span>
                   </button>
                 </TableCell>
                 <TableCell>
@@ -300,9 +348,9 @@ export const CoordinatorsPage: React.FC = () => {
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1.5">
                     <button
-                      onClick={() => handleOpenCoordInvite(coord)}
-                      title="Compartilhar link do coordenador"
-                      className="p-1.5 rounded text-zinc-400 hover:text-emerald-400 hover:bg-zinc-800 transition-colors"
+                      onClick={() => handleOpenCoordInvite(coord, 'coord_access')}
+                      title="Enviar link de cadastro ao coordenador"
+                      className="p-1.5 rounded text-zinc-400 hover:text-indigo-400 hover:bg-zinc-800 transition-colors"
                     >
                       <Share2 className="w-3.5 h-3.5" />
                     </button>
@@ -335,15 +383,16 @@ export const CoordinatorsPage: React.FC = () => {
         </Table>
       )}
 
-      {/* Coordinator Referral Link Modal */}
+      {/* Coordinator Invitation & Referral Links Modal */}
       <Modal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
-        title="Link de Indicação do Coordenador"
-        description="Qualquer líder que se cadastrar por este link ficará automaticamente vinculado a este coordenador."
+        title="Links do Coordenador"
+        description="Envie o link para o coordenador concluir seu cadastro ou utilize o link de vinculação de novas lideranças."
       >
         {inviteCoord && (
           <div className="space-y-4 text-left">
+            {/* Header info */}
             <div className="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 space-y-1.5">
               <div className="flex justify-between items-center text-xs">
                 <span className="text-zinc-400">Coordenador:</span>
@@ -353,30 +402,112 @@ export const CoordinatorsPage: React.FC = () => {
                 <span className="text-zinc-400">Território / Polo:</span>
                 <span className="text-zinc-300">{inviteCoord.territory}</span>
               </div>
+              {inviteCoord.phone && (
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-zinc-400">WhatsApp / Telefone:</span>
+                  <span className="text-zinc-300 font-mono">{inviteCoord.phone}</span>
+                </div>
+              )}
             </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-zinc-300">
-                Link de Indicação Direta
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  readOnly
-                  value={getCoordInviteLink(inviteCoord)}
-                  className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-300 font-mono focus:outline-none"
-                />
+            {/* Tab navigation */}
+            <div className="flex rounded-lg bg-zinc-950 p-1 border border-zinc-800 gap-1">
+              <button
+                type="button"
+                onClick={() => setActiveInviteTab('coord_access')}
+                className={`flex-1 py-1.5 px-2 rounded-md text-xs font-medium transition-all ${
+                  activeInviteTab === 'coord_access'
+                    ? 'bg-indigo-600 text-white shadow-xs'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                1. Cadastro do Coordenador
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveInviteTab('polo_leaders')}
+                className={`flex-1 py-1.5 px-2 rounded-md text-xs font-medium transition-all ${
+                  activeInviteTab === 'polo_leaders'
+                    ? 'bg-zinc-800 text-white shadow-xs'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                2. Link do Polo (Lideranças)
+              </button>
+            </div>
+
+            {activeInviteTab === 'coord_access' ? (
+              <div className="space-y-3 p-3.5 rounded-xl bg-indigo-950/30 border border-indigo-900/60">
+                <div>
+                  <div className="text-xs font-semibold text-indigo-300 flex items-center gap-1.5">
+                    <UsersRound className="w-3.5 h-3.5" />
+                    Link de Acesso para {inviteCoord.name}
+                  </div>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">
+                    Envie este link para o coordenador definir sua senha e ter acesso direto ao painel de coordenação.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={getCoordinatorRegistrationLink(inviteCoord)}
+                    className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-300 font-mono focus:outline-none"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCopyCoordRegLink(inviteCoord)}
+                    leftIcon={copiedRegLink ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                  >
+                    {copiedRegLink ? 'Copiado!' : 'Copiar'}
+                  </Button>
+                </div>
+
                 <Button
                   type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleCopyCoordLink(inviteCoord)}
-                  leftIcon={copiedLink ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                  variant="primary"
+                  size="md"
+                  onClick={() => handleSendWhatsAppCoordinator(inviteCoord)}
+                  leftIcon={<MessageSquare className="w-4 h-4 text-white" />}
+                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs border-0"
                 >
-                  {copiedLink ? 'Copiado!' : 'Copiar'}
+                  Enviar Convite pelo WhatsApp
                 </Button>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-3 p-3.5 rounded-xl bg-zinc-950/60 border border-zinc-800">
+                <div>
+                  <div className="text-xs font-semibold text-zinc-200 flex items-center gap-1.5">
+                    <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    Link de Lideranças para o Polo de {inviteCoord.name}
+                  </div>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">
+                    Qualquer líder que se cadastrar por este link ficará automaticamente vinculado a este coordenador.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={getCoordPoloLink(inviteCoord)}
+                    className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-300 font-mono focus:outline-none"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCopyCoordPoloLink(inviteCoord)}
+                    leftIcon={copiedPoloLink ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                  >
+                    {copiedPoloLink ? 'Copiado!' : 'Copiar'}
+                  </Button>
+                </div>
+              </div>
+            )}
 
             <div className="pt-3 border-t border-zinc-800 flex justify-end">
               <Button
@@ -385,7 +516,7 @@ export const CoordinatorsPage: React.FC = () => {
                 size="sm"
                 onClick={() => setIsInviteModalOpen(false)}
               >
-                Concluído
+                Fechar
               </Button>
             </div>
           </div>
@@ -397,7 +528,7 @@ export const CoordinatorsPage: React.FC = () => {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         title={selectedCoord ? 'Editar Coordenador' : 'Novo Coordenador'}
-        description="Registre as informações do coordenador regional."
+        description="Registre as informações do coordenador regional. Ao salvar, um link de acesso será gerado para envio."
       >
         <form onSubmit={handleSave} className="space-y-3.5 text-left">
           <Input
@@ -466,7 +597,7 @@ export const CoordinatorsPage: React.FC = () => {
               Cancelar
             </Button>
             <Button type="submit" variant="primary" size="sm">
-              {selectedCoord ? 'Salvar Alterações' : 'Cadastrar Coordenador'}
+              {selectedCoord ? 'Salvar Alterações' : 'Cadastrar e Gerar Link'}
             </Button>
           </div>
         </form>
@@ -502,6 +633,26 @@ export const CoordinatorsPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Access Link for Coordinator */}
+            <div className="p-3.5 rounded-xl bg-indigo-950/40 border border-indigo-900/60 space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-semibold text-indigo-300">Link de Acesso do Coordenador</div>
+                  <div className="text-[11px] text-zinc-400">Para o coordenador criar senha e acessar o painel</div>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleOpenCoordInvite(selectedCoord, 'coord_access')}
+                  className="border-indigo-800 text-indigo-200"
+                  leftIcon={<Share2 className="w-3.5 h-3.5 text-indigo-400" />}
+                >
+                  Convidar
+                </Button>
+              </div>
+            </div>
+
             {/* Referral Link Box in Drawer */}
             <div className="p-3.5 rounded-xl bg-zinc-950/90 border border-zinc-800 flex items-center justify-between gap-3">
               <div>
@@ -512,11 +663,11 @@ export const CoordinatorsPage: React.FC = () => {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => handleOpenCoordInvite(selectedCoord)}
+                onClick={() => handleOpenCoordInvite(selectedCoord, 'polo_leaders')}
                 className="border-zinc-700 text-zinc-200"
-                leftIcon={<Share2 className="w-3.5 h-3.5 text-emerald-400" />}
+                leftIcon={<Link className="w-3.5 h-3.5 text-emerald-400" />}
               >
-                Gerar Link
+                Link do Polo
               </Button>
             </div>
 

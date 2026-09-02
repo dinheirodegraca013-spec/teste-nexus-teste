@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Lock, Building2, ArrowRight, ShieldCheck, UserCheck } from 'lucide-react';
+import { User, Mail, Lock, Building2, ArrowRight, ShieldCheck, UserCheck, UsersRound } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { localStore } from '../../lib/supabase';
@@ -25,11 +25,13 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
 
   // Referral / Invitation query parameters
   const [isInvite, setIsInvite] = useState(false);
+  const [inviteType, setInviteType] = useState<'coordenador' | 'lider' | null>(null);
   const [inviteOrgId, setInviteOrgId] = useState('');
   const [inviteOrgName, setInviteOrgName] = useState('');
   const [inviteLeaderId, setInviteLeaderId] = useState('');
   const [inviteCoordId, setInviteCoordId] = useState('');
   const [inviteCoordName, setInviteCoordName] = useState('');
+  const [inviteTerritory, setInviteTerritory] = useState('');
 
   useEffect(() => {
     try {
@@ -44,10 +46,39 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
       const paramCoordId = urlParams.get('coord_id') || urlParams.get('coord');
       const paramOrgId = urlParams.get('org') || urlParams.get('org_id');
       const paramNome = urlParams.get('nome');
+      const paramEmail = urlParams.get('email');
+      const paramTerritorio = urlParams.get('territorio');
 
-      if (conviteType === 'lider' || paramLeaderId || paramCoordId) {
+      if (conviteType === 'coordenador') {
         setIsInvite(true);
+        setInviteType('coordenador');
         if (paramNome) setName(decodeURIComponent(paramNome));
+        if (paramEmail) setEmail(decodeURIComponent(paramEmail));
+        if (paramTerritorio) setInviteTerritory(decodeURIComponent(paramTerritorio));
+        if (paramOrgId) setInviteOrgId(paramOrgId);
+        if (paramCoordId) setInviteCoordId(paramCoordId);
+
+        const orgs = localStore.getOrganizations();
+        const foundOrg = orgs.find(o => o.id === (paramOrgId || 'org-alpha')) || orgs[0];
+        if (foundOrg) {
+          setInviteOrgName(foundOrg.name);
+          setInviteOrgId(foundOrg.id);
+        }
+
+        if (paramCoordId && foundOrg) {
+          const coords = localStore.getCoordinators(foundOrg.id);
+          const foundCoord = coords.find(c => c.id === paramCoordId);
+          if (foundCoord) {
+            if (!paramNome) setName(foundCoord.name);
+            if (!paramEmail && foundCoord.email) setEmail(foundCoord.email);
+            if (!paramTerritorio && foundCoord.territory) setInviteTerritory(foundCoord.territory);
+          }
+        }
+      } else if (conviteType === 'lider' || paramLeaderId || paramCoordId) {
+        setIsInvite(true);
+        setInviteType('lider');
+        if (paramNome) setName(decodeURIComponent(paramNome));
+        if (paramEmail) setEmail(decodeURIComponent(paramEmail));
         if (paramOrgId) setInviteOrgId(paramOrgId);
         if (paramLeaderId) setInviteLeaderId(paramLeaderId);
         if (paramCoordId) setInviteCoordId(paramCoordId);
@@ -97,12 +128,14 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
     }
 
     setIsLoading(true);
+    const assignedRole = inviteType === 'coordenador' ? 'coordinator' : (isInvite ? 'leader' : 'admin');
+    
     const { error } = await signUp({
       name: name.trim(),
       email: email.trim(),
       password,
       organizationName: isInvite ? (inviteOrgName || 'Campanha') : (organizationName.trim() || `Organização de ${name.split(' ')[0]}`),
-      role: isInvite ? 'leader' : 'admin',
+      role: assignedRole,
       organizationId: isInvite ? inviteOrgId : undefined,
       leaderId: isInvite && inviteLeaderId ? inviteLeaderId : undefined,
       coordinatorId: isInvite && inviteCoordId ? inviteCoordId : undefined,
@@ -113,7 +146,10 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
       setErrorMessage(error.message || 'Falha ao realizar cadastro.');
       toastError('Erro: ' + (error.message || 'Não foi possível cadastrar'));
     } else {
-      if (isInvite) {
+      if (inviteType === 'coordenador') {
+        success('Bem-vindo(a) à coordenação! Acesso liberado.');
+        onNavigate('/app');
+      } else if (isInvite) {
         success('Bem-vindo(a) à equipe de campo! Acesso liberado.');
         onNavigate('/app/campo');
       } else {
@@ -141,27 +177,51 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
               </div>
             )}
 
-            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950 space-y-2">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-emerald-700 text-white flex items-center justify-center shrink-0">
-                  <UserCheck className="w-4 h-4" />
+            {inviteType === 'coordenador' ? (
+              <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-950 space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-700 text-white flex items-center justify-center shrink-0">
+                    <UsersRound className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold tracking-wider uppercase bg-indigo-200/80 text-indigo-900 px-2 py-0.5 rounded-md">
+                      Convite de Coordenador
+                    </span>
+                    <h3 className="text-sm font-bold text-slate-900 mt-0.5">
+                      Acesso à Coordenação de Polo
+                    </h3>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-[10px] font-bold tracking-wider uppercase bg-emerald-200/80 text-emerald-900 px-2 py-0.5 rounded-md">
-                    Convite de Liderança
-                  </span>
-                  <h3 className="text-sm font-bold text-slate-900 mt-0.5">
-                    Entrar na Equipe de Campo
-                  </h3>
-                </div>
+                <p className="text-xs text-slate-600 leading-relaxed pt-1 border-t border-indigo-200/60">
+                  Você foi cadastrado(a) como Coordenador(a){inviteTerritory ? ` do território ` : ' na '}
+                  {inviteTerritory && <strong className="text-slate-900 font-semibold">{inviteTerritory} </strong>}
+                  na campanha <strong className="text-slate-900 font-semibold">{inviteOrgName || 'Central'}</strong>.
+                  Crie sua senha de acesso para gerenciar suas lideranças, metas e articulação.
+                </p>
               </div>
-              <p className="text-xs text-slate-600 leading-relaxed pt-1 border-t border-emerald-200/60">
-                Você foi indicado{inviteCoordName ? ` pelo coordenador ` : ` para a `}
-                {inviteCoordName && <strong className="text-slate-900 font-semibold">{inviteCoordName} </strong>}
-                na campanha <strong className="text-slate-900 font-semibold">{inviteOrgName || 'Central'}</strong>.
-                Cadastre sua senha para acessar o aplicativo móvel de campo.
-              </p>
-            </div>
+            ) : (
+              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950 space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-700 text-white flex items-center justify-center shrink-0">
+                    <UserCheck className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold tracking-wider uppercase bg-emerald-200/80 text-emerald-900 px-2 py-0.5 rounded-md">
+                      Convite de Liderança
+                    </span>
+                    <h3 className="text-sm font-bold text-slate-900 mt-0.5">
+                      Entrar na Equipe de Campo
+                    </h3>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed pt-1 border-t border-emerald-200/60">
+                  Você foi indicado{inviteCoordName ? ` pelo coordenador ` : ` para a `}
+                  {inviteCoordName && <strong className="text-slate-900 font-semibold">{inviteCoordName} </strong>}
+                  na campanha <strong className="text-slate-900 font-semibold">{inviteOrgName || 'Central'}</strong>.
+                  Cadastre sua senha para acessar o aplicativo móvel de campo.
+                </p>
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-center mb-6">
@@ -278,7 +338,9 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
             className="w-full mt-4"
             rightIcon={<ArrowRight className="w-4 h-4" />}
           >
-            {isInvite ? 'Concluir Cadastro e Entrar no Modo de Campo' : 'Cadastrar e Continuar'}
+            {inviteType === 'coordenador'
+              ? 'Concluir Cadastro e Acessar Coordenação'
+              : (isInvite ? 'Concluir Cadastro e Entrar no Modo de Campo' : 'Cadastrar e Continuar')}
           </Button>
         </form>
 

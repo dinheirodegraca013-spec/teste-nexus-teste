@@ -330,6 +330,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
 
+        // If coordinatorId was passed, update coordinator record status and email
+        if (data.coordinatorId) {
+          const coords = localStore.getCoordinators(targetOrg.id);
+          const found = coords.find(c => c.id === data.coordinatorId);
+          if (found) {
+            localStore.saveCoordinator({
+              ...found,
+              email: data.email,
+              status: 'active'
+            });
+          }
+        }
+
         return { error: null };
       } else {
         setOrganizations(localStore.getOrganizations());
@@ -355,6 +368,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const found = leaders.find(l => l.id === data.leaderId);
           if (found) {
             localStore.saveLeader({
+              ...found,
+              email: data.email,
+              status: 'active'
+            });
+          }
+        }
+
+        // If coordinatorId was passed, update coordinator record status and email
+        if (data.coordinatorId) {
+          const coords = localStore.getCoordinators(targetOrg.id);
+          const found = coords.find(c => c.id === data.coordinatorId);
+          if (found) {
+            localStore.saveCoordinator({
               ...found,
               email: data.email,
               status: 'active'
