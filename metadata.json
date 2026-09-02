@@ -1,0 +1,6 @@
+{
+  "name": "NEXUS",
+  "description": "Plataforma SaaS profissional de gestão, inteligência e operação multi-tenant integrada ao Supabase.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
