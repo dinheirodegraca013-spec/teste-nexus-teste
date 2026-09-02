@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserCheck, Plus, Clock, Trash2, CheckCircle2, FileDown } from 'lucide-react';
+import { UserCheck, Plus, Clock, Trash2, CheckCircle2, FileDown, Image as ImageIcon, Eye, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { localStore } from '../../lib/supabase';
@@ -11,6 +11,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '.
 import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
+import { FileUpload } from '../../components/ui/FileUpload';
 import { EmptyState } from '../../components/ui/EmptyState';
 
 export const PresencePage: React.FC = () => {
@@ -24,12 +25,15 @@ export const PresencePage: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
     reference_name: events[0]?.title || 'Ato Público',
     status: 'present' as PresenceLog['status'],
+    photo_url: '',
+    attachment_name: '',
   });
 
   const reloadData = () => {
@@ -43,19 +47,25 @@ export const PresencePage: React.FC = () => {
       return;
     }
 
-    localStore.savePresenceLog({
-      id: 'pres_' + Math.random().toString(36).substring(2, 9),
-      organization_id: orgId,
-      name: formData.name.trim(),
-      phone: formData.phone.trim() || undefined,
-      reference_name: formData.reference_name,
-      status: formData.status,
-      created_at: new Date().toISOString(),
-    });
+    try {
+      localStore.savePresenceLog({
+        id: 'pres_' + Math.random().toString(36).substring(2, 9),
+        organization_id: orgId,
+        name: formData.name.trim(),
+        phone: formData.phone.trim() || undefined,
+        reference_name: formData.reference_name,
+        photo_url: formData.photo_url || undefined,
+        attachment_name: formData.attachment_name || undefined,
+        status: formData.status,
+        created_at: new Date().toISOString(),
+      });
 
-    reloadData();
-    setIsModalOpen(false);
-    success('Presença registrada!');
+      reloadData();
+      setIsModalOpen(false);
+      success('Presença registrada!');
+    } catch {
+      toastError('Erro ao registrar presença. Tente novamente.');
+    }
   };
 
   const handleDelete = (id: string) => {
@@ -95,6 +105,8 @@ export const PresencePage: React.FC = () => {
               phone: '',
               reference_name: events[0]?.title || 'Atividade Operacional',
               status: 'present',
+              photo_url: '',
+              attachment_name: '',
             });
             setIsModalOpen(true);
           }}
@@ -125,6 +137,7 @@ export const PresencePage: React.FC = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Participante</TableHead>
+              <TableHead>Comprovante / Foto</TableHead>
               <TableHead>Contato</TableHead>
               <TableHead>Atividade / Evento</TableHead>
               <TableHead>Horário do Check-in</TableHead>
@@ -136,7 +149,42 @@ export const PresencePage: React.FC = () => {
             {filteredLogs.map((log) => (
               <TableRow key={log.id}>
                 <TableCell>
-                  <div className="font-medium text-zinc-100">{log.name}</div>
+                  <div className="flex items-center gap-2.5">
+                    {log.photo_url ? (
+                      <button
+                        type="button"
+                        onClick={() => setPreviewImage({ url: log.photo_url!, title: `${log.name} - ${log.reference_name || 'Presença'}` })}
+                        className="w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-zinc-700 relative group cursor-pointer"
+                        title="Clique para ver foto"
+                      >
+                        <img
+                          src={log.photo_url}
+                          alt="Foto"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          referrerPolicy="no-referrer"
+                        />
+                      </button>
+                    ) : (
+                      <div className="w-8 h-8 rounded-lg bg-zinc-800 text-zinc-300 flex items-center justify-center font-bold text-xs shrink-0 border border-zinc-700">
+                        {log.name.slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="font-medium text-zinc-100">{log.name}</div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {log.photo_url ? (
+                    <button
+                      type="button"
+                      onClick={() => setPreviewImage({ url: log.photo_url!, title: `${log.name} - ${log.reference_name || 'Presença'}` })}
+                      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20 transition-colors"
+                    >
+                      <ImageIcon className="w-3.5 h-3.5" />
+                      <span>Ver Foto</span>
+                    </button>
+                  ) : (
+                    <span className="text-xs text-zinc-500">Sem anexo</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <div className="text-xs font-mono text-zinc-300">{log.phone || '—'}</div>
@@ -202,6 +250,20 @@ export const PresencePage: React.FC = () => {
             required
           />
 
+          <FileUpload
+            label="Foto / Comprovante de Presença (Opcional)"
+            helperText="Foto do participante, selfie ou registro da reunião"
+            value={formData.photo_url || null}
+            fileName={formData.attachment_name || null}
+            onChange={(dataUrl, meta) => {
+              setFormData({
+                ...formData,
+                photo_url: dataUrl || '',
+                attachment_name: meta?.name || '',
+              });
+            }}
+          />
+
           <Select
             label="Status"
             value={formData.status}
@@ -222,6 +284,32 @@ export const PresencePage: React.FC = () => {
           </div>
         </form>
       </Modal>
+
+      {/* Image Preview Modal */}
+      {previewImage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
+          <div className="relative max-w-xl w-full bg-slate-900 rounded-2xl border border-slate-700 overflow-hidden shadow-2xl">
+            <div className="p-3.5 border-b border-slate-800 flex items-center justify-between text-white">
+              <span className="text-xs font-semibold truncate pr-4">{previewImage.title}</span>
+              <button
+                type="button"
+                onClick={() => setPreviewImage(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-3 flex items-center justify-center bg-black/60 max-h-[75vh] overflow-auto">
+              <img
+                src={previewImage.url}
+                alt={previewImage.title}
+                className="max-h-[70vh] w-auto object-contain rounded-lg"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

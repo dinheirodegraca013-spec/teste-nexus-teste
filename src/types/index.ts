@@ -178,6 +178,8 @@ export interface FieldPresence {
   attendee_phone?: string;
   phone?: string;
   attendee_territory?: string;
+  photo_url?: string;
+  attachment_name?: string;
   confirmed_by?: string;
   status?: 'present' | 'justified' | 'absent';
   created_at: string;

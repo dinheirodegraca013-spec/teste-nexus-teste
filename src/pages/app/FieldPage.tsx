@@ -8,7 +8,7 @@ import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Badge } from '../../components/ui/Badge';
 import { FileUpload } from '../../components/ui/FileUpload';
-import { Leader, CarSticker, HouseSticker, CrmContact } from '../../types';
+import { Leader, CarSticker, HouseSticker, CrmContact, FieldPresence } from '../../types';
 
 interface FieldPageProps {
   onNavigate?: (path: string) => void;
@@ -61,17 +61,22 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
   const [presenceName, setPresenceName] = useState('');
   const [presencePhone, setPresencePhone] = useState('');
   const [activityName, setActivityName] = useState('Caminhada de Rua / Feira');
+  const [presencePhoto, setPresencePhoto] = useState<string | null>(null);
+  const [presenceFileName, setPresenceFileName] = useState<string | null>(null);
+  const [isSubmittingPresence, setIsSubmittingPresence] = useState(false);
 
   // Local data lists for real-time progress
   const [recentContacts, setRecentContacts] = useState<CrmContact[]>(() => localStore.getContacts(orgId));
   const [carStickers, setCarStickers] = useState<CarSticker[]>(() => localStore.getCarStickers(orgId));
   const [houseStickers, setHouseStickers] = useState<HouseSticker[]>(() => localStore.getHouseStickers(orgId));
+  const [presenceLogs, setPresenceLogs] = useState<FieldPresence[]>(() => localStore.getPresenceLogs(orgId));
 
   const reloadData = () => {
     setLeaders(localStore.getLeaders(orgId));
     setRecentContacts(localStore.getContacts(orgId));
     setCarStickers(localStore.getCarStickers(orgId));
     setHouseStickers(localStore.getHouseStickers(orgId));
+    setPresenceLogs(localStore.getPresenceLogs(orgId));
   };
 
   useEffect(() => {
@@ -226,21 +231,32 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
       return;
     }
 
-    localStore.savePresenceLog({
-      id: 'pres_' + Math.random().toString(36).substring(2, 9),
-      organization_id: orgId,
-      name: presenceName.trim(),
-      phone: presencePhone.trim() || undefined,
-      reference_name: activityName,
-      status: 'present',
-      created_at: new Date().toISOString(),
-    });
+    setIsSubmittingPresence(true);
+    try {
+      localStore.savePresenceLog({
+        id: 'pres_' + Math.random().toString(36).substring(2, 9),
+        organization_id: orgId,
+        name: presenceName.trim(),
+        phone: presencePhone.trim() || undefined,
+        reference_name: activityName.trim() || 'Reunião / Ato Público',
+        photo_url: presencePhoto || undefined,
+        attachment_name: presenceFileName || undefined,
+        status: 'present',
+        created_at: new Date().toISOString(),
+      });
 
-    setPresenceName('');
-    setPresencePhone('');
+      setPresenceName('');
+      setPresencePhone('');
+      setPresencePhoto(null);
+      setPresenceFileName(null);
 
-    reloadData();
-    success('Presença confirmada no evento!');
+      reloadData();
+      success('Presença confirmada no evento!');
+    } catch {
+      toastError('Erro ao registrar presença. Tente novamente.');
+    } finally {
+      setIsSubmittingPresence(false);
+    }
   };
 
   return (
@@ -738,46 +754,125 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
 
       {/* Tab 4: Fast Presence Form */}
       {activeTab === 'presence' && (
-        <form onSubmit={handleSavePresence} className="p-5 rounded-2xl bg-white border border-slate-200 space-y-3.5 shadow-2xs">
-          <div className="border-b border-slate-100 pb-2.5">
-            <h3 className="text-sm font-semibold text-slate-900">Check-in de Presença Rápido</h3>
-            <p className="text-[11px] text-slate-500">Para reuniões, plenárias e comícios</p>
+        <div className="space-y-4">
+          <form onSubmit={handleSavePresence} className="p-5 rounded-2xl bg-white border border-slate-200 space-y-3.5 shadow-2xs">
+            <div className="border-b border-slate-100 pb-2.5">
+              <h3 className="text-sm font-semibold text-slate-900">Check-in de Presença Rápido</h3>
+              <p className="text-[11px] text-slate-500">Para reuniões, plenárias e comícios</p>
+            </div>
+
+            <Input
+              label="Atividade / Evento Atual"
+              value={activityName}
+              onChange={(e) => setActivityName(e.target.value)}
+              placeholder="Ex.: Plenária do Bairro Gonzaga"
+            />
+
+            <Input
+              label="Nome do Participante *"
+              value={presenceName}
+              onChange={(e) => setPresenceName(e.target.value)}
+              placeholder="Ex.: Juliana Almeida"
+              required
+              autoFocus
+            />
+
+            <Input
+              label="WhatsApp para Contato"
+              type="tel"
+              value={presencePhone}
+              onChange={(e) => setPresencePhone(e.target.value)}
+              placeholder="(11) 97777-6666"
+            />
+
+            {/* Photo / File Upload for Presence */}
+            <FileUpload
+              label="Foto / Comprovante de Presença (Opcional)"
+              helperText="Selfie, foto do participante, crachá ou foto do ato/reunião"
+              value={presencePhoto}
+              fileName={presenceFileName}
+              onChange={(dataUrl, meta) => {
+                setPresencePhoto(dataUrl || null);
+                setPresenceFileName(meta?.name || null);
+              }}
+            />
+
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              isLoading={isSubmittingPresence}
+              className="w-full mt-2"
+              rightIcon={<Check className="w-4 h-4" />}
+            >
+              Registrar Presença
+            </Button>
+          </form>
+
+          {/* Lista de Presenças Confirmadas */}
+          <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Presenças Registradas ({presenceLogs.length})
+              </h4>
+            </div>
+            {presenceLogs.length === 0 ? (
+              <p className="text-xs text-slate-400 py-2">Nenhum check-in registrado nesta sessão.</p>
+            ) : (
+              <div className="space-y-2">
+                {presenceLogs.map(log => (
+                  <div key={log.id} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      {log.photo_url ? (
+                        <button
+                          type="button"
+                          onClick={() => setPreviewImage({ url: log.photo_url!, title: `${log.name} - ${log.reference_name || 'Presença'}` })}
+                          className="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-slate-300 relative group cursor-pointer"
+                          title="Clique para ver a foto ampliada"
+                        >
+                          <img
+                            src={log.photo_url}
+                            alt="Foto do participante"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            referrerPolicy="no-referrer"
+                          />
+                          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <Eye className="w-3.5 h-3.5 text-white" />
+                          </div>
+                        </button>
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs shrink-0">
+                          {log.name.slice(0, 2).toUpperCase()}
+                        </div>
+                      )}
+
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold text-slate-900 truncate">{log.name}</div>
+                        <div className="text-[11px] text-slate-500 truncate">
+                          {log.reference_name || 'Evento'} {log.phone ? `• ${log.phone}` : ''}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {log.photo_url && (
+                        <button
+                          type="button"
+                          onClick={() => setPreviewImage({ url: log.photo_url!, title: `${log.name} - ${log.reference_name || 'Presença'}` })}
+                          className="p-1.5 rounded-md text-slate-400 hover:text-slate-800 hover:bg-slate-200 transition-colors"
+                          title="Ver Foto"
+                        >
+                          <ImageIcon className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      <Badge variant="success">Presente</Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-
-          <Input
-            label="Atividade / Evento Atual"
-            value={activityName}
-            onChange={(e) => setActivityName(e.target.value)}
-            placeholder="Ex.: Plenária do Bairro Gonzaga"
-          />
-
-          <Input
-            label="Nome do Participante *"
-            value={presenceName}
-            onChange={(e) => setPresenceName(e.target.value)}
-            placeholder="Ex.: Juliana Almeida"
-            required
-            autoFocus
-          />
-
-          <Input
-            label="WhatsApp para Contato"
-            type="tel"
-            value={presencePhone}
-            onChange={(e) => setPresencePhone(e.target.value)}
-            placeholder="(11) 97777-6666"
-          />
-
-          <Button
-            type="submit"
-            variant="primary"
-            size="lg"
-            className="w-full mt-2"
-            rightIcon={<Check className="w-4 h-4" />}
-          >
-            Registrar Presença
-          </Button>
-        </form>
+        </div>
       )}
 
       {/* Image Preview Modal */}
