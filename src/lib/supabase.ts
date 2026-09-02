@@ -93,25 +93,57 @@ if (typeof window !== 'undefined') {
   }
 }
 
-// Local state store with multi-tenant isolation
+// Local state store with multi-tenant isolation and quota-safe fallback
 class LocalMultiTenantStore {
+  private memoryCache: Record<string, any[]> = {};
+
   private get<T>(key: string, defaultValue: T[]): T[] {
     if (typeof window === 'undefined') return [...defaultValue];
+    if (this.memoryCache[key]) {
+      return [...this.memoryCache[key]];
+    }
+
     const data = localStorage.getItem(`nexus_${key}`);
     if (!data) {
-      localStorage.setItem(`nexus_${key}`, JSON.stringify(defaultValue));
+      try {
+        localStorage.setItem(`nexus_${key}`, JSON.stringify(defaultValue));
+      } catch {
+        // Ignore quota error on initialization
+      }
+      this.memoryCache[key] = [...defaultValue];
       return [...defaultValue];
     }
     try {
-      return JSON.parse(data);
+      const parsed = JSON.parse(data);
+      this.memoryCache[key] = parsed;
+      return parsed;
     } catch {
+      this.memoryCache[key] = [...defaultValue];
       return [...defaultValue];
     }
   }
 
   private set<T>(key: string, value: T[]): void {
+    this.memoryCache[key] = value;
     if (typeof window === 'undefined') return;
-    localStorage.setItem(`nexus_${key}`, JSON.stringify(value));
+
+    try {
+      localStorage.setItem(`nexus_${key}`, JSON.stringify(value));
+    } catch (err) {
+      console.warn(`[LocalStore] Quota exceeded or storage error on '${key}', optimizing payloads...`, err);
+      try {
+        // If storage is full, sanitize older bulky image attachments
+        const sanitized = value.map((item: any) => {
+          if (item && typeof item === 'object' && item.photo_url && item.photo_url.length > 250000) {
+            return { ...item, photo_url: undefined };
+          }
+          return item;
+        });
+        localStorage.setItem(`nexus_${key}`, JSON.stringify(sanitized));
+      } catch (innerErr) {
+        console.warn(`[LocalStore] Saved to in-memory store for session:`, innerErr);
+      }
+    }
   }
 
   getOrganizations(): Organization[] {

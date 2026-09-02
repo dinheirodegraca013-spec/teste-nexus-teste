@@ -26,7 +26,67 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleProcessFile = (file: File) => {
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      if (!file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+        return;
+      }
+
+      const img = new window.Image();
+      const objectUrl = URL.createObjectURL(file);
+
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        const MAX_DIM = 1200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > MAX_DIM || height > MAX_DIM) {
+          if (width > height) {
+            height = Math.round((height * MAX_DIM) / width);
+            width = MAX_DIM;
+          } else {
+            width = Math.round((width * MAX_DIM) / height);
+            height = MAX_DIM;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          // Fallback to FileReader if canvas context is unavailable
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        // Compress as JPEG 0.72 quality (~60-100KB)
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.72);
+        resolve(compressedDataUrl);
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      };
+
+      img.src = objectUrl;
+    });
+  };
+
+  const handleProcessFile = async (file: File) => {
     setError(null);
 
     if (file.size > maxSizeMB * 1024 * 1024) {
@@ -34,20 +94,16 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
+    try {
+      const result = await compressImage(file);
       onChange(result, {
         name: file.name,
-        size: file.size,
-        type: file.type,
+        size: Math.round(result.length * 0.75), // approximate compressed size
+        type: file.type.startsWith('image/') ? 'image/jpeg' : file.type,
       });
-    };
-    reader.onerror = () => {
-      setError('Erro ao ler o arquivo. Tente novamente.');
-    };
-
-    reader.readAsDataURL(file);
+    } catch {
+      setError('Erro ao processar imagem. Tente novamente.');
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
