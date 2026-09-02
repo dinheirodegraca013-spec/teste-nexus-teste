@@ -230,6 +230,8 @@ export interface CarSticker {
   owner_phone?: string;
   phone?: string;
   vehicle_model?: string;
+  photo_url?: string;
+  attachment_name?: string;
   applied_at?: string;
   applied_by?: string;
   territory: string;
@@ -243,6 +245,8 @@ export interface HouseSticker {
   address: string;
   resident_name: string;
   phone?: string;
+  photo_url?: string;
+  attachment_name?: string;
   neighborhood?: string;
   territory: string;
   applied_at?: string;

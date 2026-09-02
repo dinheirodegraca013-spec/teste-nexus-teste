@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Tag, Plus, Car, Home, Phone, MapPin, Trash2, Edit2, CheckCircle2 } from 'lucide-react';
+import { Tag, Plus, Car, Home, Phone, MapPin, Trash2, Edit2, CheckCircle2, Image as ImageIcon, Eye, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { localStore } from '../../lib/supabase';
@@ -12,6 +12,7 @@ import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { FileUpload } from '../../components/ui/FileUpload';
 
 export const StickersPage: React.FC = () => {
   const { organization } = useAuth();
@@ -32,6 +33,8 @@ export const StickersPage: React.FC = () => {
     owner_name: '',
     owner_phone: '',
     territory: '',
+    photo_url: '' as string | undefined,
+    attachment_name: '' as string | undefined,
     status: 'applied' as CarSticker['status'],
   });
 
@@ -41,8 +44,12 @@ export const StickersPage: React.FC = () => {
     phone: '',
     address: '',
     territory: '',
+    photo_url: '' as string | undefined,
+    attachment_name: '' as string | undefined,
     status: 'applied' as HouseSticker['status'],
   });
+
+  const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
 
   const reloadData = () => {
     setCarStickers(localStore.getCarStickers(orgId));
@@ -64,13 +71,15 @@ export const StickersPage: React.FC = () => {
       owner_name: carForm.owner_name.trim(),
       owner_phone: carForm.owner_phone.trim() || undefined,
       territory: carForm.territory.trim() || 'Geral',
+      photo_url: carForm.photo_url || undefined,
+      attachment_name: carForm.attachment_name || undefined,
       status: carForm.status,
       created_at: new Date().toISOString(),
     });
 
     reloadData();
     setIsCarModalOpen(false);
-    success('Adesivo de veículo cadastrado!');
+    success('Adesivo de veículo cadastrado com sucesso!');
   };
 
   const handleSaveHouse = (e: React.FormEvent) => {
@@ -87,13 +96,15 @@ export const StickersPage: React.FC = () => {
       phone: houseForm.phone.trim() || undefined,
       address: houseForm.address.trim(),
       territory: houseForm.territory.trim() || 'Geral',
+      photo_url: houseForm.photo_url || undefined,
+      attachment_name: houseForm.attachment_name || undefined,
       status: houseForm.status,
       created_at: new Date().toISOString(),
     });
 
     reloadData();
     setIsHouseModalOpen(false);
-    success('Adesivo residencial cadastrado!');
+    success('Adesivo residencial cadastrado com sucesso!');
   };
 
   const handleDeleteCar = (id: string) => {
@@ -134,7 +145,7 @@ export const StickersPage: React.FC = () => {
             Adesivagem & Visibilidade
           </h2>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Controle de veículos adesivados (placa, modelo) e autorizações residenciais
+            Controle de veículos adesivados (placa, modelo, fotos) e autorizações residenciais
           </p>
         </div>
 
@@ -143,7 +154,7 @@ export const StickersPage: React.FC = () => {
             variant="outline"
             size="sm"
             onClick={() => {
-              setHouseForm({ resident_name: '', phone: '', address: '', territory: '', status: 'applied' });
+              setHouseForm({ resident_name: '', phone: '', address: '', territory: '', photo_url: undefined, attachment_name: undefined, status: 'applied' });
               setIsHouseModalOpen(true);
             }}
             leftIcon={<Home className="w-3.5 h-3.5" />}
@@ -155,7 +166,7 @@ export const StickersPage: React.FC = () => {
             variant="primary"
             size="sm"
             onClick={() => {
-              setCarForm({ plate: '', vehicle_model: '', owner_name: '', owner_phone: '', territory: '', status: 'applied' });
+              setCarForm({ plate: '', vehicle_model: '', owner_name: '', owner_phone: '', territory: '', photo_url: undefined, attachment_name: undefined, status: 'applied' });
               setIsCarModalOpen(true);
             }}
             leftIcon={<Car className="w-3.5 h-3.5" />}
@@ -171,7 +182,7 @@ export const StickersPage: React.FC = () => {
         <div className="flex gap-2 self-start sm:self-auto text-xs font-medium">
           <button
             onClick={() => setActiveTab('cars')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
               activeTab === 'cars' ? 'bg-zinc-800 text-zinc-100 font-semibold' : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
@@ -180,7 +191,7 @@ export const StickersPage: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('houses')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
               activeTab === 'houses' ? 'bg-zinc-800 text-zinc-100 font-semibold' : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
@@ -202,14 +213,18 @@ export const StickersPage: React.FC = () => {
           <EmptyState
             icon={<Car className="w-6 h-6" />}
             title="Nenhum veículo registrado"
-            description="Cadastre carros e motos adesivados em pit-stops ou ações de rua."
+            description="Cadastre carros e motos adesivados em pit-stops ou ações de rua com foto comprovante."
             actionLabel="Adesivar Veículo"
-            onAction={() => setIsCarModalOpen(true)}
+            onAction={() => {
+              setCarForm({ plate: '', vehicle_model: '', owner_name: '', owner_phone: '', territory: '', photo_url: undefined, attachment_name: undefined, status: 'applied' });
+              setIsCarModalOpen(true);
+            }}
           />
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-14">Foto</TableHead>
                 <TableHead>Proprietário & Contato</TableHead>
                 <TableHead>Placa & Modelo</TableHead>
                 <TableHead>Território / Bairro</TableHead>
@@ -220,6 +235,30 @@ export const StickersPage: React.FC = () => {
             <TableBody>
               {filteredCars.map((c) => (
                 <TableRow key={c.id}>
+                  <TableCell>
+                    {c.photo_url ? (
+                      <button
+                        type="button"
+                        onClick={() => setPreviewImage({ url: c.photo_url!, title: `${c.owner_name} - ${c.vehicle_model || c.plate || 'Carro'}` })}
+                        className="w-10 h-10 rounded-lg overflow-hidden border border-zinc-700 bg-zinc-800 relative group cursor-pointer"
+                        title="Ver foto do veículo"
+                      >
+                        <img
+                          src={c.photo_url}
+                          alt="Foto"
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                          <Eye className="w-3.5 h-3.5 text-white" />
+                        </div>
+                      </button>
+                    ) : (
+                      <div className="w-10 h-10 rounded-lg bg-zinc-800/80 border border-zinc-700/60 flex items-center justify-center text-zinc-500">
+                        <Car className="w-4 h-4" />
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <div className="font-medium text-zinc-100">{c.owner_name}</div>
                     {c.owner_phone && (
@@ -248,7 +287,7 @@ export const StickersPage: React.FC = () => {
                     <button
                       onClick={() => handleDeleteCar(c.id)}
                       title="Excluir"
-                      className="p-1.5 rounded text-zinc-400 hover:text-rose-400 hover:bg-zinc-800"
+                      className="p-1.5 rounded text-zinc-400 hover:text-rose-400 hover:bg-zinc-800 cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -265,12 +304,16 @@ export const StickersPage: React.FC = () => {
             title="Nenhuma residência registrada"
             description="Cadastre as casas e comércios que autorizaram a colocação de placas/adesivos."
             actionLabel="Adesivar Residência"
-            onAction={() => setIsHouseModalOpen(true)}
+            onAction={() => {
+              setHouseForm({ resident_name: '', phone: '', address: '', territory: '', photo_url: undefined, attachment_name: undefined, status: 'applied' });
+              setIsHouseModalOpen(true);
+            }}
           />
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-14">Foto</TableHead>
                 <TableHead>Morador / Responsável</TableHead>
                 <TableHead>Endereço Completo</TableHead>
                 <TableHead>Território / Bairro</TableHead>
@@ -282,6 +325,30 @@ export const StickersPage: React.FC = () => {
               {filteredHouses.map((h) => (
                 <TableRow key={h.id}>
                   <TableCell>
+                    {h.photo_url ? (
+                      <button
+                        type="button"
+                        onClick={() => setPreviewImage({ url: h.photo_url!, title: `${h.resident_name} - ${h.address}` })}
+                        className="w-10 h-10 rounded-lg overflow-hidden border border-zinc-700 bg-zinc-800 relative group cursor-pointer"
+                        title="Ver foto da fachada"
+                      >
+                        <img
+                          src={h.photo_url}
+                          alt="Foto"
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                          <Eye className="w-3.5 h-3.5 text-white" />
+                        </div>
+                      </button>
+                    ) : (
+                      <div className="w-10 h-10 rounded-lg bg-zinc-800/80 border border-zinc-700/60 flex items-center justify-center text-amber-500/70">
+                        <Home className="w-4 h-4" />
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     <div className="font-medium text-zinc-100">{h.resident_name}</div>
                     {h.phone && (
                       <div className="text-xs font-mono text-zinc-400 mt-0.5">{h.phone}</div>
@@ -289,7 +356,7 @@ export const StickersPage: React.FC = () => {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1.5 text-xs text-zinc-200">
-                      <MapPin className="w-3.5 h-3.5 text-zinc-500" />
+                      <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                       <span>{h.address}</span>
                     </div>
                   </TableCell>
@@ -305,7 +372,7 @@ export const StickersPage: React.FC = () => {
                     <button
                       onClick={() => handleDeleteHouse(h.id)}
                       title="Excluir"
-                      className="p-1.5 rounded text-zinc-400 hover:text-rose-400 hover:bg-zinc-800"
+                      className="p-1.5 rounded text-zinc-400 hover:text-rose-400 hover:bg-zinc-800 cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -326,7 +393,7 @@ export const StickersPage: React.FC = () => {
       >
         <form onSubmit={handleSaveCar} className="space-y-3.5 text-left">
           <Input
-            label="Nome do Proprietário"
+            label="Nome do Proprietário *"
             value={carForm.owner_name}
             onChange={(e) => setCarForm({ ...carForm, owner_name: e.target.value })}
             placeholder="Ex.: Marcos Aurélio"
@@ -364,6 +431,21 @@ export const StickersPage: React.FC = () => {
             />
           </div>
 
+          {/* Photo / File Upload for Car Sticker */}
+          <FileUpload
+            label="Foto do Carro Adesivado (Opcional)"
+            helperText="Tire uma foto ou anexe o comprovante (PNG/JPG até 10MB)"
+            value={carForm.photo_url || null}
+            fileName={carForm.attachment_name || null}
+            onChange={(dataUrl, meta) => {
+              setCarForm({
+                ...carForm,
+                photo_url: dataUrl || undefined,
+                attachment_name: meta?.name || undefined,
+              });
+            }}
+          />
+
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-800">
             <Button type="button" variant="outline" size="sm" onClick={() => setIsCarModalOpen(false)}>
               Cancelar
@@ -384,7 +466,7 @@ export const StickersPage: React.FC = () => {
       >
         <form onSubmit={handleSaveHouse} className="space-y-3.5 text-left">
           <Input
-            label="Nome do Morador / Responsável"
+            label="Nome do Morador / Responsável *"
             value={houseForm.resident_name}
             onChange={(e) => setHouseForm({ ...houseForm, resident_name: e.target.value })}
             placeholder="Ex.: Dona Cecília"
@@ -393,7 +475,7 @@ export const StickersPage: React.FC = () => {
           />
 
           <Input
-            label="Endereço Completo"
+            label="Endereço Completo *"
             value={houseForm.address}
             onChange={(e) => setHouseForm({ ...houseForm, address: e.target.value })}
             placeholder="Ex.: Rua Euclides da Cunha, 85 - Casa 2"
@@ -415,6 +497,21 @@ export const StickersPage: React.FC = () => {
             />
           </div>
 
+          {/* Photo / File Upload for House Sticker */}
+          <FileUpload
+            label="Foto da Fachada / Residência (Opcional)"
+            helperText="Tire foto da placa/adesivo instalado na residência"
+            value={houseForm.photo_url || null}
+            fileName={houseForm.attachment_name || null}
+            onChange={(dataUrl, meta) => {
+              setHouseForm({
+                ...houseForm,
+                photo_url: dataUrl || undefined,
+                attachment_name: meta?.name || undefined,
+              });
+            }}
+          />
+
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-800">
             <Button type="button" variant="outline" size="sm" onClick={() => setIsHouseModalOpen(false)}>
               Cancelar
@@ -425,6 +522,32 @@ export const StickersPage: React.FC = () => {
           </div>
         </form>
       </Modal>
+
+      {/* Full Photo Modal */}
+      {previewImage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
+          <div className="relative max-w-xl w-full bg-zinc-900 rounded-2xl border border-zinc-700 overflow-hidden shadow-2xl">
+            <div className="p-3.5 border-b border-zinc-800 flex items-center justify-between text-zinc-100">
+              <span className="text-xs font-semibold truncate pr-4">{previewImage.title}</span>
+              <button
+                type="button"
+                onClick={() => setPreviewImage(null)}
+                className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-3 flex items-center justify-center bg-black/60 max-h-[75vh] overflow-auto">
+              <img
+                src={previewImage.url}
+                alt={previewImage.title}
+                className="max-h-[70vh] w-auto object-contain rounded-lg"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
