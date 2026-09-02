@@ -51,7 +51,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { profile, organization, organizations, switchOrganization, signOut, hasPermission } = useAuth();
   const [isOrgDropdownOpen, setIsOrgDropdownOpen] = React.useState(false);
 
-  const navGroups: NavGroup[] = [
+  const isLeader = profile?.role === 'leader';
+
+  const leaderNavGroups: NavGroup[] = [
+    {
+      title: 'Operação do Líder',
+      items: [
+        { name: 'Painel & Metas de Campo', path: '/app/campo', icon: Target, highlight: true },
+        { name: 'Carros & Casas Adesivadas', path: '/app/adesivos', icon: Tag },
+        { name: 'Meus Apoiadores (CRM)', path: '/app/crm', icon: Contact },
+      ]
+    },
+    {
+      title: 'Minha Conta',
+      items: [
+        { name: 'Meu Perfil', path: '/app/perfil', icon: User },
+      ]
+    }
+  ];
+
+  const adminNavGroups: NavGroup[] = [
     {
       title: 'Principal',
       items: [
@@ -100,6 +119,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ]
     }
   ];
+
+  const navGroups = isLeader ? leaderNavGroups : adminNavGroups;
 
   const handleItemClick = (path: string) => {
     onNavigate(path);

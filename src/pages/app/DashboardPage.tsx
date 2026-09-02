@@ -38,12 +38,28 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   const houseStickers = localStore.getHouseStickers(orgId);
 
   // Overall goal percentage calculation
-  const totalTarget = goals.reduce((acc, g) => acc + g.target_value, 0);
-  const totalCurrent = goals.reduce((acc, g) => acc + g.current_value, 0);
-  const goalsPercentage = totalTarget > 0 ? Math.round((totalCurrent / totalTarget) * 100) : 82;
+  const totalTarget = goals.reduce((acc, g) => acc + (Number(g.target_value) || 0), 0);
+  const totalCurrent = goals.reduce((acc, g) => acc + (Number(g.current_value) || 0), 0);
+  const goalsPercentage = totalTarget > 0 ? Math.round((totalCurrent / totalTarget) * 100) : 0;
 
   // Multiplier contacts count
   const multipliersCount = contacts.filter(c => c.status === 'multiplier').length;
+
+  // Dynamic territorial breakdown from real data
+  const territoryMap = new Map<string, { contactsCount: number; leadersCount: number }>();
+  leaders.forEach(l => {
+    const t = l.territory || l.neighborhood || 'Geral';
+    const current = territoryMap.get(t) || { contactsCount: 0, leadersCount: 0 };
+    current.leadersCount += 1;
+    territoryMap.set(t, current);
+  });
+  contacts.forEach(c => {
+    const t = c.territory || c.neighborhood || 'Geral';
+    const current = territoryMap.get(t) || { contactsCount: 0, leadersCount: 0 };
+    current.contactsCount += 1;
+    territoryMap.set(t, current);
+  });
+  const territoryHighlights = Array.from(territoryMap.entries()).slice(0, 3);
 
   return (
     <div className="space-y-6 text-left">
@@ -57,7 +73,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             Olá, {profile?.full_name?.split(' ')[0] || 'Gestor'}
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Visão geral da operação em <strong className="text-slate-800 font-semibold">{organization?.name}</strong>
+            Visão geral da operação em <strong className="text-slate-800 font-semibold">{organization?.name || 'Sua Organização'}</strong>
           </p>
         </div>
 
@@ -87,30 +103,30 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
           label="Contatos CRM"
-          value="12.450"
-          subValue="Base ativa qualificada"
-          change={{ value: '+340 esta semana', isPositive: true }}
+          value={contacts.length.toLocaleString('pt-BR')}
+          subValue="Base ativa cadastrada"
+          change={{ value: `${multipliersCount} multiplicadores`, isPositive: true }}
           icon={<Contact className="w-4 h-4" />}
         />
         <StatCard
           label="Lideranças"
-          value="187"
-          subValue="Em 18 territórios"
-          change={{ value: `${coordinators.length} Coordenadores`, isPositive: true }}
+          value={leaders.length.toLocaleString('pt-BR')}
+          subValue={`${coordinators.length} coordenadores`}
+          change={{ value: `${territoryMap.size} territórios`, isPositive: true }}
           icon={<UserCheck className="w-4 h-4" />}
         />
         <StatCard
           label="Metas Globais"
-          value={`${goalsPercentage}%`}
-          subValue="Progresso geral consolidado"
-          change={{ value: 'No prazo previsto', isPositive: true }}
+          value={goals.length > 0 ? `${goalsPercentage}%` : '0%'}
+          subValue={`${goals.length} metas cadastradas`}
+          change={{ value: goals.length > 0 ? `${totalCurrent}/${totalTarget}` : 'Sem metas', isPositive: true }}
           icon={<Target className="w-4 h-4" />}
         />
         <StatCard
           label="Adesivagem Total"
-          value="2.760"
-          subValue="1.920 carros • 840 casas"
-          change={{ value: '+85 hoje', isPositive: true }}
+          value={(carStickers.length + houseStickers.length).toLocaleString('pt-BR')}
+          subValue={`${carStickers.length} carros • ${houseStickers.length} casas`}
+          change={{ value: 'Registros ativos', isPositive: true }}
           icon={<Tag className="w-4 h-4" />}
         />
       </div>
@@ -139,38 +155,54 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
               </Button>
             </div>
 
-            <div className="divide-y divide-slate-100 mt-2">
-              {goals.slice(0, 4).map((goal) => {
-                const percent = Math.min(100, Math.round((goal.current_value / goal.target_value) * 100));
-                return (
-                  <div key={goal.id} className="py-3.5 first:pt-2 last:pb-0">
-                    <div className="flex items-start justify-between gap-2 text-xs">
-                      <div>
-                        <div className="font-semibold text-slate-900">{goal.title}</div>
-                        <div className="text-[11px] text-slate-400 mt-0.5 font-medium">{goal.responsible_name}</div>
+            {goals.length === 0 ? (
+              <div className="py-8 text-center text-xs text-slate-400">
+                <Target className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                <p className="font-medium text-slate-600">Nenhuma meta cadastrada ainda</p>
+                <p className="text-slate-400 text-[11px] mt-0.5">Defina metas para contatos, lideranças ou adesivagens.</p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onNavigate('/app/metas')}
+                  className="mt-3 text-xs"
+                >
+                  Cadastrar Primeira Meta
+                </Button>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100 mt-2">
+                {goals.slice(0, 4).map((goal) => {
+                  const percent = goal.target_value > 0 ? Math.min(100, Math.round((goal.current_value / goal.target_value) * 100)) : 0;
+                  return (
+                    <div key={goal.id} className="py-3.5 first:pt-2 last:pb-0">
+                      <div className="flex items-start justify-between gap-2 text-xs">
+                        <div>
+                          <div className="font-semibold text-slate-900">{goal.title}</div>
+                          <div className="text-[11px] text-slate-400 mt-0.5 font-medium">{goal.responsible_name || 'Responsável não definido'}</div>
+                        </div>
+                        <div className="text-right font-mono">
+                          <span className="font-semibold text-slate-900">{goal.current_value.toLocaleString('pt-BR')}</span>
+                          <span className="text-slate-400 text-[11px]"> / {goal.target_value.toLocaleString('pt-BR')} {goal.unit}</span>
+                        </div>
                       </div>
-                      <div className="text-right font-mono">
-                        <span className="font-semibold text-slate-900">{goal.current_value.toLocaleString('pt-BR')}</span>
-                        <span className="text-slate-400 text-[11px]"> / {goal.target_value.toLocaleString('pt-BR')} {goal.unit}</span>
-                      </div>
-                    </div>
 
-                    {/* Progress Bar */}
-                    <div className="mt-2 flex items-center gap-3">
-                      <div className="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                        <div
-                          className="h-full bg-slate-900 rounded-full transition-all duration-300"
-                          style={{ width: `${percent}%` }}
-                        />
+                      {/* Progress Bar */}
+                      <div className="mt-2 flex items-center gap-3">
+                        <div className="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                          <div
+                            className="h-full bg-slate-900 rounded-full transition-all duration-300"
+                            style={{ width: `${percent}%` }}
+                          />
+                        </div>
+                        <span className="text-[11px] font-semibold text-slate-700 w-9 text-right font-mono">
+                          {percent}%
+                        </span>
                       </div>
-                      <span className="text-[11px] font-semibold text-slate-700 w-9 text-right font-mono">
-                        {percent}%
-                      </span>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Quick Territorial Breakdown */}
@@ -189,23 +221,23 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 Inteligência Territorial
               </Button>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                <div className="text-xs font-semibold text-slate-900">Gonzaga / Orla</div>
-                <div className="text-lg font-bold font-mono text-slate-950 mt-1">4.120 contatos</div>
-                <div className="text-[11px] text-slate-500 mt-0.5 font-medium">Fabiana Rios • 5 Lideranças</div>
+            
+            {territoryHighlights.length === 0 ? (
+              <div className="py-6 text-center text-xs text-slate-400">
+                <p className="font-medium text-slate-600">Nenhum território mapeado ainda</p>
+                <p className="text-slate-400 text-[11px] mt-0.5">Os territórios e bairros aparecerão conforme contatos e líderes forem cadastrados.</p>
               </div>
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                <div className="text-xs font-semibold text-slate-900">Zona Noroeste</div>
-                <div className="text-lg font-bold font-mono text-slate-950 mt-1">3.890 contatos</div>
-                <div className="text-[11px] text-slate-500 mt-0.5 font-medium">Dra. Mariana • 8 Lideranças</div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+                {territoryHighlights.map(([name, data]) => (
+                  <div key={name} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                    <div className="text-xs font-semibold text-slate-900 truncate">{name}</div>
+                    <div className="text-lg font-bold font-mono text-slate-950 mt-1">{data.contactsCount} contatos</div>
+                    <div className="text-[11px] text-slate-500 mt-0.5 font-medium">{data.leadersCount} lideranças</div>
+                  </div>
+                ))}
               </div>
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                <div className="text-xs font-semibold text-slate-900">Morros / Nova Cintra</div>
-                <div className="text-lg font-bold font-mono text-slate-950 mt-1">2.440 contatos</div>
-                <div className="text-[11px] text-slate-500 mt-0.5 font-medium">Seu Valdir • 4 Lideranças</div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -229,26 +261,33 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             </div>
 
             <div className="mt-3 space-y-3">
-              {events.slice(0, 3).map((evt) => (
-                <div key={evt.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-xs space-y-1.5">
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="font-semibold text-slate-900 truncate">{evt.title}</span>
-                    <Badge variant="neutral" size="sm">
-                      {evt.event_type}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-3 text-[11px] text-slate-500 font-medium">
-                    <span className="flex items-center gap-1 font-mono text-slate-700">
-                      <Clock className="w-3 h-3 text-slate-400" />
-                      {new Date(evt.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} • {evt.time}
-                    </span>
-                    <span className="truncate flex items-center gap-1 text-slate-500">
-                      <MapPin className="w-3 h-3 shrink-0" />
-                      {evt.territory || evt.location}
-                    </span>
-                  </div>
+              {events.length === 0 ? (
+                <div className="py-6 text-center text-xs text-slate-400">
+                  <p className="font-medium text-slate-600">Nenhum evento agendado</p>
+                  <p className="text-slate-400 text-[11px] mt-0.5">Agende plenárias, caminhadas ou encontros.</p>
                 </div>
-              ))}
+              ) : (
+                events.slice(0, 3).map((evt) => (
+                  <div key={evt.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-xs space-y-1.5">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="font-semibold text-slate-900 truncate">{evt.title}</span>
+                      <Badge variant="neutral" size="sm">
+                        {evt.event_type}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-3 text-[11px] text-slate-500 font-medium">
+                      <span className="flex items-center gap-1 font-mono text-slate-700">
+                        <Clock className="w-3 h-3 text-slate-400" />
+                        {new Date(evt.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} • {evt.time}
+                      </span>
+                      <span className="truncate flex items-center gap-1 text-slate-500">
+                        <MapPin className="w-3 h-3 shrink-0" />
+                        {evt.territory || evt.location}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 

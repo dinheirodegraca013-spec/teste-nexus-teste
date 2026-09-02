@@ -104,9 +104,9 @@ export const ReportsPage: React.FC = () => {
             <div className="p-4 rounded-xl bg-zinc-950/80 border border-zinc-800/80 print:bg-zinc-50 print:border-zinc-300">
               <div className="text-xs text-zinc-400 print:text-zinc-600">Total de Contatos</div>
               <div className="text-xl font-bold font-mono text-zinc-100 print:text-zinc-900 mt-1">
-                12.450
+                {contacts.length.toLocaleString('pt-BR')}
               </div>
-              <div className="text-[11px] text-emerald-400 mt-0.5">Base qualificada</div>
+              <div className="text-[11px] text-emerald-400 mt-0.5">Base cadastrada</div>
             </div>
             <div className="p-4 rounded-xl bg-zinc-950/80 border border-zinc-800/80 print:bg-zinc-50 print:border-zinc-300">
               <div className="text-xs text-zinc-400 print:text-zinc-600">Lideranças Mapeadas</div>

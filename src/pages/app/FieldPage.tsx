@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Smartphone, Check, UserPlus, Tag, MapPin, CheckCircle2, UserCheck, Flame, Radio } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Smartphone, Check, UserPlus, Tag, MapPin, CheckCircle2, UserCheck, Flame, Radio, Car, Home, Target, TrendingUp, Phone, Users } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { localStore } from '../../lib/supabase';
@@ -7,37 +7,81 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Badge } from '../../components/ui/Badge';
+import { Leader, CarSticker, HouseSticker, CrmContact } from '../../types';
 
-export const FieldPage: React.FC = () => {
+interface FieldPageProps {
+  onNavigate?: (path: string) => void;
+}
+
+export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
   const { organization, profile } = useAuth();
   const { success, error: toastError } = useToast();
   const orgId = organization?.id || 'org-alpha';
 
-  const leaders = localStore.getLeaders(orgId);
-  const [activeTab, setActiveTab] = useState<'contact' | 'sticker' | 'presence'>('contact');
+  const [leaders, setLeaders] = useState<Leader[]>(() => localStore.getLeaders(orgId));
+  const [activeTab, setActiveTab] = useState<'contact' | 'cars' | 'houses' | 'presence'>('contact');
+
+  // Find leader profile if logged in as leader or matching name/email
+  const currentLeader = leaders.find(
+    l => l.email?.toLowerCase() === profile?.email?.toLowerCase() ||
+         l.name.toLowerCase() === profile?.full_name?.toLowerCase() ||
+         l.id === profile?.id
+  ) || leaders[0];
 
   // Contact fast form
   const [contactName, setContactName] = useState('');
   const [contactPhone, setContactPhone] = useState('');
-  const [contactNeighborhood, setContactNeighborhood] = useState('');
-  const [contactLeader, setContactLeader] = useState(leaders[0]?.id || '');
+  const [contactNeighborhood, setContactNeighborhood] = useState(currentLeader?.neighborhood || '');
+  const [contactLeader, setContactLeader] = useState(currentLeader?.id || '');
   const [isMultiplier, setIsMultiplier] = useState(false);
   const [wantsSticker, setWantsSticker] = useState(false);
 
-  // Sticker fast form
-  const [stickerType, setStickerType] = useState<'car' | 'house'>('car');
-  const [vehiclePlate, setVehiclePlate] = useState('');
-  const [vehicleModel, setVehicleModel] = useState('');
-  const [ownerName, setOwnerName] = useState('');
-  const [ownerPhone, setOwnerPhone] = useState('');
-  const [addressLocation, setAddressLocation] = useState('');
+  // Car sticker fast form
+  const [carOwnerName, setCarOwnerName] = useState('');
+  const [carOwnerPhone, setCarOwnerPhone] = useState('');
+  const [carPlate, setCarPlate] = useState('');
+  const [carModel, setCarModel] = useState('');
+  const [carTerritory, setCarTerritory] = useState(currentLeader?.territory || 'Região Central');
+
+  // House sticker fast form
+  const [houseResidentName, setHouseResidentName] = useState('');
+  const [housePhone, setHousePhone] = useState('');
+  const [houseAddress, setHouseAddress] = useState('');
+  const [houseTerritory, setHouseTerritory] = useState(currentLeader?.territory || 'Região Central');
 
   // Presence fast check-in
   const [presenceName, setPresenceName] = useState('');
   const [presencePhone, setPresencePhone] = useState('');
   const [activityName, setActivityName] = useState('Caminhada de Rua / Feira');
 
-  const [counterToday, setCounterToday] = useState(14);
+  // Local data lists for real-time progress
+  const [recentContacts, setRecentContacts] = useState<CrmContact[]>(() => localStore.getContacts(orgId));
+  const [carStickers, setCarStickers] = useState<CarSticker[]>(() => localStore.getCarStickers(orgId));
+  const [houseStickers, setHouseStickers] = useState<HouseSticker[]>(() => localStore.getHouseStickers(orgId));
+
+  const reloadData = () => {
+    setLeaders(localStore.getLeaders(orgId));
+    setRecentContacts(localStore.getContacts(orgId));
+    setCarStickers(localStore.getCarStickers(orgId));
+    setHouseStickers(localStore.getHouseStickers(orgId));
+  };
+
+  useEffect(() => {
+    reloadData();
+  }, [orgId]);
+
+  // Target metrics calculation
+  const contactsGoal = currentLeader?.goal_target || 300;
+  const contactsReached = (currentLeader?.goal_reached || 0) + recentContacts.filter(c => c.leader_id === currentLeader?.id).length;
+  const contactsPercent = Math.min(100, Math.round((contactsReached / (contactsGoal || 1)) * 100));
+
+  const carsGoal = 50;
+  const carsReached = carStickers.length;
+  const carsPercent = Math.min(100, Math.round((carsReached / carsGoal) * 100));
+
+  const housesGoal = 30;
+  const housesReached = houseStickers.length;
+  const housesPercent = Math.min(100, Math.round((housesReached / housesGoal) * 100));
 
   const handleSaveContact = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,12 +90,12 @@ export const FieldPage: React.FC = () => {
       return;
     }
 
-    const assignedLeader = leaders.find(l => l.id === contactLeader);
+    const assignedLeader = leaders.find(l => l.id === contactLeader) || currentLeader;
 
     localStore.saveContact({
       id: 'crm_field_' + Math.random().toString(36).substring(2, 9),
       organization_id: orgId,
-      leader_id: contactLeader || undefined,
+      leader_id: assignedLeader?.id,
       leader_name: assignedLeader?.name,
       full_name: contactName.trim(),
       phone: contactPhone.trim(),
@@ -59,7 +103,7 @@ export const FieldPage: React.FC = () => {
       neighborhood: contactNeighborhood.trim() || assignedLeader?.neighborhood || undefined,
       status: isMultiplier ? 'multiplier' : 'supporter',
       tags: wantsSticker ? ['campo', 'adesivo'] : ['campo'],
-      responsible: profile?.full_name || 'Operador de Campo',
+      responsible: profile?.full_name || assignedLeader?.name || 'Líder de Campo',
       created_at: new Date().toISOString(),
     });
 
@@ -69,7 +113,7 @@ export const FieldPage: React.FC = () => {
         organization_id: orgId,
         owner_name: contactName.trim(),
         owner_phone: contactPhone.trim(),
-        territory: contactNeighborhood.trim() || 'Campo',
+        territory: contactNeighborhood.trim() || assignedLeader?.territory || 'Campo',
         status: 'applied',
         created_at: new Date().toISOString(),
       });
@@ -77,54 +121,66 @@ export const FieldPage: React.FC = () => {
 
     setContactName('');
     setContactPhone('');
-    setContactNeighborhood('');
+    setContactNeighborhood(currentLeader?.neighborhood || '');
     setIsMultiplier(false);
     setWantsSticker(false);
-    setCounterToday(prev => prev + 1);
 
-    success('Contato gravado em 3 segundos!');
+    reloadData();
+    success('Apoiador salvo com sucesso!');
   };
 
-  const handleSaveSticker = (e: React.FormEvent) => {
+  const handleSaveCar = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!ownerName.trim()) {
-      toastError('Informe o nome do responsável.');
+    if (!carOwnerName.trim()) {
+      toastError('Informe o nome do proprietário.');
       return;
     }
 
-    if (stickerType === 'car') {
-      localStore.saveCarSticker({
-        id: 'cst_' + Math.random().toString(36).substring(2, 9),
-        organization_id: orgId,
-        plate: vehiclePlate.trim().toUpperCase() || undefined,
-        vehicle_model: vehicleModel.trim() || undefined,
-        owner_name: ownerName.trim(),
-        owner_phone: ownerPhone.trim() || undefined,
-        territory: addressLocation.trim() || 'Ação de Rua',
-        status: 'applied',
-        created_at: new Date().toISOString(),
-      });
-    } else {
-      localStore.saveHouseSticker({
-        id: 'hst_' + Math.random().toString(36).substring(2, 9),
-        organization_id: orgId,
-        resident_name: ownerName.trim(),
-        phone: ownerPhone.trim() || undefined,
-        address: addressLocation.trim() || 'Endereço Local',
-        territory: 'Bairro Residencial',
-        status: 'applied',
-        created_at: new Date().toISOString(),
-      });
+    localStore.saveCarSticker({
+      id: 'cst_' + Math.random().toString(36).substring(2, 9),
+      organization_id: orgId,
+      plate: carPlate.trim().toUpperCase() || undefined,
+      vehicle_model: carModel.trim() || undefined,
+      owner_name: carOwnerName.trim(),
+      owner_phone: carOwnerPhone.trim() || undefined,
+      territory: carTerritory.trim() || currentLeader?.territory || 'Ação de Campo',
+      status: 'applied',
+      created_at: new Date().toISOString(),
+    });
+
+    setCarOwnerName('');
+    setCarOwnerPhone('');
+    setCarPlate('');
+    setCarModel('');
+
+    reloadData();
+    success('Carro adesivado registrado!');
+  };
+
+  const handleSaveHouse = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!houseResidentName.trim() || !houseAddress.trim()) {
+      toastError('Informe o nome do morador e o endereço.');
+      return;
     }
 
-    setOwnerName('');
-    setOwnerPhone('');
-    setVehiclePlate('');
-    setVehicleModel('');
-    setAddressLocation('');
-    setCounterToday(prev => prev + 1);
+    localStore.saveHouseSticker({
+      id: 'hst_' + Math.random().toString(36).substring(2, 9),
+      organization_id: orgId,
+      resident_name: houseResidentName.trim(),
+      phone: housePhone.trim() || undefined,
+      address: houseAddress.trim(),
+      territory: houseTerritory.trim() || currentLeader?.territory || 'Bairro Residencial',
+      status: 'applied',
+      created_at: new Date().toISOString(),
+    });
 
-    success('Adesivagem confirmada e salva!');
+    setHouseResidentName('');
+    setHousePhone('');
+    setHouseAddress('');
+
+    reloadData();
+    success('Casa adesivada registrada com sucesso!');
   };
 
   const handleSavePresence = (e: React.FormEvent) => {
@@ -146,226 +202,396 @@ export const FieldPage: React.FC = () => {
 
     setPresenceName('');
     setPresencePhone('');
-    setCounterToday(prev => prev + 1);
 
+    reloadData();
     success('Presença confirmada no evento!');
   };
 
   return (
-    <div className="max-w-md mx-auto space-y-4 text-left pb-12">
-      {/* Top Banner: Mobile Fast Action Header */}
-      <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
-            <Smartphone className="w-4 h-4" />
-          </div>
-          <div>
-            <h2 className="text-sm font-bold text-slate-950">Operação de Campo</h2>
-            <p className="text-[11px] text-slate-500">Modo de registro rápido</p>
+    <div className="max-w-2xl mx-auto space-y-4 text-left pb-12">
+      {/* Top Banner: Painel do Líder e Metas */}
+      <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-base shadow-xs">
+              <Target className="w-5 h-5 text-emerald-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-bold text-slate-950">
+                  {profile?.full_name || currentLeader?.name || 'Painel da Liderança'}
+                </h2>
+                <Badge variant="success">Líder Ativo</Badge>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {currentLeader?.neighborhood ? `Bairro: ${currentLeader.neighborhood}` : 'Operação de Campo'} • {organization?.name || 'Campanha'}
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="text-right">
-          <div className="text-xs font-mono font-bold text-emerald-700">{counterToday} salvos</div>
-          <div className="text-[10px] text-slate-400">Hoje na equipe</div>
+        {/* Metas em Destaque */}
+        <div className="grid grid-cols-3 gap-2.5 pt-2 border-t border-slate-100">
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+            <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
+              <span>Meta Apoiadores</span>
+              <Users className="w-3.5 h-3.5 text-slate-400" />
+            </div>
+            <div className="mt-1 flex items-baseline gap-1.5">
+              <span className="text-lg font-bold text-slate-900">{contactsReached}</span>
+              <span className="text-xs text-slate-400">/ {contactsGoal}</span>
+            </div>
+            <div className="w-full h-1.5 bg-slate-200 rounded-full mt-2 overflow-hidden">
+              <div 
+                className="h-full bg-slate-900 rounded-full transition-all duration-300"
+                style={{ width: `${contactsPercent}%` }}
+              />
+            </div>
+            <div className="text-[10px] text-right font-semibold text-slate-600 mt-1">{contactsPercent}%</div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/80">
+            <div className="flex items-center justify-between text-[11px] text-emerald-800 font-medium">
+              <span>Carros Adesivados</span>
+              <Car className="w-3.5 h-3.5 text-emerald-600" />
+            </div>
+            <div className="mt-1 flex items-baseline gap-1.5">
+              <span className="text-lg font-bold text-emerald-950">{carsReached}</span>
+              <span className="text-xs text-emerald-600">/ {carsGoal}</span>
+            </div>
+            <div className="w-full h-1.5 bg-emerald-200 rounded-full mt-2 overflow-hidden">
+              <div 
+                className="h-full bg-emerald-600 rounded-full transition-all duration-300"
+                style={{ width: `${carsPercent}%` }}
+              />
+            </div>
+            <div className="text-[10px] text-right font-semibold text-emerald-700 mt-1">{carsPercent}%</div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200/80">
+            <div className="flex items-center justify-between text-[11px] text-amber-800 font-medium">
+              <span>Casas Adesivadas</span>
+              <Home className="w-3.5 h-3.5 text-amber-600" />
+            </div>
+            <div className="mt-1 flex items-baseline gap-1.5">
+              <span className="text-lg font-bold text-amber-950">{housesReached}</span>
+              <span className="text-xs text-amber-600">/ {housesGoal}</span>
+            </div>
+            <div className="w-full h-1.5 bg-amber-200 rounded-full mt-2 overflow-hidden">
+              <div 
+                className="h-full bg-amber-600 rounded-full transition-all duration-300"
+                style={{ width: `${housesPercent}%` }}
+              />
+            </div>
+            <div className="text-[10px] text-right font-semibold text-amber-700 mt-1">{housesPercent}%</div>
+          </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-slate-100 border border-slate-200 text-xs font-medium">
+      <div className="grid grid-cols-4 gap-1.5 p-1 rounded-xl bg-slate-100 border border-slate-200 text-xs font-medium">
         <button
           type="button"
           onClick={() => setActiveTab('contact')}
-          className={`py-2 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-            activeTab === 'contact' ? 'bg-white text-slate-950 font-semibold shadow-xs' : 'text-slate-500 hover:text-slate-900'
+          className={`py-2 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${
+            activeTab === 'contact' ? 'bg-white text-slate-950 font-semibold shadow-xs' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <UserPlus className="w-3.5 h-3.5" />
-          <span>Contato</span>
+          <UserPlus className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">Apoiador</span>
         </button>
+
         <button
           type="button"
-          onClick={() => setActiveTab('sticker')}
-          className={`py-2 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-            activeTab === 'sticker' ? 'bg-white text-slate-950 font-semibold shadow-xs' : 'text-slate-500 hover:text-slate-900'
+          onClick={() => setActiveTab('cars')}
+          className={`py-2 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${
+            activeTab === 'cars' ? 'bg-white text-slate-950 font-semibold shadow-xs' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <Tag className="w-3.5 h-3.5" />
-          <span>Adesivo</span>
+          <Car className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">Carros</span>
         </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('houses')}
+          className={`py-2 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${
+            activeTab === 'houses' ? 'bg-white text-slate-950 font-semibold shadow-xs' : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Home className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">Casas</span>
+        </button>
+
         <button
           type="button"
           onClick={() => setActiveTab('presence')}
-          className={`py-2 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-            activeTab === 'presence' ? 'bg-white text-slate-950 font-semibold shadow-xs' : 'text-slate-500 hover:text-slate-900'
+          className={`py-2 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${
+            activeTab === 'presence' ? 'bg-white text-slate-950 font-semibold shadow-xs' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <UserCheck className="w-3.5 h-3.5" />
-          <span>Presença</span>
+          <UserCheck className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">Presença</span>
         </button>
       </div>
 
       {/* Tab 1: Fast Contact Form */}
       {activeTab === 'contact' && (
-        <form onSubmit={handleSaveContact} className="p-5 rounded-2xl bg-white border border-slate-200 space-y-3.5 shadow-2xs">
-          <div className="border-b border-slate-100 pb-2.5">
-            <h3 className="text-sm font-semibold text-slate-900">Cadastrar Novo Apoiador</h3>
-            <p className="text-[11px] text-slate-500">Salva direto no CRM da organização</p>
+        <div className="space-y-4">
+          <form onSubmit={handleSaveContact} className="p-5 rounded-2xl bg-white border border-slate-200 space-y-3.5 shadow-2xs">
+            <div className="border-b border-slate-100 pb-2.5">
+              <h3 className="text-sm font-semibold text-slate-900">Cadastrar Novo Apoiador</h3>
+              <p className="text-[11px] text-slate-500">Salva direto na sua base de contatos</p>
+            </div>
+
+            <Input
+              label="Nome Completo *"
+              value={contactName}
+              onChange={(e) => setContactName(e.target.value)}
+              placeholder="Ex.: Maria de Fátima"
+              required
+              autoFocus
+            />
+
+            <Input
+              label="WhatsApp / Celular *"
+              type="tel"
+              value={contactPhone}
+              onChange={(e) => setContactPhone(e.target.value)}
+              placeholder="(11) 98888-7777"
+              required
+            />
+
+            <Input
+              label="Bairro"
+              value={contactNeighborhood}
+              onChange={(e) => setContactNeighborhood(e.target.value)}
+              placeholder="Ex.: Gonzaga / Macuco"
+            />
+
+            {/* Quick Toggle Checkboxes */}
+            <div className="space-y-2 pt-1 border-t border-slate-100">
+              <label className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isMultiplier}
+                  onChange={(e) => setIsMultiplier(e.target.checked)}
+                  className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                />
+                <span className="text-xs text-slate-800 font-medium">Classificar como Multiplicador</span>
+              </label>
+
+              <label className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={wantsSticker}
+                  onChange={(e) => setWantsSticker(e.target.checked)}
+                  className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                />
+                <span className="text-xs text-slate-800 font-medium">Aplicou Adesivo de Carro</span>
+              </label>
+            </div>
+
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              className="w-full mt-2"
+              rightIcon={<Check className="w-4 h-4" />}
+            >
+              Gravar Apoiador
+            </Button>
+          </form>
+
+          {/* Últimos contatos cadastrados */}
+          <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+              Últimos Apoiadores Cadastrados
+            </h4>
+            <div className="space-y-2">
+              {recentContacts.slice(0, 5).map(c => (
+                <div key={c.id} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-between">
+                  <div>
+                    <div className="text-xs font-semibold text-slate-900">{c.full_name}</div>
+                    <div className="text-[11px] text-slate-500">{c.phone} • {c.neighborhood || c.territory}</div>
+                  </div>
+                  <Badge variant={c.status === 'multiplier' ? 'success' : 'default'}>
+                    {c.status === 'multiplier' ? 'Multiplicador' : 'Apoiador'}
+                  </Badge>
+                </div>
+              ))}
+            </div>
           </div>
-
-          <Input
-            label="Nome Completo *"
-            value={contactName}
-            onChange={(e) => setContactName(e.target.value)}
-            placeholder="Ex.: Maria de Fátima"
-            required
-            autoFocus
-          />
-
-          <Input
-            label="WhatsApp / Celular *"
-            type="tel"
-            value={contactPhone}
-            onChange={(e) => setContactPhone(e.target.value)}
-            placeholder="(11) 98888-7777"
-            required
-          />
-
-          <Input
-            label="Bairro"
-            value={contactNeighborhood}
-            onChange={(e) => setContactNeighborhood(e.target.value)}
-            placeholder="Ex.: Gonzaga / Macuco"
-          />
-
-          <Select
-            label="Liderança de Referência"
-            value={contactLeader}
-            onChange={(e) => setContactLeader(e.target.value)}
-            options={[
-              { value: '', label: 'Coordenação Geral' },
-              ...leaders.map(l => ({ value: l.id, label: `${l.name} (${l.neighborhood || l.territory})` }))
-            ]}
-          />
-
-          {/* Quick Toggle Checkboxes */}
-          <div className="space-y-2 pt-1 border-t border-slate-100">
-            <label className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isMultiplier}
-                onChange={(e) => setIsMultiplier(e.target.checked)}
-                className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
-              />
-              <span className="text-xs text-slate-800 font-medium">Classificar como Multiplicador</span>
-            </label>
-
-            <label className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={wantsSticker}
-                onChange={(e) => setWantsSticker(e.target.checked)}
-                className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
-              />
-              <span className="text-xs text-slate-800 font-medium">Aplicou Adesivo de Carro</span>
-            </label>
-          </div>
-
-          <Button
-            type="submit"
-            variant="primary"
-            size="lg"
-            className="w-full mt-2"
-            rightIcon={<Check className="w-4 h-4" />}
-          >
-            Gravar Contato
-          </Button>
-        </form>
+        </div>
       )}
 
-      {/* Tab 2: Fast Sticker Form */}
-      {activeTab === 'sticker' && (
-        <form onSubmit={handleSaveSticker} className="p-5 rounded-2xl bg-white border border-slate-200 space-y-3.5 shadow-2xs">
-          <div className="border-b border-slate-100 pb-2.5">
-            <h3 className="text-sm font-semibold text-slate-900">Lançamento de Adesivagem</h3>
-            <p className="text-[11px] text-slate-500">Registro de veículos e residências</p>
-          </div>
+      {/* Tab 2: Fast Car Sticker Form */}
+      {activeTab === 'cars' && (
+        <div className="space-y-4">
+          <form onSubmit={handleSaveCar} className="p-5 rounded-2xl bg-white border border-slate-200 space-y-3.5 shadow-2xs">
+            <div className="border-b border-slate-100 pb-2.5">
+              <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <Car className="w-4 h-4 text-emerald-600" />
+                Cadastrar Carro Adesivado
+              </h3>
+              <p className="text-[11px] text-slate-500">Registro de veículos que receberam adesivo</p>
+            </div>
 
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setStickerType('car')}
-              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
-                stickerType === 'car' ? 'bg-slate-900 text-white border-slate-900 font-semibold' : 'bg-slate-50 text-slate-600 border-slate-200'
-              }`}
-            >
-              Veículo / Carro
-            </button>
-            <button
-              type="button"
-              onClick={() => setStickerType('house')}
-              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
-                stickerType === 'house' ? 'bg-slate-900 text-white border-slate-900 font-semibold' : 'bg-slate-50 text-slate-600 border-slate-200'
-              }`}
-            >
-              Residência / Casa
-            </button>
-          </div>
+            <Input
+              label="Nome do Proprietário / Motorista *"
+              value={carOwnerName}
+              onChange={(e) => setCarOwnerName(e.target.value)}
+              placeholder="Ex.: Roberto Silva"
+              required
+              autoFocus
+            />
 
-          <Input
-            label={stickerType === 'car' ? 'Nome do Proprietário *' : 'Nome do Morador *'}
-            value={ownerName}
-            onChange={(e) => setOwnerName(e.target.value)}
-            placeholder="Ex.: Roberto Silva"
-            required
-            autoFocus
-          />
+            <Input
+              label="Telefone / WhatsApp"
+              type="tel"
+              value={carOwnerPhone}
+              onChange={(e) => setCarOwnerPhone(e.target.value)}
+              placeholder="(11) 98888-0000"
+            />
 
-          <Input
-            label="Telefone / WhatsApp"
-            type="tel"
-            value={ownerPhone}
-            onChange={(e) => setOwnerPhone(e.target.value)}
-            placeholder="(11) 98888-0000"
-          />
-
-          {stickerType === 'car' ? (
             <div className="grid grid-cols-2 gap-2.5">
               <Input
                 label="Placa do Carro"
-                value={vehiclePlate}
-                onChange={(e) => setVehiclePlate(e.target.value)}
+                value={carPlate}
+                onChange={(e) => setCarPlate(e.target.value)}
                 placeholder="ABC1D23"
               />
               <Input
                 label="Modelo / Cor"
-                value={vehicleModel}
-                onChange={(e) => setVehicleModel(e.target.value)}
-                placeholder="Onix Preto"
+                value={carModel}
+                onChange={(e) => setCarModel(e.target.value)}
+                placeholder="Ex.: Onix Preto"
               />
             </div>
-          ) : (
-            <Input
-              label="Endereço / Bairro"
-              value={addressLocation}
-              onChange={(e) => setAddressLocation(e.target.value)}
-              placeholder="Rua das Flores, 140 - Gonzaga"
-            />
-          )}
 
-          <Button
-            type="submit"
-            variant="primary"
-            size="lg"
-            className="w-full mt-2"
-            rightIcon={<Check className="w-4 h-4" />}
-          >
-            Confirmar Adesivagem
-          </Button>
-        </form>
+            <Input
+              label="Bairro / Região"
+              value={carTerritory}
+              onChange={(e) => setCarTerritory(e.target.value)}
+              placeholder="Ex.: Gonzaga"
+            />
+
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              className="w-full mt-2"
+              rightIcon={<Check className="w-4 h-4" />}
+            >
+              Registrar Carro Adesivado
+            </Button>
+          </form>
+
+          {/* Lista de Carros Adesivados */}
+          <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Carros Adesivados ({carStickers.length})
+              </h4>
+            </div>
+            {carStickers.length === 0 ? (
+              <p className="text-xs text-slate-400 py-2">Nenhum carro cadastrado ainda.</p>
+            ) : (
+              <div className="space-y-2">
+                {carStickers.map(car => (
+                  <div key={car.id} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-semibold text-slate-900">{car.owner_name}</div>
+                      <div className="text-[11px] text-slate-500">
+                        {car.vehicle_model || 'Veículo'} {car.plate ? `• Placa: ${car.plate}` : ''} {car.owner_phone ? `• ${car.owner_phone}` : ''}
+                      </div>
+                    </div>
+                    <Badge variant="success">Adesivado</Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
-      {/* Tab 3: Fast Presence Form */}
+      {/* Tab 3: Fast House Sticker Form */}
+      {activeTab === 'houses' && (
+        <div className="space-y-4">
+          <form onSubmit={handleSaveHouse} className="p-5 rounded-2xl bg-white border border-slate-200 space-y-3.5 shadow-2xs">
+            <div className="border-b border-slate-100 pb-2.5">
+              <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <Home className="w-4 h-4 text-amber-600" />
+                Cadastrar Casa Adesivada
+              </h3>
+              <p className="text-[11px] text-slate-500">Autorizações para faixas, placas ou perfurado em residências</p>
+            </div>
+
+            <Input
+              label="Nome do Morador / Responsável *"
+              value={houseResidentName}
+              onChange={(e) => setHouseResidentName(e.target.value)}
+              placeholder="Ex.: Dona Helena"
+              required
+              autoFocus
+            />
+
+            <Input
+              label="Telefone / WhatsApp"
+              type="tel"
+              value={housePhone}
+              onChange={(e) => setHousePhone(e.target.value)}
+              placeholder="(11) 97777-1111"
+            />
+
+            <Input
+              label="Endereço Completo (Rua, Número, Bairro) *"
+              value={houseAddress}
+              onChange={(e) => setHouseAddress(e.target.value)}
+              placeholder="Ex.: Rua das Flores, 140 - Gonzaga"
+              required
+            />
+
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              className="w-full mt-2"
+              rightIcon={<Check className="w-4 h-4" />}
+            >
+              Registrar Casa Adesivada
+            </Button>
+          </form>
+
+          {/* Lista de Casas Adesivadas */}
+          <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Casas Adesivadas ({houseStickers.length})
+              </h4>
+            </div>
+            {houseStickers.length === 0 ? (
+              <p className="text-xs text-slate-400 py-2">Nenhuma residência cadastrada ainda.</p>
+            ) : (
+              <div className="space-y-2">
+                {houseStickers.map(house => (
+                  <div key={house.id} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-semibold text-slate-900">{house.resident_name}</div>
+                      <div className="text-[11px] text-slate-500">
+                        {house.address} {house.phone ? `• ${house.phone}` : ''}
+                      </div>
+                    </div>
+                    <Badge variant="warning">Autorizado</Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Tab 4: Fast Presence Form */}
       {activeTab === 'presence' && (
         <form onSubmit={handleSavePresence} className="p-5 rounded-2xl bg-white border border-slate-200 space-y-3.5 shadow-2xs">
           <div className="border-b border-slate-100 pb-2.5">
@@ -411,3 +637,4 @@ export const FieldPage: React.FC = () => {
     </div>
   );
 };
+

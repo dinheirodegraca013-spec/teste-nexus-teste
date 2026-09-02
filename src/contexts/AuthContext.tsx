@@ -438,6 +438,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const hasPermission = (module: AppModule, action: 'view' | 'create' | 'edit' | 'delete' = 'view'): boolean => {
     if (!profile) return false;
     if (profile.role === 'superadmin' || profile.role === 'admin') return true;
+    if (profile.role === 'leader') {
+      if (['field', 'stickers', 'crm', 'events', 'presence', 'dashboard'].includes(module)) {
+        return action !== 'delete';
+      }
+      return false;
+    }
     const perm = permissions.find(p => p.module === module);
     if (!perm) return false;
     if (action === 'view') return perm.can_view;

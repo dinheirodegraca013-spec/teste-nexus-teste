@@ -11,7 +11,7 @@ interface RegisterPageProps {
 }
 
 export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
-  const { signUp } = useAuth();
+  const { user, signOut, signUp } = useAuth();
   const { error: toastError, success } = useToast();
 
   const [name, setName] = useState('');
@@ -33,7 +33,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
 
   useEffect(() => {
     try {
-      const urlParams = new URLSearchParams(window.location.search);
+      let searchStr = window.location.search || '';
+      if (!searchStr && window.location.hash && window.location.hash.includes('?')) {
+        searchStr = window.location.hash.slice(window.location.hash.indexOf('?'));
+      }
+      
+      const urlParams = new URLSearchParams(searchStr);
       const conviteType = urlParams.get('convite');
       const paramLeaderId = urlParams.get('lider_id');
       const paramCoordId = urlParams.get('coord_id') || urlParams.get('coord');
@@ -122,7 +127,20 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
     <div className="flex-1 flex items-center justify-center p-4 sm:p-6 my-6">
       <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs text-left">
         {isInvite ? (
-          <div className="mb-6">
+          <div className="mb-6 space-y-3">
+            {user && (
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center justify-between gap-2">
+                <span>Você está conectado como <strong>{user.email}</strong>.</span>
+                <button
+                  type="button"
+                  onClick={() => signOut()}
+                  className="text-[11px] underline font-bold text-amber-950 hover:text-amber-800 shrink-0 cursor-pointer"
+                >
+                  Sair desta conta
+                </button>
+              </div>
+            )}
+
             <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950 space-y-2">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-xl bg-emerald-700 text-white flex items-center justify-center shrink-0">

@@ -69,12 +69,34 @@ export const IntelligencePage: React.FC = () => {
     }
   };
 
-  const territoriesList = [
-    { name: 'Gonzaga / Orla', contactsCount: 4120, leadersCount: 5, status: 'Forte' },
-    { name: 'Zona Noroeste', contactsCount: 3890, leadersCount: 8, status: 'Em expansão' },
-    { name: 'Morros / Nova Cintra', contactsCount: 2440, leadersCount: 4, status: 'Moderado' },
-    { name: 'Centro Histórico & Porto', contactsCount: 2000, leadersCount: 3, status: 'Atenção' },
-  ];
+  // Dynamically group contacts and leaders by territory/neighborhood
+  const territoryMap = new Map<string, { contactsCount: number; leadersCount: number }>();
+  leaders.forEach(l => {
+    const t = l.territory || l.neighborhood || 'Geral';
+    const current = territoryMap.get(t) || { contactsCount: 0, leadersCount: 0 };
+    current.leadersCount += 1;
+    territoryMap.set(t, current);
+  });
+  contacts.forEach(c => {
+    const t = c.territory || c.neighborhood || 'Geral';
+    const current = territoryMap.get(t) || { contactsCount: 0, leadersCount: 0 };
+    current.contactsCount += 1;
+    territoryMap.set(t, current);
+  });
+
+  const territoriesList = Array.from(territoryMap.entries()).map(([name, data]) => {
+    let status = 'Ativo';
+    if (data.contactsCount > 100 || data.leadersCount >= 5) status = 'Forte';
+    else if (data.contactsCount > 20 || data.leadersCount >= 2) status = 'Em expansão';
+    else status = 'Iniciando';
+
+    return {
+      name,
+      contactsCount: data.contactsCount,
+      leadersCount: data.leadersCount,
+      status,
+    };
+  });
 
   const filteredDemands = demands.filter(d => 
     selectedTerritory === 'all' || d.territory.toLowerCase().includes(selectedTerritory.toLowerCase())
@@ -106,23 +128,30 @@ export const IntelligencePage: React.FC = () => {
       </div>
 
       {/* Territorial Density Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        {territoriesList.map((t) => (
-          <div key={t.name} className="p-4 rounded-xl bg-zinc-900 border border-zinc-800 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-zinc-200">{t.name}</span>
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">
-                {t.status}
-              </span>
+      {territoriesList.length === 0 ? (
+        <div className="p-6 rounded-xl bg-zinc-900 border border-zinc-800 text-center">
+          <p className="text-xs text-zinc-400 font-medium">Nenhum território cadastrado ainda.</p>
+          <p className="text-[11px] text-zinc-500 mt-0.5">Os territórios e bairros serão mapeados automaticamente ao cadastrar coordenadores, líderes e contatos no CRM.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          {territoriesList.map((t) => (
+            <div key={t.name} className="p-4 rounded-xl bg-zinc-900 border border-zinc-800 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-zinc-200">{t.name}</span>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">
+                  {t.status}
+                </span>
+              </div>
+              <div className="text-xl font-bold font-mono text-zinc-100">{t.contactsCount.toLocaleString('pt-BR')}</div>
+              <div className="flex items-center justify-between text-[11px] text-zinc-400">
+                <span>{t.leadersCount} lideranças ativas</span>
+                <span className="text-emerald-400 font-medium">{t.contactsCount} contatos</span>
+              </div>
             </div>
-            <div className="text-xl font-bold font-mono text-zinc-100">{t.contactsCount.toLocaleString('pt-BR')}</div>
-            <div className="flex items-center justify-between text-[11px] text-zinc-400">
-              <span>{t.leadersCount} lideranças ativas</span>
-              <span className="text-emerald-400 font-medium">Penetração alta</span>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Demands Section */}
       <div className="p-5 rounded-xl bg-zinc-900/60 border border-zinc-800 space-y-4">

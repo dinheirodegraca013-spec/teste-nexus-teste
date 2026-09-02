@@ -38,15 +38,24 @@ import { PlansPage } from './pages/app/PlansPage';
 import { ProfilePage } from './pages/app/ProfilePage';
 import { SettingsPage } from './pages/app/SettingsPage';
 
+function getPathFromLocation(): string {
+  let path = window.location.pathname || '/';
+  if (window.location.hash && window.location.hash.startsWith('#/')) {
+    path = window.location.hash.slice(1).split('?')[0];
+  }
+  if (path.length > 1 && path.endsWith('/')) {
+    path = path.slice(0, -1);
+  }
+  return path || '/';
+}
+
 function MainRouter() {
-  const { user, isLoading } = useAuth();
-  const [currentPath, setCurrentPath] = useState(() => {
-    return window.location.pathname || '/';
-  });
+  const { user, profile, isLoading } = useAuth();
+  const [currentPath, setCurrentPath] = useState(() => getPathFromLocation());
 
   useEffect(() => {
     const handlePopState = () => {
-      setCurrentPath(window.location.pathname || '/');
+      setCurrentPath(getPathFromLocation());
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
@@ -54,7 +63,7 @@ function MainRouter() {
 
   const navigate = (path: string) => {
     window.history.pushState({}, '', path);
-    setCurrentPath(path);
+    setCurrentPath(getPathFromLocation());
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -69,6 +78,7 @@ function MainRouter() {
   // Route protection
   const isAppRoute = currentPath.startsWith('/app');
   const isAuthRoute = currentPath === '/login' || currentPath === '/cadastro' || currentPath === '/recuperar-senha';
+  const hasInviteParam = typeof window !== 'undefined' && window.location.search.includes('convite=');
 
   // If trying to access /app/* but not logged in -> redirect to /login
   if (isAppRoute && !user) {
@@ -79,11 +89,16 @@ function MainRouter() {
     );
   }
 
-  // If user is already logged in and visits /login or /cadastro, redirect to dashboard
-  if (isAuthRoute && user) {
+  // If user is already logged in and visits /login or /cadastro without invite, redirect to dashboard or field
+  if (isAuthRoute && user && !hasInviteParam) {
+    const initialRoute = profile?.role === 'leader' ? '/app/campo' : '/app/dashboard';
     return (
-      <AppLayout currentPath="/app/dashboard" onNavigate={navigate}>
-        <DashboardPage onNavigate={navigate} />
+      <AppLayout currentPath={initialRoute} onNavigate={navigate}>
+        {profile?.role === 'leader' ? (
+          <FieldPage onNavigate={navigate} />
+        ) : (
+          <DashboardPage onNavigate={navigate} />
+        )}
       </AppLayout>
     );
   }
