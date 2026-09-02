@@ -137,66 +137,86 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
     success('Apoiador salvo com sucesso!');
   };
 
+  const [isSubmittingHouse, setIsSubmittingHouse] = useState(false);
+  const [isSubmittingCar, setIsSubmittingCar] = useState(false);
+
   const handleSaveCar = (e: React.FormEvent) => {
     e.preventDefault();
     if (!carOwnerName.trim()) {
-      toastError('Informe o nome do proprietário.');
+      toastError('Informe o nome do proprietário ou condutor.');
       return;
     }
 
-    localStore.saveCarSticker({
-      id: 'cst_' + Math.random().toString(36).substring(2, 9),
-      organization_id: orgId,
-      plate: carPlate.trim().toUpperCase() || undefined,
-      vehicle_model: carModel.trim() || undefined,
-      owner_name: carOwnerName.trim(),
-      owner_phone: carOwnerPhone.trim() || undefined,
-      territory: carTerritory.trim() || currentLeader?.territory || 'Ação de Campo',
-      photo_url: carPhoto || undefined,
-      attachment_name: carFileName || undefined,
-      status: 'applied',
-      created_at: new Date().toISOString(),
-    });
+    setIsSubmittingCar(true);
+    try {
+      localStore.saveCarSticker({
+        id: 'cst_' + Math.random().toString(36).substring(2, 9),
+        organization_id: orgId,
+        plate: carPlate.trim().toUpperCase() || undefined,
+        vehicle_model: carModel.trim() || undefined,
+        owner_name: carOwnerName.trim(),
+        owner_phone: carOwnerPhone.trim() || undefined,
+        territory: carTerritory.trim() || currentLeader?.territory || 'Ação de Campo',
+        photo_url: carPhoto || undefined,
+        attachment_name: carFileName || undefined,
+        status: 'applied',
+        created_at: new Date().toISOString(),
+      });
 
-    setCarOwnerName('');
-    setCarOwnerPhone('');
-    setCarPlate('');
-    setCarModel('');
-    setCarPhoto(null);
-    setCarFileName(null);
+      setCarOwnerName('');
+      setCarOwnerPhone('');
+      setCarPlate('');
+      setCarModel('');
+      setCarPhoto(null);
+      setCarFileName(null);
 
-    reloadData();
-    success('Carro adesivado registrado com sucesso!');
+      reloadData();
+      success('Carro adesivado registrado com sucesso!');
+    } catch {
+      toastError('Erro ao registrar veículo. Tente novamente.');
+    } finally {
+      setIsSubmittingCar(false);
+    }
   };
 
   const handleSaveHouse = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!houseResidentName.trim() || !houseAddress.trim()) {
-      toastError('Informe o nome do morador e o endereço.');
+    if (!houseResidentName.trim()) {
+      toastError('Informe o nome do morador ou responsável.');
       return;
     }
 
-    localStore.saveHouseSticker({
-      id: 'hst_' + Math.random().toString(36).substring(2, 9),
-      organization_id: orgId,
-      resident_name: houseResidentName.trim(),
-      phone: housePhone.trim() || undefined,
-      address: houseAddress.trim(),
-      territory: houseTerritory.trim() || currentLeader?.territory || 'Bairro Residencial',
-      photo_url: housePhoto || undefined,
-      attachment_name: houseFileName || undefined,
-      status: 'applied',
-      created_at: new Date().toISOString(),
-    });
+    setIsSubmittingHouse(true);
+    try {
+      const finalAddress = houseAddress.trim() || houseTerritory.trim() || 'Residência autorizada';
+      const finalTerritory = houseTerritory.trim() || currentLeader?.territory || 'Bairro Residencial';
 
-    setHouseResidentName('');
-    setHousePhone('');
-    setHouseAddress('');
-    setHousePhoto(null);
-    setHouseFileName(null);
+      localStore.saveHouseSticker({
+        id: 'hst_' + Math.random().toString(36).substring(2, 9),
+        organization_id: orgId,
+        resident_name: houseResidentName.trim(),
+        phone: housePhone.trim() || undefined,
+        address: finalAddress,
+        territory: finalTerritory,
+        photo_url: housePhoto || undefined,
+        attachment_name: houseFileName || undefined,
+        status: 'applied',
+        created_at: new Date().toISOString(),
+      });
 
-    reloadData();
-    success('Casa adesivada registrada com sucesso!');
+      setHouseResidentName('');
+      setHousePhone('');
+      setHouseAddress('');
+      setHousePhoto(null);
+      setHouseFileName(null);
+
+      reloadData();
+      success('Casa adesivada registrada com sucesso!');
+    } catch {
+      toastError('Erro ao registrar casa. Tente novamente.');
+    } finally {
+      setIsSubmittingHouse(false);
+    }
   };
 
   const handleSavePresence = (e: React.FormEvent) => {
@@ -508,6 +528,7 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
               type="submit"
               variant="primary"
               size="lg"
+              isLoading={isSubmittingCar}
               className="w-full mt-2"
               rightIcon={<Check className="w-4 h-4" />}
             >
@@ -597,25 +618,32 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
               label="Nome do Morador / Responsável *"
               value={houseResidentName}
               onChange={(e) => setHouseResidentName(e.target.value)}
-              placeholder="Ex.: Dona Helena"
+              placeholder="Ex.: Dona Helena / Carlos Souza"
               required
               autoFocus
             />
 
-            <Input
-              label="Telefone / WhatsApp"
-              type="tel"
-              value={housePhone}
-              onChange={(e) => setHousePhone(e.target.value)}
-              placeholder="(11) 97777-1111"
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input
+                label="Telefone / WhatsApp"
+                type="tel"
+                value={housePhone}
+                onChange={(e) => setHousePhone(e.target.value)}
+                placeholder="(11) 97777-1111"
+              />
+              <Input
+                label="Bairro / Região"
+                value={houseTerritory}
+                onChange={(e) => setHouseTerritory(e.target.value)}
+                placeholder="Ex.: Gonzaga / Centro"
+              />
+            </div>
 
             <Input
-              label="Endereço Completo (Rua, Número, Bairro) *"
+              label="Endereço (Rua e Número)"
               value={houseAddress}
               onChange={(e) => setHouseAddress(e.target.value)}
-              placeholder="Ex.: Rua das Flores, 140 - Gonzaga"
-              required
+              placeholder="Ex.: Rua das Flores, 140"
             />
 
             {/* Photo / File Upload for House Sticker */}
@@ -634,6 +662,7 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
               type="submit"
               variant="primary"
               size="lg"
+              isLoading={isSubmittingHouse}
               className="w-full mt-2"
               rightIcon={<Check className="w-4 h-4" />}
             >

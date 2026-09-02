@@ -96,16 +96,16 @@ if (typeof window !== 'undefined') {
 // Local state store with multi-tenant isolation
 class LocalMultiTenantStore {
   private get<T>(key: string, defaultValue: T[]): T[] {
-    if (typeof window === 'undefined') return defaultValue;
+    if (typeof window === 'undefined') return [...defaultValue];
     const data = localStorage.getItem(`nexus_${key}`);
     if (!data) {
       localStorage.setItem(`nexus_${key}`, JSON.stringify(defaultValue));
-      return defaultValue;
+      return [...defaultValue];
     }
     try {
       return JSON.parse(data);
     } catch {
-      return defaultValue;
+      return [...defaultValue];
     }
   }
 

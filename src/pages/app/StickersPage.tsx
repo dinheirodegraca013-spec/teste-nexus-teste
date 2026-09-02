@@ -84,27 +84,34 @@ export const StickersPage: React.FC = () => {
 
   const handleSaveHouse = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!houseForm.resident_name.trim() || !houseForm.address.trim()) {
-      toastError('Informe o morador e o endereço.');
+    if (!houseForm.resident_name.trim()) {
+      toastError('Informe o nome do morador ou responsável.');
       return;
     }
 
-    localStore.saveHouseSticker({
-      id: 'hst_' + Math.random().toString(36).substring(2, 9),
-      organization_id: orgId,
-      resident_name: houseForm.resident_name.trim(),
-      phone: houseForm.phone.trim() || undefined,
-      address: houseForm.address.trim(),
-      territory: houseForm.territory.trim() || 'Geral',
-      photo_url: houseForm.photo_url || undefined,
-      attachment_name: houseForm.attachment_name || undefined,
-      status: houseForm.status,
-      created_at: new Date().toISOString(),
-    });
+    try {
+      const finalAddress = houseForm.address.trim() || houseForm.territory.trim() || 'Residência autorizada';
+      const finalTerritory = houseForm.territory.trim() || 'Geral';
 
-    reloadData();
-    setIsHouseModalOpen(false);
-    success('Adesivo residencial cadastrado com sucesso!');
+      localStore.saveHouseSticker({
+        id: 'hst_' + Math.random().toString(36).substring(2, 9),
+        organization_id: orgId,
+        resident_name: houseForm.resident_name.trim(),
+        phone: houseForm.phone.trim() || undefined,
+        address: finalAddress,
+        territory: finalTerritory,
+        photo_url: houseForm.photo_url || undefined,
+        attachment_name: houseForm.attachment_name || undefined,
+        status: houseForm.status,
+        created_at: new Date().toISOString(),
+      });
+
+      reloadData();
+      setIsHouseModalOpen(false);
+      success('Adesivo residencial cadastrado com sucesso!');
+    } catch {
+      toastError('Erro ao registrar casa. Tente novamente.');
+    }
   };
 
   const handleDeleteCar = (id: string) => {
@@ -475,11 +482,10 @@ export const StickersPage: React.FC = () => {
           />
 
           <Input
-            label="Endereço Completo *"
+            label="Endereço (Rua, Número ou Referência)"
             value={houseForm.address}
             onChange={(e) => setHouseForm({ ...houseForm, address: e.target.value })}
             placeholder="Ex.: Rua Euclides da Cunha, 85 - Casa 2"
-            required
           />
 
           <div className="grid grid-cols-2 gap-3">
