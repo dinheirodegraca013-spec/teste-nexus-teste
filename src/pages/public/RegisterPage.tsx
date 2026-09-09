@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Lock, Building2, ArrowRight, ShieldCheck, UserCheck, UsersRound } from 'lucide-react';
+import { User, Mail, Lock, Building2, ArrowRight, ShieldCheck, UserCheck, UsersRound, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { organizationsService, coordinatorsService } from '../../services';
+import { isSupabaseConfigured } from '../../lib/supabase';
 
 interface RegisterPageProps {
   onNavigate: (path: string) => void;
@@ -22,6 +23,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
   const [acceptTerms, setAcceptTerms] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [confirmationSent, setConfirmationSent] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
 
   // Referral / Invitation query parameters
   const [isInvite, setIsInvite] = useState(false);
@@ -119,7 +122,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
     setIsLoading(true);
     const assignedRole = inviteType === 'coordenador' ? 'coordinator' : (isInvite ? 'leader' : 'admin');
     
-    const { error } = await signUp({
+    const { error, requiresConfirmation } = await signUp({
       name: name.trim(),
       email: email.trim(),
       password,
@@ -132,8 +135,25 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
     setIsLoading(false);
 
     if (error) {
-      setErrorMessage(error.message || 'Falha ao realizar cadastro.');
-      toastError('Erro: ' + (error.message || 'Não foi possível cadastrar'));
+      let friendlyMessage = error.message || 'Falha ao realizar cadastro.';
+      if (error.message?.includes('Failed to fetch') || (error as any)?.status === 0) {
+        if (!isSupabaseConfigured) {
+          friendlyMessage = 'O backend Supabase não está configurado. As variáveis VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY precisam ser configuradas na Vercel e o projeto reconstruído.';
+        } else {
+          friendlyMessage = 'Não foi possível conectar aos servidores do sistema. Verifique sua conexão com a internet ou se extensões do navegador (como bloqueadores de anúncios) estão impedindo a comunicação com o Supabase.';
+        }
+      } else if (error.message?.includes('User already registered') || (error as any)?.code === 'user_already_exists') {
+        friendlyMessage = 'Este e-mail já está cadastrado no sistema. Tente fazer login ou recuperar sua senha.';
+      } else if (error.message?.includes('Password should be at least')) {
+        friendlyMessage = 'A senha deve ter pelo menos 6 caracteres.';
+      }
+
+      setErrorMessage(friendlyMessage);
+      toastError(friendlyMessage);
+    } else if (requiresConfirmation) {
+      setRegisteredEmail(email.trim());
+      setConfirmationSent(true);
+      success('Conta criada! Enviamos um link de confirmação para seu e-mail.');
     } else {
       if (inviteType === 'coordenador') {
         success('Bem-vindo(a) à coordenação! Acesso liberado.');
@@ -147,6 +167,52 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
       }
     }
   };
+
+  if (confirmationSent) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 my-6">
+        <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs text-center">
+          <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-4 border border-emerald-100">
+            <CheckCircle2 className="w-6 h-6" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-950 tracking-tight">
+            Conta Criada com Sucesso!
+          </h2>
+          <p className="text-sm text-slate-600 mt-2 leading-relaxed">
+            Enviamos uma mensagem de confirmação para{' '}
+            <strong className="text-slate-900 font-semibold">{registeredEmail}</strong>.
+          </p>
+          <div className="mt-4 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-600 text-left leading-relaxed">
+            <p className="font-semibold text-slate-800 mb-1">Próximos passos:</p>
+            <ol className="list-decimal list-inside space-y-1 text-slate-500">
+              <li>Abra sua caixa de entrada (verifique também a pasta de Spam).</li>
+              <li>Clique no link de confirmação enviado pelo Supabase.</li>
+              <li>Retorne e faça login no sistema com sua senha cadastrada.</li>
+            </ol>
+          </div>
+
+          <div className="mt-6 flex flex-col gap-2">
+            <Button
+              variant="primary"
+              size="md"
+              className="w-full"
+              onClick={() => onNavigate('/login')}
+            >
+              Ir para o Login
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-slate-500"
+              onClick={() => onNavigate('/')}
+            >
+              Voltar à Página Inicial
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex items-center justify-center p-4 sm:p-6 my-6">

@@ -16,14 +16,18 @@ export const isSupabaseConfigured = Boolean(
 
 if (!isSupabaseConfigured) {
   console.warn(
-    '[NEXUS] Atenção: As variáveis VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY não estão configuradas no ambiente. Para conectar com o Supabase real na Vercel ou desenvolvimento, defina essas variáveis no arquivo .env.'
+    '[NEXUS] Atenção: As variáveis VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY não estão configuradas no build deste ambiente. Defina essas variáveis no painel da Vercel (Settings > Environment Variables) e faça um redeploy.'
   );
 }
 
-// Supabase client instance with persistent session and auto token refresh
+// Fallback safe URL only for valid client creation when variables are empty, preventing invalid domain resolution
+const effectiveUrl = isSupabaseConfigured ? supabaseUrl : 'https://supabase-not-configured.local';
+const effectiveKey = isSupabaseConfigured ? supabaseAnonKey : 'not-configured-key';
+
+// Supabase client instance with persistent session and auto token refresh (Singleton)
 export const supabase: SupabaseClient = createClient(
-  isSupabaseConfigured ? supabaseUrl : 'https://placeholder-nexus.supabase.co',
-  isSupabaseConfigured ? supabaseAnonKey : 'placeholder-anon-key',
+  effectiveUrl,
+  effectiveKey,
   {
     auth: {
       persistSession: true,

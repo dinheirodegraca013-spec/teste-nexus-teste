@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, supabaseUrl } from '../lib/supabase';
 import { Organization, Profile, UserRole, AppModule, UserModulePermission } from '../types';
 import { organizationsService, profilesService, permissionsService } from '../services';
 
@@ -15,6 +15,12 @@ interface SignUpParams {
   coordinatorId?: string;
 }
 
+interface SignUpResult {
+  error: AuthError | Error | null;
+  requiresConfirmation?: boolean;
+  user?: User | null;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -25,7 +31,7 @@ interface AuthContextType {
   isLoading: boolean;
   isConfigured: boolean;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | Error | null }>;
-  signUp: (params: SignUpParams) => Promise<{ error: AuthError | Error | null }>;
+  signUp: (params: SignUpParams) => Promise<SignUpResult>;
   signOut: () => Promise<{ error: AuthError | Error | null }>;
   resetPassword: (email: string) => Promise<{ error: AuthError | Error | null }>;
   updatePassword: (password: string) => Promise<{ error: AuthError | Error | null }>;
@@ -203,6 +209,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Helper to log detailed network/Supabase errors without exposing private tokens
+  const logAuthError = (operation: string, err: any) => {
+    try {
+      const parsedHost = supabaseUrl ? new URL(supabaseUrl).hostname : 'configuração-ausente';
+      console.error(`[AuthNetworkError][${operation}]`, {
+        targetHost: parsedHost,
+        errorName: err?.name || 'UnknownError',
+        message: err?.message || String(err),
+        status: err?.status,
+        code: err?.code,
+        cause: err?.cause,
+        stack: err?.stack,
+      });
+    } catch {
+      console.error(`[AuthNetworkError][${operation}]`, err);
+    }
+  };
+
   const signUp = async ({
     name,
     email,
@@ -212,25 +236,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     organizationId,
     leaderId,
     coordinatorId,
-  }: SignUpParams) => {
+  }: SignUpParams): Promise<SignUpResult> => {
+    // 1. Validação estrita da configuração do Supabase antes de qualquer chamada
+    if (!isSupabaseConfigured) {
+      const configError = new Error(
+        'O backend Supabase não está configurado neste ambiente (as variáveis VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY não foram fornecidas no build da Vercel).'
+      );
+      logAuthError('signUp:config', configError);
+      return { error: configError };
+    }
+
     try {
-      let finalOrgId = organizationId;
-
-      // If user creates a new organization during sign up
-      if (!finalOrgId && organizationName) {
-        const { data: newOrg, error: orgErr } = await organizationsService.create({
-          name: organizationName.trim(),
-          slug: organizationName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-          plan: 'professional',
-          status: 'active',
-        });
-        if (newOrg) {
-          finalOrgId = newOrg.id;
-        } else if (orgErr) {
-          console.warn('[Auth] Erro ao criar organização:', orgErr.message);
-        }
-      }
-
+      // 2. Executar supabase.auth.signUp primeiro, passando metadados
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password: password || '123456',
@@ -238,38 +255,73 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           data: {
             full_name: name.trim(),
             role,
-            organization_id: finalOrgId,
-            organization_name: organizationName,
-            leader_id: leaderId,
-            coordinator_id: coordinatorId,
+            organization_id: organizationId || null,
+            organization_name: organizationName || null,
+            leader_id: leaderId || null,
+            coordinator_id: coordinatorId || null,
           },
         },
       });
 
-      if (error) return { error };
-
-      if (data.user) {
-        // Create profile in PostgreSQL table
-        await profilesService.create({
-          id: data.user.id,
-          user_id: data.user.id,
-          organization_id: finalOrgId || 'org-alpha',
-          full_name: name.trim(),
-          email: email.trim(),
-          role,
-          status: 'active',
-          is_active: true,
-        });
-
-        if (data.session) {
-          setUser(data.user);
-          setSession(data.session);
-          await loadUserData(data.user);
-        }
+      if (error) {
+        logAuthError('signUp:supabaseAuth', error);
+        return { error };
       }
 
-      return { error: null };
+      // 3. Caso signUp retorne usuário mas session seja null (confirmação por e-mail obrigatória)
+      if (data.user && !data.session) {
+        console.info('[Auth] Conta criada com sucesso no Supabase Auth. Confirmação de e-mail requerida antes do login.');
+        return { error: null, requiresConfirmation: true, user: data.user };
+      }
+
+      // 4. Se houver data.session (usuário autenticado imediatamente)
+      if (data.user && data.session) {
+        setUser(data.user);
+        setSession(data.session);
+
+        let finalOrgId = organizationId;
+
+        // Criar organização no PostgreSQL caso seja uma nova campanha e tenhamos sessão ativa
+        if (!finalOrgId && organizationName) {
+          try {
+            const { data: newOrg, error: orgErr } = await organizationsService.create({
+              name: organizationName.trim(),
+              slug: organizationName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+              status: 'active',
+            });
+            if (newOrg?.id) {
+              finalOrgId = newOrg.id;
+            } else if (orgErr) {
+              console.warn('[Auth] Aviso ao criar organização após autenticação:', orgErr.message);
+            }
+          } catch (orgErr) {
+            console.warn('[Auth] Falha na criação da organização pós-autenticação:', orgErr);
+          }
+        }
+
+        // Criar profile no PostgreSQL com a sessão do usuário autenticado
+        try {
+          await profilesService.create({
+            id: data.user.id,
+            user_id: data.user.id,
+            organization_id: finalOrgId || 'org-alpha',
+            full_name: name.trim(),
+            email: email.trim(),
+            role,
+            status: 'active',
+            is_active: true,
+          });
+        } catch (profErr) {
+          console.warn('[Auth] Aviso ao registrar profile após autenticação:', profErr);
+        }
+
+        // Carregar os dados completos do usuário recém-criado
+        await loadUserData(data.user);
+      }
+
+      return { error: null, requiresConfirmation: false, user: data.user };
     } catch (err: any) {
+      logAuthError('signUp:exception', err);
       return { error: err };
     }
   };
