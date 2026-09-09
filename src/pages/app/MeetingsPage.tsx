@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { Users, Plus, Clock, MapPin, FileText, CheckSquare, Edit2, Trash2, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Users, Plus, Clock, MapPin, FileText, CheckSquare, Edit2, Trash2, CheckCircle2, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
-import { localStore } from '../../lib/supabase';
 import { Meeting } from '../../types';
+import { meetingsService } from '../../services';
 import { Button } from '../../components/ui/Button';
 import { SearchInput } from '../../components/ui/SearchInput';
 import { Badge } from '../../components/ui/Badge';
@@ -16,11 +16,13 @@ import { EmptyState } from '../../components/ui/EmptyState';
 export const MeetingsPage: React.FC = () => {
   const { organization } = useAuth();
   const { success, error: toastError } = useToast();
-  const orgId = organization?.id || 'org-alpha';
+  const orgId = organization?.id || '';
 
-  const [meetings, setMeetings] = useState<Meeting[]>(() => localStore.getMeetings(orgId));
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState('');
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
 
@@ -34,9 +36,22 @@ export const MeetingsPage: React.FC = () => {
     minutes: '',
   });
 
-  const reloadData = () => {
-    setMeetings(localStore.getMeetings(orgId));
-  };
+  const loadData = useCallback(async () => {
+    if (!orgId) return;
+    setIsLoading(true);
+    try {
+      const { data } = await meetingsService.getAll(orgId);
+      setMeetings(data || []);
+    } catch (err: any) {
+      toastError('Erro ao carregar reuniões: ' + err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [orgId, toastError]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleOpenModal = (meeting?: Meeting) => {
     if (meeting) {
@@ -65,41 +80,73 @@ export const MeetingsPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim() || !formData.location.trim()) {
       toastError('Informe Pauta/Título e Local da reunião.');
       return;
     }
 
-    const newMeeting: Meeting = {
-      id: selectedMeeting ? selectedMeeting.id : 'meet_' + Math.random().toString(36).substring(2, 9),
-      organization_id: orgId,
-      title: formData.title.trim(),
-      date: formData.date,
-      time: formData.time,
-      location: formData.location.trim(),
-      responsible: formData.responsible.trim() || undefined,
-      status: formData.status,
-      minutes: formData.minutes.trim() || undefined,
-      created_at: selectedMeeting ? selectedMeeting.created_at : new Date().toISOString(),
-    };
+    setIsSubmitting(true);
+    try {
+      if (selectedMeeting) {
+        const { error } = await meetingsService.update(selectedMeeting.id, {
+          title: formData.title.trim(),
+          date: formData.date,
+          time: formData.time,
+          location: formData.location.trim(),
+          responsible: formData.responsible.trim() || undefined,
+          status: formData.status,
+          minutes: formData.minutes.trim() || undefined,
+        });
 
-    localStore.saveMeeting(newMeeting);
-    reloadData();
-    setIsModalOpen(false);
-    success(selectedMeeting ? 'Reunião atualizada!' : 'Reunião registrada com sucesso!');
-  };
+        if (error) {
+          toastError('Erro ao atualizar reunião: ' + error.message);
+        } else {
+          success('Reunião atualizada!');
+          await loadData();
+          setIsModalOpen(false);
+        }
+      } else {
+        const { error } = await meetingsService.create({
+          organization_id: orgId,
+          title: formData.title.trim(),
+          date: formData.date,
+          time: formData.time,
+          location: formData.location.trim(),
+          responsible: formData.responsible.trim() || undefined,
+          status: formData.status,
+          minutes: formData.minutes.trim() || undefined,
+        });
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Excluir esta reunião?')) {
-      localStore.deleteMeeting(id);
-      reloadData();
-      success('Reunião removida.');
+        if (error) {
+          toastError('Erro ao registrar reunião: ' + error.message);
+        } else {
+          success('Reunião registrada no Supabase com sucesso!');
+          await loadData();
+          setIsModalOpen(false);
+        }
+      }
+    } catch (err: any) {
+      toastError('Erro inesperado: ' + err.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const filteredMeetings = meetings.filter(m => 
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Excluir esta reunião?')) {
+      const { error } = await meetingsService.delete(id);
+      if (error) {
+        toastError('Erro ao excluir reunião: ' + error.message);
+      } else {
+        await loadData();
+        success('Reunião removida.');
+      }
+    }
+  };
+
+  const filteredMeetings = meetings.filter(m =>
     m.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     m.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (m.responsible && m.responsible.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -108,14 +155,14 @@ export const MeetingsPage: React.FC = () => {
   return (
     <div className="space-y-6 text-left">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-zinc-800/60">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
         <div>
-          <h2 className="text-xl font-bold text-zinc-100 flex items-center gap-2">
-            <Users className="w-5 h-5 text-zinc-400" />
-            Reuniões & Pautas
+          <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <Users className="w-5 h-5 text-slate-700" />
+            Reuniões & Alinhamento Político
           </h2>
-          <p className="text-xs text-zinc-400 mt-0.5">
-            Alinhamento de coordenadores, comitês setoriais e atas de decisões
+          <p className="text-xs text-slate-500 mt-0.5">
+            Pautas, atas, deliberações e agenda de reuniões internas e territoriais
           </p>
         </div>
 
@@ -133,15 +180,20 @@ export const MeetingsPage: React.FC = () => {
       <SearchInput
         value={searchTerm}
         onChange={setSearchTerm}
-        placeholder="Buscar por pauta, local ou responsável..."
+        placeholder="Buscar reunião, local ou coordenador..."
         className="w-full sm:w-80"
       />
 
-      {filteredMeetings.length === 0 ? (
+      {isLoading ? (
+        <div className="py-16 flex flex-col items-center justify-center text-slate-400 gap-3">
+          <Loader2 className="w-7 h-7 animate-spin text-slate-600" />
+          <span className="text-xs font-medium">Carregando reuniões do Supabase...</span>
+        </div>
+      ) : filteredMeetings.length === 0 ? (
         <EmptyState
           icon={<Users className="w-6 h-6" />}
-          title="Nenhuma reunião registrada"
-          description="Agende reuniões de coordenação e registre decisões estratégicas."
+          title="Nenhuma reunião agendada"
+          description="Cadastre as reuniões de coordenação, plenárias de bairro e encontros estratégicos."
           actionLabel="Agendar Reunião"
           onAction={() => handleOpenModal()}
         />
@@ -151,52 +203,49 @@ export const MeetingsPage: React.FC = () => {
             <TableRow>
               <TableHead>Pauta / Título</TableHead>
               <TableHead>Data & Horário</TableHead>
-              <TableHead>Local</TableHead>
+              <TableHead>Local / Endereço</TableHead>
               <TableHead>Responsável</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredMeetings.map((meet) => (
-              <TableRow key={meet.id}>
+            {filteredMeetings.map((m) => (
+              <TableRow key={m.id}>
                 <TableCell>
-                  <div className="font-medium text-zinc-100">{meet.title}</div>
-                  {meet.minutes && <div className="text-[11px] text-zinc-400 mt-0.5 line-clamp-1">{meet.minutes}</div>}
+                  <div className="font-semibold text-slate-900">{m.title}</div>
+                  {m.minutes && <div className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">{m.minutes}</div>}
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-1.5 text-xs text-zinc-200 font-mono">
-                    <Clock className="w-3.5 h-3.5 text-zinc-500" />
-                    <span>{new Date(meet.date + 'T12:00:00').toLocaleDateString('pt-BR')} às {meet.time}</span>
+                  <div className="text-xs font-mono text-slate-700">{m.date} às {m.time}</div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1.5 text-xs text-slate-700">
+                    <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{m.location}</span>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-1.5 text-xs text-zinc-300">
-                    <MapPin className="w-3.5 h-3.5 text-zinc-500" />
-                    <span>{meet.location}</span>
-                  </div>
+                  <span className="text-xs text-slate-700">{m.responsible || 'Coordenação'}</span>
                 </TableCell>
                 <TableCell>
-                  <div className="text-xs text-zinc-300">{meet.responsible || 'Coordenação'}</div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant={meet.status === 'completed' ? 'success' : meet.status === 'scheduled' ? 'info' : 'danger'} size="sm">
-                    {meet.status === 'completed' ? 'Realizada' : meet.status === 'scheduled' ? 'Agendada' : 'Cancelada'}
+                  <Badge variant={m.status === 'completed' ? 'success' : m.status === 'scheduled' ? 'primary' : 'neutral'} size="sm">
+                    {m.status === 'completed' ? 'Realizada' : m.status === 'scheduled' ? 'Agendada' : 'Cancelada'}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1.5">
                     <button
-                      onClick={() => handleOpenModal(meet)}
+                      onClick={() => handleOpenModal(m)}
+                      className="p-1.5 rounded text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
                       title="Editar"
-                      className="p-1.5 rounded text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button
-                      onClick={() => handleDelete(meet.id)}
+                      onClick={() => handleDelete(m.id)}
+                      className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-slate-100 transition-colors cursor-pointer"
                       title="Excluir"
-                      className="p-1.5 rounded text-zinc-400 hover:text-rose-400 hover:bg-zinc-800"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -212,15 +261,15 @@ export const MeetingsPage: React.FC = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={selectedMeeting ? 'Editar Reunião' : 'Nova Reunião / Pauta'}
-        description="Defina pauta, local e responsável pelo alinhamento."
+        title={selectedMeeting ? 'Editar Reunião' : 'Agendar Nova Reunião'}
+        description="Registre as informações e deliberações no Supabase."
       >
         <form onSubmit={handleSave} className="space-y-3.5 text-left">
           <Input
-            label="Pauta Principal"
+            label="Título / Pauta Principal"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            placeholder="Ex.: Alinhamento com Lideranças do Bairro Macuco"
+            placeholder="Ex.: Alinhamento com Lideranças da Zona Leste"
             required
           />
 
@@ -241,49 +290,49 @@ export const MeetingsPage: React.FC = () => {
             />
           </div>
 
-          <Input
-            label="Local"
-            value={formData.location}
-            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-            placeholder="Ex.: Comitê Central / Sala de Reunião 2"
-            required
-          />
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input
-              label="Responsável pela Pauta"
+              label="Local da Reunião"
+              value={formData.location}
+              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+              placeholder="Ex.: Comitê Central / Associação de Moradores"
+              required
+            />
+            <Input
+              label="Responsável / Coordenador"
               value={formData.responsible}
               onChange={(e) => setFormData({ ...formData, responsible: e.target.value })}
-              placeholder="Ex.: Roberto Lima"
-            />
-            <Select
-              label="Status"
-              value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-              options={[
-                { value: 'scheduled', label: 'Agendada' },
-                { value: 'completed', label: 'Realizada' },
-                { value: 'cancelled', label: 'Cancelada' },
-              ]}
+              placeholder="Ex.: Coord. Geral"
             />
           </div>
 
+          <Select
+            label="Status da Reunião"
+            value={formData.status}
+            onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+            options={[
+              { value: 'scheduled', label: 'Agendada' },
+              { value: 'completed', label: 'Realizada' },
+              { value: 'canceled', label: 'Cancelada' },
+            ]}
+          />
+
           <div className="space-y-1.5">
-            <label className="block text-xs font-medium text-zinc-300">Ata / Decisões e Encaminhamentos</label>
+            <label className="block text-xs font-medium text-slate-700">Ata / Deliberações & Encaminhamentos</label>
             <textarea
               value={formData.minutes}
               onChange={(e) => setFormData({ ...formData, minutes: e.target.value })}
-              placeholder="Principais deliberações e tarefas atribuídas..."
-              rows={3}
-              className="w-full bg-zinc-900 text-zinc-100 text-xs rounded-lg border border-zinc-800 p-2.5 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+              placeholder="Pontos acordados, metas combinadas, distribuição de materiais..."
+              rows={4}
+              className="w-full bg-white text-slate-900 text-xs rounded-lg border border-slate-200 p-3 focus:outline-none focus:ring-1 focus:ring-slate-400"
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-800">
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
             <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>
               Cancelar
             </Button>
-            <Button type="submit" variant="primary" size="sm">
+            <Button type="submit" variant="primary" size="sm" isLoading={isSubmitting}>
               Salvar Reunião
             </Button>
           </div>

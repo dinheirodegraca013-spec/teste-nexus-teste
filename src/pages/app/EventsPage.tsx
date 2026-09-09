@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { Calendar, Plus, MapPin, Clock, Users, Edit2, Trash2, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Calendar, Plus, MapPin, Clock, Users, Edit2, Trash2, CheckCircle2, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
-import { localStore } from '../../lib/supabase';
-import { OperationEvent } from '../../types';
+import { CampaignEvent } from '../../types';
+import { eventsService } from '../../services';
 import { Button } from '../../components/ui/Button';
 import { SearchInput } from '../../components/ui/SearchInput';
 import { Badge } from '../../components/ui/Badge';
@@ -16,14 +16,17 @@ import { EmptyState } from '../../components/ui/EmptyState';
 export const EventsPage: React.FC = () => {
   const { organization } = useAuth();
   const { success, error: toastError } = useToast();
-  const orgId = organization?.id || 'org-alpha';
+  const orgId = organization?.id || '';
 
-  const [events, setEvents] = useState<OperationEvent[]>(() => localStore.getEvents(orgId));
+  const [events, setEvents] = useState<CampaignEvent[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<OperationEvent | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<CampaignEvent | null>(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -35,14 +38,27 @@ export const EventsPage: React.FC = () => {
     territory: '',
     expected_attendees: 100,
     confirmed_attendees: 0,
-    status: 'scheduled' as OperationEvent['status'],
+    status: 'scheduled' as CampaignEvent['status'],
   });
 
-  const reloadData = () => {
-    setEvents(localStore.getEvents(orgId));
-  };
+  const loadData = useCallback(async () => {
+    if (!orgId) return;
+    setIsLoading(true);
+    try {
+      const { data } = await eventsService.getAll(orgId);
+      setEvents(data || []);
+    } catch (err: any) {
+      toastError('Erro ao carregar eventos: ' + err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [orgId, toastError]);
 
-  const handleOpenModal = (event?: OperationEvent) => {
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleOpenModal = (event?: CampaignEvent) => {
     if (event) {
       setSelectedEvent(event);
       setFormData({
@@ -75,40 +91,75 @@ export const EventsPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim() || !formData.location.trim()) {
       toastError('Preencha Título e Local do evento.');
       return;
     }
 
-    const newEvent: OperationEvent = {
-      id: selectedEvent ? selectedEvent.id : 'evt_' + Math.random().toString(36).substring(2, 9),
-      organization_id: orgId,
-      title: formData.title.trim(),
-      description: formData.description.trim() || undefined,
-      event_type: formData.event_type,
-      date: formData.date,
-      time: formData.time,
-      location: formData.location.trim(),
-      territory: formData.territory.trim() || undefined,
-      expected_attendees: Number(formData.expected_attendees) || 0,
-      confirmed_attendees: Number(formData.confirmed_attendees) || 0,
-      status: formData.status,
-      created_at: selectedEvent ? selectedEvent.created_at : new Date().toISOString(),
-    };
+    setIsSubmitting(true);
+    try {
+      if (selectedEvent) {
+        const { error } = await eventsService.update(selectedEvent.id, {
+          title: formData.title.trim(),
+          description: formData.description.trim() || undefined,
+          event_type: formData.event_type,
+          date: formData.date,
+          time: formData.time,
+          location: formData.location.trim(),
+          territory: formData.territory.trim() || undefined,
+          expected_attendees: Number(formData.expected_attendees) || 0,
+          confirmed_attendees: Number(formData.confirmed_attendees) || 0,
+          status: formData.status,
+        });
 
-    localStore.saveEvent(newEvent);
-    reloadData();
-    setIsModalOpen(false);
-    success(selectedEvent ? 'Evento atualizado!' : 'Evento cadastrado com sucesso!');
+        if (error) {
+          toastError('Erro ao atualizar evento: ' + error.message);
+        } else {
+          success('Evento atualizado!');
+          await loadData();
+          setIsModalOpen(false);
+        }
+      } else {
+        const { error } = await eventsService.create({
+          organization_id: orgId,
+          title: formData.title.trim(),
+          description: formData.description.trim() || undefined,
+          event_type: formData.event_type,
+          date: formData.date,
+          time: formData.time,
+          location: formData.location.trim(),
+          territory: formData.territory.trim() || undefined,
+          expected_attendees: Number(formData.expected_attendees) || 0,
+          confirmed_attendees: Number(formData.confirmed_attendees) || 0,
+          status: formData.status,
+        });
+
+        if (error) {
+          toastError('Erro ao registrar evento: ' + error.message);
+        } else {
+          success('Evento cadastrado no Supabase com sucesso!');
+          await loadData();
+          setIsModalOpen(false);
+        }
+      }
+    } catch (err: any) {
+      toastError('Erro inesperado: ' + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm('Excluir este evento?')) {
-      localStore.deleteEvent(id);
-      reloadData();
-      success('Evento removido.');
+      const { error } = await eventsService.delete(id);
+      if (error) {
+        toastError('Erro ao remover evento: ' + error.message);
+      } else {
+        await loadData();
+        success('Evento removido.');
+      }
     }
   };
 
@@ -124,14 +175,14 @@ export const EventsPage: React.FC = () => {
   return (
     <div className="space-y-6 text-left">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-zinc-800/60">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
         <div>
-          <h2 className="text-xl font-bold text-zinc-100 flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-zinc-400" />
-            Eventos & Mobilizações
+          <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-slate-700" />
+            Agenda de Eventos & Comícios
           </h2>
-          <p className="text-xs text-zinc-400 mt-0.5">
-            Plenárias, caminhadas, comícios e controle de público esperado
+          <p className="text-xs text-slate-500 mt-0.5">
+            Organização dos comícios, carreatas, caminhadas e plenárias de mobilização
           </p>
         </div>
 
@@ -146,38 +197,44 @@ export const EventsPage: React.FC = () => {
         </Button>
       </div>
 
-      {/* Filters */}
+      {/* Filters Bar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
         <SearchInput
           value={searchTerm}
           onChange={setSearchTerm}
-          placeholder="Buscar por título, local ou território..."
+          placeholder="Buscar evento, local ou território..."
           className="w-full sm:w-80"
         />
 
         <div className="flex items-center gap-2 self-start sm:self-auto text-xs">
+          <span className="text-slate-500">Tipo:</span>
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="bg-zinc-900 border border-zinc-800 rounded-lg py-1.5 px-3 text-zinc-200 text-xs focus:outline-none"
+            className="bg-white border border-slate-200 rounded-lg py-1.5 px-3 text-slate-800 text-xs focus:outline-none"
           >
-            <option value="all">Todos os Tipos ({events.length})</option>
-            <option value="Plenária">Plenária</option>
-            <option value="Caminhada">Caminhada</option>
+            <option value="all">Todos os tipos ({events.length})</option>
             <option value="Comício">Comício</option>
-            <option value="Visita Técnica">Visita Técnica</option>
-            <option value="Adesivaço">Adesivaço</option>
+            <option value="Carreata">Carreata</option>
+            <option value="Caminhada">Caminhada</option>
+            <option value="Plenária">Plenária</option>
+            <option value="Bandeiraço">Bandeiraço</option>
           </select>
         </div>
       </div>
 
-      {/* Table */}
-      {filteredEvents.length === 0 ? (
+      {/* Content */}
+      {isLoading ? (
+        <div className="py-16 flex flex-col items-center justify-center text-slate-400 gap-3">
+          <Loader2 className="w-7 h-7 animate-spin text-slate-600" />
+          <span className="text-xs font-medium">Carregando eventos do Supabase...</span>
+        </div>
+      ) : filteredEvents.length === 0 ? (
         <EmptyState
           icon={<Calendar className="w-6 h-6" />}
-          title="Nenhum evento agendado"
-          description="Cadastre as próximas mobilizações para convocar lideranças e apoiadores."
-          actionLabel="Agendar Evento"
+          title="Nenhum evento encontrado"
+          description="Cadastre comícios, caminhadas ou carreatas da campanha."
+          actionLabel="Criar Evento"
           onAction={() => handleOpenModal()}
         />
       ) : (
@@ -187,7 +244,7 @@ export const EventsPage: React.FC = () => {
               <TableHead>Evento & Tipo</TableHead>
               <TableHead>Data & Horário</TableHead>
               <TableHead>Local & Território</TableHead>
-              <TableHead>Estimativa de Público</TableHead>
+              <TableHead>Público Estimado</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -196,30 +253,29 @@ export const EventsPage: React.FC = () => {
             {filteredEvents.map((evt) => (
               <TableRow key={evt.id}>
                 <TableCell>
-                  <div className="font-medium text-zinc-100">{evt.title}</div>
-                  <div className="text-xs text-zinc-400 mt-0.5">{evt.event_type}</div>
+                  <div className="font-semibold text-slate-900">{evt.title}</div>
+                  <span className="inline-block mt-0.5 text-[10px] uppercase font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                    {evt.event_type}
+                  </span>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-1.5 text-xs text-zinc-200 font-mono">
-                    <Clock className="w-3.5 h-3.5 text-zinc-500" />
-                    <span>{new Date(evt.date + 'T12:00:00').toLocaleDateString('pt-BR')} às {evt.time}</span>
-                  </div>
+                  <div className="text-xs font-mono text-slate-700">{evt.date}</div>
+                  <div className="text-[11px] text-slate-500 font-mono">{evt.time}</div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-1.5 text-xs text-zinc-200">
-                    <MapPin className="w-3.5 h-3.5 text-zinc-500" />
+                  <div className="flex items-center gap-1.5 text-xs text-slate-700">
+                    <MapPin className="w-3.5 h-3.5 text-slate-400" />
                     <span>{evt.location}</span>
                   </div>
-                  {evt.territory && <div className="text-[11px] text-zinc-500 mt-0.5">{evt.territory}</div>}
+                  {evt.territory && <div className="text-[11px] text-slate-500 mt-0.5">{evt.territory}</div>}
                 </TableCell>
                 <TableCell>
-                  <div className="font-mono text-xs">
-                    <span className="font-semibold text-emerald-400">{evt.confirmed_attendees}</span>
-                    <span className="text-zinc-500"> / {evt.expected_attendees} pessoas</span>
+                  <div className="text-xs font-semibold text-slate-900">
+                    {evt.confirmed_attendees || 0} <span className="font-normal text-slate-500">/ {evt.expected_attendees || 0}</span>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={evt.status === 'completed' ? 'success' : evt.status === 'scheduled' ? 'info' : 'danger'} size="sm">
+                  <Badge variant={evt.status === 'completed' ? 'success' : evt.status === 'scheduled' ? 'primary' : 'neutral'} size="sm">
                     {evt.status === 'completed' ? 'Realizado' : evt.status === 'scheduled' ? 'Confirmado' : 'Cancelado'}
                   </Badge>
                 </TableCell>
@@ -227,15 +283,15 @@ export const EventsPage: React.FC = () => {
                   <div className="flex items-center justify-end gap-1.5">
                     <button
                       onClick={() => handleOpenModal(evt)}
+                      className="p-1.5 rounded text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
                       title="Editar"
-                      className="p-1.5 rounded text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => handleDelete(evt.id)}
+                      className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-slate-100 transition-colors cursor-pointer"
                       title="Excluir"
-                      className="p-1.5 rounded text-zinc-400 hover:text-rose-400 hover:bg-zinc-800"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -251,15 +307,15 @@ export const EventsPage: React.FC = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={selectedEvent ? 'Editar Evento' : 'Novo Evento / Mobilização'}
-        description="Registre data, local e expectativa de presentes."
+        title={selectedEvent ? 'Editar Evento' : 'Novo Evento de Campanha'}
+        description="Salve no Supabase os dados e a estimativa de público."
       >
         <form onSubmit={handleSave} className="space-y-3.5 text-left">
           <Input
-            label="Título do Evento"
+            label="Nome do Evento"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            placeholder="Ex.: Grande Plenária da Zona Leste"
+            placeholder="Ex.: Grande Caminhada no Bairro Gonzaga"
             required
           />
 
@@ -269,18 +325,24 @@ export const EventsPage: React.FC = () => {
               value={formData.event_type}
               onChange={(e) => setFormData({ ...formData, event_type: e.target.value })}
               options={[
-                { value: 'Plenária', label: 'Plenária / Reunião Geral' },
-                { value: 'Caminhada', label: 'Caminhada / Corpo a Corpo' },
-                { value: 'Comício', label: 'Comício / Grande Ato' },
-                { value: 'Visita Técnica', label: 'Visita Técnica / Lideranças' },
-                { value: 'Adesivaço', label: 'Adesivaço / Pit Stop' },
+                { value: 'Comício', label: 'Comício' },
+                { value: 'Caminhada', label: 'Caminhada' },
+                { value: 'Carreata', label: 'Carreata' },
+                { value: 'Plenária', label: 'Plenária' },
+                { value: 'Bandeiraço', label: 'Bandeiraço' },
+                { value: 'Encontro Temático', label: 'Encontro Temático' },
               ]}
             />
-            <Input
-              label="Território / Bairro"
-              value={formData.territory}
-              onChange={(e) => setFormData({ ...formData, territory: e.target.value })}
-              placeholder="Ex.: Gonzaga"
+
+            <Select
+              label="Status"
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+              options={[
+                { value: 'scheduled', label: 'Agendado / Confirmado' },
+                { value: 'completed', label: 'Realizado' },
+                { value: 'canceled', label: 'Cancelado' },
+              ]}
             />
           </div>
 
@@ -293,7 +355,7 @@ export const EventsPage: React.FC = () => {
               required
             />
             <Input
-              label="Horário"
+              label="Horário de Início"
               type="time"
               value={formData.time}
               onChange={(e) => setFormData({ ...formData, time: e.target.value })}
@@ -301,45 +363,53 @@ export const EventsPage: React.FC = () => {
             />
           </div>
 
-          <Input
-            label="Endereço / Local"
-            value={formData.location}
-            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-            placeholder="Ex.: Salão Nobre do Clube Sirio - Av. Ana Costa, 200"
-            required
-          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Input
+              label="Local / Ponto de Concentração"
+              value={formData.location}
+              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+              placeholder="Ex.: Praça da Independência"
+              required
+            />
+            <Input
+              label="Território / Região"
+              value={formData.territory}
+              onChange={(e) => setFormData({ ...formData, territory: e.target.value })}
+              placeholder="Ex.: Gonzaga / Zona Leste"
+            />
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input
-              label="Expectativa de Público"
+              label="Público Estimado (Meta)"
               type="number"
               value={formData.expected_attendees}
               onChange={(e) => setFormData({ ...formData, expected_attendees: Number(e.target.value) })}
             />
             <Input
-              label="Confirmados / Presentes"
+              label="Público Confirmado / Presente"
               type="number"
               value={formData.confirmed_attendees}
               onChange={(e) => setFormData({ ...formData, confirmed_attendees: Number(e.target.value) })}
             />
           </div>
 
-          <Select
-            label="Status"
-            value={formData.status}
-            onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-            options={[
-              { value: 'scheduled', label: 'Agendado / Confirmado' },
-              { value: 'completed', label: 'Realizado' },
-              { value: 'cancelled', label: 'Cancelado' },
-            ]}
-          />
+          <div className="space-y-1.5">
+            <label className="block text-xs font-medium text-slate-700">Orientações & Detalhes da Ação</label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Pontos de parada, distribuição de materiais, carro de som..."
+              rows={3}
+              className="w-full bg-white text-slate-900 text-xs rounded-lg border border-slate-200 p-3 focus:outline-none focus:ring-1 focus:ring-slate-400"
+            />
+          </div>
 
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-800">
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
             <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>
               Cancelar
             </Button>
-            <Button type="submit" variant="primary" size="sm">
+            <Button type="submit" variant="primary" size="sm" isLoading={isSubmitting}>
               Salvar Evento
             </Button>
           </div>

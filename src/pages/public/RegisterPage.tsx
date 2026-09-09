@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { User, Mail, Lock, Building2, ArrowRight, ShieldCheck, UserCheck, UsersRound } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
-import { localStore } from '../../lib/supabase';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { organizationsService, coordinatorsService } from '../../services';
 
 interface RegisterPageProps {
   onNavigate: (path: string) => void;
@@ -34,72 +34,61 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
   const [inviteTerritory, setInviteTerritory] = useState('');
 
   useEffect(() => {
-    try {
-      let searchStr = window.location.search || '';
-      if (!searchStr && window.location.hash && window.location.hash.includes('?')) {
-        searchStr = window.location.hash.slice(window.location.hash.indexOf('?'));
-      }
-      
-      const urlParams = new URLSearchParams(searchStr);
-      const conviteType = urlParams.get('convite');
-      const paramLeaderId = urlParams.get('lider_id');
-      const paramCoordId = urlParams.get('coord_id') || urlParams.get('coord');
-      const paramOrgId = urlParams.get('org') || urlParams.get('org_id');
-      const paramNome = urlParams.get('nome');
-      const paramEmail = urlParams.get('email');
-      const paramTerritorio = urlParams.get('territorio');
-
-      if (conviteType === 'coordenador') {
-        setIsInvite(true);
-        setInviteType('coordenador');
-        if (paramNome) setName(decodeURIComponent(paramNome));
-        if (paramEmail) setEmail(decodeURIComponent(paramEmail));
-        if (paramTerritorio) setInviteTerritory(decodeURIComponent(paramTerritorio));
-        if (paramOrgId) setInviteOrgId(paramOrgId);
-        if (paramCoordId) setInviteCoordId(paramCoordId);
-
-        const orgs = localStore.getOrganizations();
-        const foundOrg = orgs.find(o => o.id === (paramOrgId || 'org-alpha')) || orgs[0];
-        if (foundOrg) {
-          setInviteOrgName(foundOrg.name);
-          setInviteOrgId(foundOrg.id);
+    async function loadInviteDetails() {
+      try {
+        let searchStr = window.location.search || '';
+        if (!searchStr && window.location.hash && window.location.hash.includes('?')) {
+          searchStr = window.location.hash.slice(window.location.hash.indexOf('?'));
         }
+        
+        const urlParams = new URLSearchParams(searchStr);
+        const conviteType = urlParams.get('convite');
+        const paramLeaderId = urlParams.get('lider_id');
+        const paramCoordId = urlParams.get('coord_id') || urlParams.get('coord');
+        const paramOrgId = urlParams.get('org') || urlParams.get('org_id');
+        const paramNome = urlParams.get('nome');
+        const paramEmail = urlParams.get('email');
+        const paramTerritorio = urlParams.get('territorio');
 
-        if (paramCoordId && foundOrg) {
-          const coords = localStore.getCoordinators(foundOrg.id);
-          const foundCoord = coords.find(c => c.id === paramCoordId);
-          if (foundCoord) {
-            if (!paramNome) setName(foundCoord.name);
-            if (!paramEmail && foundCoord.email) setEmail(foundCoord.email);
-            if (!paramTerritorio && foundCoord.territory) setInviteTerritory(foundCoord.territory);
+        if (conviteType === 'coordenador') {
+          setIsInvite(true);
+          setInviteType('coordenador');
+          if (paramNome) setName(decodeURIComponent(paramNome));
+          if (paramEmail) setEmail(decodeURIComponent(paramEmail));
+          if (paramTerritorio) setInviteTerritory(decodeURIComponent(paramTerritorio));
+          if (paramOrgId) setInviteOrgId(paramOrgId);
+          if (paramCoordId) setInviteCoordId(paramCoordId);
+
+          if (paramOrgId) {
+            const { data: foundOrg } = await organizationsService.getById(paramOrgId);
+            if (foundOrg) {
+              setInviteOrgName(foundOrg.name);
+              setInviteOrgId(foundOrg.id);
+            }
+          }
+        } else if (conviteType === 'lider' || paramLeaderId || paramCoordId) {
+          setIsInvite(true);
+          setInviteType('lider');
+          if (paramNome) setName(decodeURIComponent(paramNome));
+          if (paramEmail) setEmail(decodeURIComponent(paramEmail));
+          if (paramOrgId) setInviteOrgId(paramOrgId);
+          if (paramLeaderId) setInviteLeaderId(paramLeaderId);
+          if (paramCoordId) setInviteCoordId(paramCoordId);
+
+          if (paramOrgId) {
+            const { data: foundOrg } = await organizationsService.getById(paramOrgId);
+            if (foundOrg) {
+              setInviteOrgName(foundOrg.name);
+              setInviteOrgId(foundOrg.id);
+            }
           }
         }
-      } else if (conviteType === 'lider' || paramLeaderId || paramCoordId) {
-        setIsInvite(true);
-        setInviteType('lider');
-        if (paramNome) setName(decodeURIComponent(paramNome));
-        if (paramEmail) setEmail(decodeURIComponent(paramEmail));
-        if (paramOrgId) setInviteOrgId(paramOrgId);
-        if (paramLeaderId) setInviteLeaderId(paramLeaderId);
-        if (paramCoordId) setInviteCoordId(paramCoordId);
-
-        // Fetch org / coordinator friendly names
-        const orgs = localStore.getOrganizations();
-        const foundOrg = orgs.find(o => o.id === (paramOrgId || 'org-alpha')) || orgs[0];
-        if (foundOrg) {
-          setInviteOrgName(foundOrg.name);
-          setInviteOrgId(foundOrg.id);
-        }
-
-        if (paramCoordId && foundOrg) {
-          const coords = localStore.getCoordinators(foundOrg.id);
-          const foundCoord = coords.find(c => c.id === paramCoordId);
-          if (foundCoord) setInviteCoordName(foundCoord.name);
-        }
+      } catch (e) {
+        console.error('Error parsing invite params', e);
       }
-    } catch (e) {
-      console.error('Error parsing invite params', e);
     }
+
+    loadInviteDetails();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -136,7 +125,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
       password,
       organizationName: isInvite ? (inviteOrgName || 'Campanha') : (organizationName.trim() || `Organização de ${name.split(' ')[0]}`),
       role: assignedRole,
-      organizationId: isInvite ? inviteOrgId : undefined,
+      organizationId: isInvite && inviteOrgId ? inviteOrgId : undefined,
       leaderId: isInvite && inviteLeaderId ? inviteLeaderId : undefined,
       coordinatorId: isInvite && inviteCoordId ? inviteCoordId : undefined,
     });

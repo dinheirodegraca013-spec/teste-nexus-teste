@@ -1,24 +1,27 @@
-import React, { useState } from 'react';
-import { Package, Plus, ArrowUpRight, AlertTriangle, CheckCircle2, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Package, Plus, ArrowUpRight, AlertTriangle, CheckCircle2, Trash2, Loader2, Send } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
-import { localStore } from '../../lib/supabase';
-import { MaterialItem, MaterialDistribution } from '../../types';
+import { MaterialItem, MaterialDistribution, Coordinator } from '../../types';
+import { materialsService, coordinatorsService } from '../../services';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui/Table';
 import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 export const MaterialsPage: React.FC = () => {
   const { organization } = useAuth();
   const { success, error: toastError } = useToast();
-  const orgId = organization?.id || 'org-alpha';
+  const orgId = organization?.id || '';
 
-  const [materials, setMaterials] = useState<MaterialItem[]>(() => localStore.getMaterials(orgId));
-  const [distributions, setDistributions] = useState<MaterialDistribution[]>(() => localStore.getMaterialDistributions(orgId));
-  const coordinators = localStore.getCoordinators(orgId);
+  const [materials, setMaterials] = useState<MaterialItem[]>([]);
+  const [distributions, setDistributions] = useState<MaterialDistribution[]>([]);
+  const [coordinators, setCoordinators] = useState<Coordinator[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [activeTab, setActiveTab] = useState<'inventory' | 'distributions'>('inventory');
 
@@ -35,39 +38,74 @@ export const MaterialsPage: React.FC = () => {
   // Distribute modal
   const [isDistributeModalOpen, setIsDistributeModalOpen] = useState(false);
   const [distForm, setDistForm] = useState({
-    material_id: materials[0]?.id || '',
-    recipient_name: coordinators[0]?.name || '',
-    territory: coordinators[0]?.territory || 'Geral',
+    material_id: '',
+    recipient_name: '',
+    territory: 'Geral',
     quantity: 500,
   });
 
-  const reloadData = () => {
-    setMaterials(localStore.getMaterials(orgId));
-    setDistributions(localStore.getMaterialDistributions(orgId));
-  };
+  const loadData = useCallback(async () => {
+    if (!orgId) return;
+    setIsLoading(true);
+    try {
+      const [matsRes, distRes, coordsRes] = await Promise.all([
+        materialsService.getItems(orgId),
+        materialsService.getDistributions(orgId),
+        coordinatorsService.getAll(orgId),
+      ]);
+      setMaterials(matsRes.data || []);
+      setDistributions(distRes.data || []);
+      setCoordinators(coordsRes.data || []);
+      if (matsRes.data && matsRes.data.length > 0) {
+        setDistForm(prev => ({
+          ...prev,
+          material_id: prev.material_id || matsRes.data[0].id,
+          recipient_name: prev.recipient_name || coordsRes.data?.[0]?.name || 'Equipe de Rua',
+          territory: prev.territory || coordsRes.data?.[0]?.territory || 'Geral',
+        }));
+      }
+    } catch (err: any) {
+      toastError('Erro ao carregar materiais: ' + err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [orgId, toastError]);
 
-  const handleSaveItem = (e: React.FormEvent) => {
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleSaveItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!itemForm.name.trim()) return;
 
-    localStore.saveMaterial({
-      id: 'mat_' + Math.random().toString(36).substring(2, 9),
-      organization_id: orgId,
-      name: itemForm.name.trim(),
-      category: itemForm.category,
-      total_quantity: Number(itemForm.total_quantity) || 0,
-      distributed_quantity: 0,
-      unit: itemForm.unit,
-      min_stock_alert: Number(itemForm.min_stock_alert) || 0,
-      created_at: new Date().toISOString(),
-    });
+    setIsSubmitting(true);
+    try {
+      const { error } = await materialsService.createItem({
+        organization_id: orgId,
+        name: itemForm.name.trim(),
+        category: itemForm.category,
+        total_quantity: Number(itemForm.total_quantity) || 0,
+        distributed_quantity: 0,
+        unit: itemForm.unit,
+        min_stock_alert: Number(itemForm.min_stock_alert) || 0,
+      });
 
-    reloadData();
-    setIsNewItemModalOpen(false);
-    success('Material cadastrado no estoque!');
+      if (error) {
+        toastError('Erro ao cadastrar material: ' + error.message);
+      } else {
+        await loadData();
+        setIsNewItemModalOpen(false);
+        success('Material cadastrado no estoque!');
+      }
+    } catch (err: any) {
+      toastError('Erro inesperado: ' + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleSaveDistribution = (e: React.FormEvent) => {
+  const handleSaveDistribution = async (e: React.FormEvent) => {
     e.preventDefault();
     const mat = materials.find(m => m.id === distForm.material_id);
     if (!mat) {
@@ -82,198 +120,262 @@ export const MaterialsPage: React.FC = () => {
       return;
     }
 
-    // Update material distributed count
-    localStore.saveMaterial({
-      ...mat,
-      distributed_quantity: mat.distributed_quantity + qty,
-    });
+    setIsSubmitting(true);
+    try {
+      // 1. Create distribution record
+      const { error: distErr } = await materialsService.createDistribution({
+        organization_id: orgId,
+        material_id: mat.id,
+        material_name: mat.name,
+        recipient_name: distForm.recipient_name,
+        territory: distForm.territory,
+        quantity: qty,
+        status: 'delivered',
+      });
 
-    // Save distribution log
-    localStore.saveMaterialDistribution({
-      id: 'dist_' + Math.random().toString(36).substring(2, 9),
-      organization_id: orgId,
-      material_id: mat.id,
-      material_name: mat.name,
-      recipient_name: distForm.recipient_name,
-      territory: distForm.territory,
-      quantity: qty,
-      status: 'delivered',
-      created_at: new Date().toISOString(),
-    });
+      if (distErr) {
+        toastError('Erro ao registrar distribuição: ' + distErr.message);
+        return;
+      }
 
-    reloadData();
-    setIsDistributeModalOpen(false);
-    success('Distribuição registrada com sucesso!');
+      // 2. Update material distributed_quantity
+      await materialsService.updateItem(mat.id, {
+        distributed_quantity: mat.distributed_quantity + qty,
+      });
+
+      await loadData();
+      setIsDistributeModalOpen(false);
+      success(`${qty} ${mat.unit} de ${mat.name} entregues a ${distForm.recipient_name}!`);
+    } catch (err: any) {
+      toastError('Erro inesperado: ' + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteItem = async (id: string) => {
+    if (window.confirm('Excluir este material do estoque?')) {
+      const { error } = await materialsService.deleteItem(id);
+      if (error) {
+        toastError('Erro ao excluir material: ' + error.message);
+      } else {
+        await loadData();
+        success('Material removido.');
+      }
+    }
   };
 
   return (
     <div className="space-y-6 text-left">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-zinc-800/60">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
         <div>
-          <h2 className="text-xl font-bold text-zinc-100 flex items-center gap-2">
-            <Package className="w-5 h-5 text-zinc-400" />
-            Estoque & Distribuição de Materiais
+          <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <Package className="w-5 h-5 text-slate-700" />
+            Controle de Materiais de Campanha
           </h2>
-          <p className="text-xs text-zinc-400 mt-0.5">
-            Controle de santinhos, panfletos, praguinhas, bandeiras e entregas para coordenadores
+          <p className="text-xs text-slate-500 mt-0.5">
+            Estoque central de santinhos, praguinhas, bandeiras e registro de entregas
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setIsNewItemModalOpen(true)}
-            leftIcon={<Plus className="w-4 h-4" />}
+            onClick={() => {
+              if (materials.length === 0) {
+                toastError('Cadastre primeiro um material no estoque.');
+                return;
+              }
+              setIsDistributeModalOpen(true);
+            }}
+            leftIcon={<Send className="w-4 h-4 text-indigo-600" />}
             className="text-xs"
           >
-            Novo Item
+            Registrar Entrega / Saída
           </Button>
           <Button
             variant="primary"
             size="sm"
-            onClick={() => setIsDistributeModalOpen(true)}
-            leftIcon={<ArrowUpRight className="w-4 h-4" />}
+            onClick={() => {
+              setItemForm({
+                name: '',
+                category: 'Gráfica',
+                total_quantity: 5000,
+                unit: 'unid',
+                min_stock_alert: 500,
+              });
+              setIsNewItemModalOpen(true);
+            }}
+            leftIcon={<Plus className="w-4 h-4" />}
             className="text-xs"
           >
-            Registrar Entrega
+            Novo Material
           </Button>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 border-b border-zinc-800 pb-2 text-xs font-medium">
+      {/* Navigation tabs */}
+      <div className="flex rounded-lg bg-slate-100 p-1 border border-slate-200 w-full sm:w-fit">
         <button
+          type="button"
           onClick={() => setActiveTab('inventory')}
-          className={`px-3 py-1.5 rounded-lg transition-all ${
-            activeTab === 'inventory' ? 'bg-zinc-800 text-zinc-100 font-semibold' : 'text-zinc-400 hover:text-zinc-200'
+          className={`py-1.5 px-4 rounded-md text-xs font-semibold flex items-center gap-2 transition-all ${
+            activeTab === 'inventory'
+              ? 'bg-white text-slate-900 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          Estoque Geral ({materials.length})
+          <Package className="w-4 h-4 text-slate-600" />
+          <span>Estoque Central ({materials.length})</span>
         </button>
         <button
+          type="button"
           onClick={() => setActiveTab('distributions')}
-          className={`px-3 py-1.5 rounded-lg transition-all ${
-            activeTab === 'distributions' ? 'bg-zinc-800 text-zinc-100 font-semibold' : 'text-zinc-400 hover:text-zinc-200'
+          className={`py-1.5 px-4 rounded-md text-xs font-semibold flex items-center gap-2 transition-all ${
+            activeTab === 'distributions'
+              ? 'bg-white text-slate-900 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          Histórico de Entregas ({distributions.length})
+          <ArrowUpRight className="w-4 h-4 text-indigo-600" />
+          <span>Histórico de Saídas ({distributions.length})</span>
         </button>
       </div>
 
-      {activeTab === 'inventory' ? (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Item / Material</TableHead>
-              <TableHead>Categoria</TableHead>
-              <TableHead>Total Produzido</TableHead>
-              <TableHead>Distribuído</TableHead>
-              <TableHead>Disponível em Estoque</TableHead>
-              <TableHead className="text-right">Ação</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {materials.map((mat) => {
-              const available = mat.total_quantity - mat.distributed_quantity;
-              const isLow = mat.min_stock_alert ? available <= mat.min_stock_alert : false;
+      {isLoading ? (
+        <div className="py-16 flex flex-col items-center justify-center text-slate-400 gap-3">
+          <Loader2 className="w-7 h-7 animate-spin text-slate-600" />
+          <span className="text-xs font-medium">Carregando estoque do Supabase...</span>
+        </div>
+      ) : activeTab === 'inventory' ? (
+        materials.length === 0 ? (
+          <EmptyState
+            icon={<Package className="w-6 h-6" />}
+            title="Nenhum material no estoque"
+            description="Cadastre santinhos, praguinhas, adesivos ou bandeiras para controlar a distribuição."
+            actionLabel="Cadastrar Material"
+            onAction={() => setIsNewItemModalOpen(true)}
+          />
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Material & Categoria</TableHead>
+                <TableHead>Total Produzido</TableHead>
+                <TableHead>Distribuído</TableHead>
+                <TableHead>Saldo em Estoque</TableHead>
+                <TableHead>Nível de Alerta</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {materials.map((mat) => {
+                const available = mat.total_quantity - mat.distributed_quantity;
+                const isLow = available <= (mat.min_stock_alert || 0);
+                const percent = Math.min(100, Math.round((mat.distributed_quantity / (mat.total_quantity || 1)) * 100));
 
-              return (
-                <TableRow key={mat.id}>
-                  <TableCell>
-                    <div className="font-medium text-zinc-100">{mat.name}</div>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-xs text-zinc-400">{mat.category || 'Geral'}</span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="font-mono text-xs text-zinc-200">{mat.total_quantity.toLocaleString('pt-BR')} {mat.unit}</span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="font-mono text-xs text-zinc-300">{mat.distributed_quantity.toLocaleString('pt-BR')} {mat.unit}</span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <span className={`font-mono text-xs font-bold ${isLow ? 'text-amber-400' : 'text-emerald-400'}`}>
-                        {available.toLocaleString('pt-BR')} {mat.unit}
-                      </span>
-                      {isLow && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800 flex items-center gap-1">
-                          <AlertTriangle className="w-3 h-3" />
-                          Estoque baixo
-                        </span>
+                return (
+                  <TableRow key={mat.id}>
+                    <TableCell>
+                      <div className="font-semibold text-slate-900">{mat.name}</div>
+                      <span className="text-[10px] text-slate-500 uppercase tracking-wider">{mat.category}</span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-xs font-mono font-medium text-slate-800">
+                        {mat.total_quantity.toLocaleString()} {mat.unit}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-xs font-mono text-indigo-600 font-medium">
+                        {mat.distributed_quantity.toLocaleString()} {mat.unit} ({percent}%)
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className={`text-xs font-mono font-bold ${isLow ? 'text-amber-600' : 'text-emerald-700'}`}>
+                        {available.toLocaleString()} {mat.unit}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {isLow ? (
+                        <Badge variant="warning" size="sm">Estoque Baixo</Badge>
+                      ) : (
+                        <Badge variant="success" size="sm">Normal</Badge>
                       )}
-                    </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <button
+                        onClick={() => handleDeleteItem(mat.id)}
+                        className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                        title="Excluir"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )
+      ) : (
+        distributions.length === 0 ? (
+          <EmptyState
+            icon={<ArrowUpRight className="w-6 h-6" />}
+            title="Nenhuma saída registrada"
+            description="Registre entregas de materiais para lideranças e coordenadores."
+            actionLabel="Registrar Entrega"
+            onAction={() => setIsDistributeModalOpen(true)}
+          />
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Material</TableHead>
+                <TableHead>Destinatário / Liderança</TableHead>
+                <TableHead>Território / Bairro</TableHead>
+                <TableHead>Quantidade Entregue</TableHead>
+                <TableHead>Data de Entrega</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {distributions.map((d) => (
+                <TableRow key={d.id}>
+                  <TableCell>
+                    <div className="font-medium text-slate-900">{d.material_name}</div>
                   </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setDistForm({
-                          material_id: mat.id,
-                          recipient_name: coordinators[0]?.name || '',
-                          territory: coordinators[0]?.territory || 'Geral',
-                          quantity: 500,
-                        });
-                        setIsDistributeModalOpen(true);
-                      }}
-                      className="text-xs py-1"
-                    >
-                      Entregar
-                    </Button>
+                  <TableCell>
+                    <div className="text-xs font-semibold text-slate-800">{d.recipient_name}</div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-xs text-slate-600">{d.territory}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-mono text-xs font-bold text-indigo-700">{d.quantity.toLocaleString()}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-xs font-mono text-slate-500">
+                      {new Date(d.created_at).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="success" size="sm">Entregue</Badge>
                   </TableCell>
                 </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Material</TableHead>
-              <TableHead>Destinatário / Coordenador</TableHead>
-              <TableHead>Território</TableHead>
-              <TableHead>Quantidade Entregue</TableHead>
-              <TableHead>Data</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {distributions.map((d) => (
-              <TableRow key={d.id}>
-                <TableCell>
-                  <div className="font-medium text-zinc-100">{d.material_name}</div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-xs text-zinc-200">{d.recipient_name}</div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-xs text-zinc-300">{d.territory}</div>
-                </TableCell>
-                <TableCell>
-                  <span className="font-mono text-xs font-bold text-zinc-100">{d.quantity.toLocaleString('pt-BR')}</span>
-                </TableCell>
-                <TableCell>
-                  <span className="text-xs font-mono text-zinc-400">{new Date(d.created_at).toLocaleDateString('pt-BR')}</span>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="success" size="sm">Entregue</Badge>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+              ))}
+            </TableBody>
+          </Table>
+        )
       )}
 
-      {/* New Item Modal */}
+      {/* New Material Modal */}
       <Modal
         isOpen={isNewItemModalOpen}
         onClose={() => setIsNewItemModalOpen(false)}
-        title="Cadastrar Material no Estoque"
-        description="Adicione material de campanha para controle de remessas."
+        title="Cadastrar Novo Material no Estoque"
+        description="Salve no Supabase o lote produzido e a unidade de contagem."
       >
         <form onSubmit={handleSaveItem} className="space-y-3.5 text-left">
           <Input
@@ -284,49 +386,49 @@ export const MaterialsPage: React.FC = () => {
             required
           />
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Select
               label="Categoria"
               value={itemForm.category}
               onChange={(e) => setItemForm({ ...itemForm, category: e.target.value })}
               options={[
-                { value: 'Gráfica', label: 'Material Gráfico / Papel' },
-                { value: 'Adesivo', label: 'Adesivos & Praguinhas' },
-                { value: 'Bandeira', label: 'Bandeiras & Windbanners' },
-                { value: 'Vestuário', label: 'Camisetas & Bonés' },
-                { value: 'Geral', label: 'Outros' },
+                { value: 'Gráfica', label: 'Gráfica (Santinhos, Jornais)' },
+                { value: 'Adesivos', label: 'Adesivos & Praguinhas' },
+                { value: 'Tecido', label: 'Bandeiras & Camisetas' },
+                { value: 'Brindes', label: 'Brindes & Outros' },
               ]}
             />
             <Input
-              label="Unidade de Medida"
+              label="Unidade"
               value={itemForm.unit}
               onChange={(e) => setItemForm({ ...itemForm, unit: e.target.value })}
-              placeholder="unid, pacotes, caixas"
+              placeholder="Ex.: unid, pacotes, caixas"
+              required
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input
-              label="Quantidade Total Recebida"
+              label="Quantidade Total em Estoque"
               type="number"
               value={itemForm.total_quantity}
               onChange={(e) => setItemForm({ ...itemForm, total_quantity: Number(e.target.value) })}
               required
             />
             <Input
-              label="Alerta de Estoque Baixo"
+              label="Alerta de Estoque Mínimo"
               type="number"
               value={itemForm.min_stock_alert}
               onChange={(e) => setItemForm({ ...itemForm, min_stock_alert: Number(e.target.value) })}
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-800">
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
             <Button type="button" variant="outline" size="sm" onClick={() => setIsNewItemModalOpen(false)}>
               Cancelar
             </Button>
-            <Button type="submit" variant="primary" size="sm">
-              Cadastrar Material
+            <Button type="submit" variant="primary" size="sm" isLoading={isSubmitting}>
+              Salvar Material
             </Button>
           </div>
         </form>
@@ -337,34 +439,36 @@ export const MaterialsPage: React.FC = () => {
         isOpen={isDistributeModalOpen}
         onClose={() => setIsDistributeModalOpen(false)}
         title="Registrar Entrega de Material"
-        description="Baixa de estoque e entrega para coordenador ou território."
+        description="Baixa no estoque e registro para o coordenador/liderança."
       >
         <form onSubmit={handleSaveDistribution} className="space-y-3.5 text-left">
           <Select
-            label="Material"
+            label="Material a Entregar"
             value={distForm.material_id}
             onChange={(e) => setDistForm({ ...distForm, material_id: e.target.value })}
             options={materials.map(m => ({
               value: m.id,
-              label: `${m.name} (${m.total_quantity - m.distributed_quantity} ${m.unit} disponíveis)`
+              label: `${m.name} (Disponível: ${m.total_quantity - m.distributed_quantity} ${m.unit})`
             }))}
-          />
-
-          <Input
-            label="Destinatário / Coordenador"
-            value={distForm.recipient_name}
-            onChange={(e) => setDistForm({ ...distForm, recipient_name: e.target.value })}
-            placeholder="Ex.: Carlos Alberto"
             required
           />
 
-          <Input
-            label="Território / Destino"
-            value={distForm.territory}
-            onChange={(e) => setDistForm({ ...distForm, territory: e.target.value })}
-            placeholder="Ex.: Zona Central / Bairro Gonzaga"
-            required
-          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Input
+              label="Nome do Destinatário / Coordenador"
+              value={distForm.recipient_name}
+              onChange={(e) => setDistForm({ ...distForm, recipient_name: e.target.value })}
+              placeholder="Ex.: Valmir Silva"
+              required
+            />
+            <Input
+              label="Território / Região"
+              value={distForm.territory}
+              onChange={(e) => setDistForm({ ...distForm, territory: e.target.value })}
+              placeholder="Ex.: Zona Sul"
+              required
+            />
+          </div>
 
           <Input
             label="Quantidade a Entregar"
@@ -374,11 +478,11 @@ export const MaterialsPage: React.FC = () => {
             required
           />
 
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-800">
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
             <Button type="button" variant="outline" size="sm" onClick={() => setIsDistributeModalOpen(false)}>
               Cancelar
             </Button>
-            <Button type="submit" variant="primary" size="sm">
+            <Button type="submit" variant="primary" size="sm" isLoading={isSubmitting}>
               Confirmar Entrega
             </Button>
           </div>

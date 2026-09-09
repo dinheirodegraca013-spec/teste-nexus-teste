@@ -1,31 +1,75 @@
-import React from 'react';
-import { FileSpreadsheet, Download, Printer, Users, Target, Tag, MapPin } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { FileSpreadsheet, Download, Printer, Users, Target, Tag, MapPin, Loader2, Car, Home, UserCheck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { localStore } from '../../lib/supabase';
+import { useToast } from '../../contexts/ToastContext';
+import { Contact, Leader, Coordinator, Goal, CampaignEvent, CarSticker, HouseSticker } from '../../types';
+import { crmService, leadersService, coordinatorsService, goalsService, eventsService, stickersService } from '../../services';
 import { Button } from '../../components/ui/Button';
 
 export const ReportsPage: React.FC = () => {
   const { organization } = useAuth();
-  const orgId = organization?.id || 'org-alpha';
+  const { error: toastError } = useToast();
+  const orgId = organization?.id || '';
 
-  const contacts = localStore.getContacts(orgId);
-  const leaders = localStore.getLeaders(orgId);
-  const coordinators = localStore.getCoordinators(orgId);
-  const goals = localStore.getGoals(orgId);
-  const events = localStore.getEvents(orgId);
-  const carStickers = localStore.getCarStickers(orgId);
-  const houseStickers = localStore.getHouseStickers(orgId);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [leaders, setLeaders] = useState<Leader[]>([]);
+  const [coordinators, setCoordinators] = useState<Coordinator[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [events, setEvents] = useState<CampaignEvent[]>([]);
+  const [carStickers, setCarStickers] = useState<CarSticker[]>([]);
+  const [houseStickers, setHouseStickers] = useState<HouseSticker[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const loadData = useCallback(async () => {
+    if (!orgId) return;
+    setIsLoading(true);
+    try {
+      const [
+        contactsRes,
+        leadersRes,
+        coordsRes,
+        goalsRes,
+        eventsRes,
+        carsRes,
+        housesRes,
+      ] = await Promise.all([
+        crmService.getAll(orgId),
+        leadersService.getAll(orgId),
+        coordinatorsService.getAll(orgId),
+        goalsService.getAll(orgId),
+        eventsService.getAll(orgId),
+        stickersService.getCarStickers(orgId),
+        stickersService.getHouseStickers(orgId),
+      ]);
+
+      setContacts(contactsRes.data || []);
+      setLeaders(leadersRes.data || []);
+      setCoordinators(coordsRes.data || []);
+      setGoals(goalsRes.data || []);
+      setEvents(eventsRes.data || []);
+      setCarStickers(carsRes.data || []);
+      setHouseStickers(housesRes.data || []);
+    } catch (err: any) {
+      toastError('Erro ao carregar dados do relatório: ' + err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [orgId, toastError]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handlePrint = () => {
     window.print();
   };
 
   const handleExportCSV = () => {
-    const headers = ['Nome', 'Telefone', 'Territorio', 'Lider', 'Classificacao'];
+    const headers = ['Nome', 'Telefone', 'Territorio', 'Lider', 'Status'];
     const rows = contacts.map(c => [
       `"${c.full_name}"`,
       `"${c.phone}"`,
-      `"${c.territory}"`,
+      `"${c.territory || ''}"`,
       `"${c.leader_name || ''}"`,
       `"${c.status}"`,
     ]);
@@ -42,13 +86,13 @@ export const ReportsPage: React.FC = () => {
   return (
     <div className="space-y-6 text-left">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-zinc-800/60 print:hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200 print:hidden">
         <div>
-          <h2 className="text-xl font-bold text-zinc-100 flex items-center gap-2">
-            <FileSpreadsheet className="w-5 h-5 text-zinc-400" />
+          <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <FileSpreadsheet className="w-5 h-5 text-slate-700" />
             Relatórios Estratégicos & Consolidados
           </h2>
-          <p className="text-xs text-zinc-400 mt-0.5">
+          <p className="text-xs text-slate-500 mt-0.5">
             Documento analítico executivo pronto para impressão ou exportação tabular
           </p>
         </div>
@@ -75,115 +119,142 @@ export const ReportsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Printable Report Document */}
-      <div className="p-8 rounded-2xl bg-zinc-900/80 border border-zinc-800 space-y-8 print:bg-white print:text-black print:border-none print:p-0">
-        {/* Report Header */}
-        <div className="border-b border-zinc-800 pb-6 print:border-zinc-300">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-zinc-100 text-zinc-950 font-black text-lg flex items-center justify-center">
-                N
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-zinc-100 print:text-zinc-900">{organization?.name || 'NEXUS Operations'}</h1>
-                <p className="text-xs text-zinc-400 print:text-zinc-600">Relatório Consolidado de Desempenho Operacional</p>
-              </div>
-            </div>
-            <div className="text-right text-xs font-mono text-zinc-400 print:text-zinc-600">
-              Emitido em: {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR')}
-            </div>
-          </div>
+      {isLoading ? (
+        <div className="py-20 flex flex-col items-center justify-center text-slate-400 gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-slate-600" />
+          <span className="text-sm font-medium">Consolidando dados do Supabase...</span>
         </div>
-
-        {/* Section 1: Executive KPI Summary */}
-        <div className="space-y-3">
-          <h2 className="text-xs font-bold text-zinc-400 uppercase tracking-widest print:text-zinc-700">
-            1. Indicadores Chave de Desempenho
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="p-4 rounded-xl bg-zinc-950/80 border border-zinc-800/80 print:bg-zinc-50 print:border-zinc-300">
-              <div className="text-xs text-zinc-400 print:text-zinc-600">Total de Contatos</div>
-              <div className="text-xl font-bold font-mono text-zinc-100 print:text-zinc-900 mt-1">
-                {contacts.length.toLocaleString('pt-BR')}
-              </div>
-              <div className="text-[11px] text-emerald-400 mt-0.5">Base cadastrada</div>
-            </div>
-            <div className="p-4 rounded-xl bg-zinc-950/80 border border-zinc-800/80 print:bg-zinc-50 print:border-zinc-300">
-              <div className="text-xs text-zinc-400 print:text-zinc-600">Lideranças Mapeadas</div>
-              <div className="text-xl font-bold font-mono text-zinc-100 print:text-zinc-900 mt-1">
-                {leaders.length}
-              </div>
-              <div className="text-[11px] text-zinc-400 print:text-zinc-600 mt-0.5">{coordinators.length} coordenadores</div>
-            </div>
-            <div className="p-4 rounded-xl bg-zinc-950/80 border border-zinc-800/80 print:bg-zinc-50 print:border-zinc-300">
-              <div className="text-xs text-zinc-400 print:text-zinc-600">Adesivagem Total</div>
-              <div className="text-xl font-bold font-mono text-zinc-100 print:text-zinc-900 mt-1">
-                {carStickers.length + houseStickers.length}
-              </div>
-              <div className="text-[11px] text-zinc-400 print:text-zinc-600 mt-0.5">{carStickers.length} carros • {houseStickers.length} casas</div>
-            </div>
-            <div className="p-4 rounded-xl bg-zinc-950/80 border border-zinc-800/80 print:bg-zinc-50 print:border-zinc-300">
-              <div className="text-xs text-zinc-400 print:text-zinc-600">Eventos Realizados</div>
-              <div className="text-xl font-bold font-mono text-zinc-100 print:text-zinc-900 mt-1">
-                {events.length}
-              </div>
-              <div className="text-[11px] text-emerald-400 mt-0.5">Mobilização contínua</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Section 2: Goals Status */}
-        <div className="space-y-3">
-          <h2 className="text-xs font-bold text-zinc-400 uppercase tracking-widest print:text-zinc-700">
-            2. Cumprimento de Metas Estratégicas
-          </h2>
-          <div className="divide-y divide-zinc-800/60 print:divide-zinc-300 border border-zinc-800/80 print:border-zinc-300 rounded-xl overflow-hidden">
-            {goals.map(g => {
-              const p = Math.min(100, Math.round((g.current_value / g.target_value) * 100));
-              return (
-                <div key={g.id} className="p-3.5 bg-zinc-950/40 print:bg-white flex items-center justify-between gap-4 text-xs">
-                  <div>
-                    <div className="font-semibold text-zinc-200 print:text-zinc-900">{g.title}</div>
-                    <div className="text-[11px] text-zinc-500 print:text-zinc-600 mt-0.5">{g.responsible_name || 'Coordenação'}</div>
-                  </div>
-                  <div className="text-right font-mono">
-                    <span className="font-bold text-zinc-100 print:text-zinc-900">{g.current_value.toLocaleString('pt-BR')}</span> / {g.target_value.toLocaleString('pt-BR')} ({p}%)
-                  </div>
+      ) : (
+        /* Printable Report Document */
+        <div className="p-8 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-8 print:bg-white print:text-black print:border-none print:p-0">
+          {/* Report Header */}
+          <div className="border-b border-slate-200 pb-6 print:border-slate-300">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-slate-900 text-white font-black text-lg flex items-center justify-center">
+                  N
                 </div>
-              );
-            })}
+                <div>
+                  <h1 className="text-lg font-bold text-slate-900 print:text-slate-900">{organization?.name || 'NEXUS Operations'}</h1>
+                  <p className="text-xs text-slate-500 print:text-slate-600">Relatório Consolidado dos 4 Eixos Operacionais</p>
+                </div>
+              </div>
+              <div className="text-right text-xs font-mono text-slate-500 print:text-slate-600">
+                Emitido em: {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR')}
+              </div>
+            </div>
+          </div>
+
+          {/* Section 1: 4 Eixos KPI Summary */}
+          <div className="space-y-3">
+            <h2 className="text-xs font-bold text-slate-600 uppercase tracking-widest print:text-slate-700">
+              1. Indicadores Chave dos 4 Eixos de Mobilização
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 print:border-slate-300">
+                <div className="flex items-center justify-between text-slate-500 text-xs">
+                  <span>1. Apoiadores</span>
+                  <Users className="w-4 h-4 text-slate-600" />
+                </div>
+                <div className="text-2xl font-bold text-slate-900 mt-2 font-mono">{contacts.length}</div>
+                <span className="text-[11px] text-slate-500">Cadastrados no CRM</span>
+              </div>
+
+              <div className="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200 print:border-slate-300">
+                <div className="flex items-center justify-between text-emerald-800 text-xs">
+                  <span>2. Carros Adesivados</span>
+                  <Car className="w-4 h-4 text-emerald-600" />
+                </div>
+                <div className="text-2xl font-bold text-emerald-950 mt-2 font-mono">{carStickers.length}</div>
+                <span className="text-[11px] text-emerald-700">Veículos em trânsito</span>
+              </div>
+
+              <div className="p-4 rounded-xl bg-amber-50/60 border border-amber-200 print:border-slate-300">
+                <div className="flex items-center justify-between text-amber-800 text-xs">
+                  <span>3. Casas Adesivadas</span>
+                  <Home className="w-4 h-4 text-amber-600" />
+                </div>
+                <div className="text-2xl font-bold text-amber-950 mt-2 font-mono">{houseStickers.length}</div>
+                <span className="text-[11px] text-amber-700">Placas residenciais</span>
+              </div>
+
+              <div className="p-4 rounded-xl bg-indigo-50/60 border border-indigo-200 print:border-slate-300">
+                <div className="flex items-center justify-between text-indigo-800 text-xs">
+                  <span>4. Lideranças & Eventos</span>
+                  <UserCheck className="w-4 h-4 text-indigo-600" />
+                </div>
+                <div className="text-2xl font-bold text-indigo-950 mt-2 font-mono">{leaders.length}</div>
+                <span className="text-[11px] text-indigo-700">Em {events.length} atos programados</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 2: Goals Status */}
+          <div className="space-y-3">
+            <h2 className="text-xs font-bold text-slate-600 uppercase tracking-widest print:text-slate-700">
+              2. Metas Operacionais Cadastradas ({goals.length})
+            </h2>
+            {goals.length === 0 ? (
+              <p className="text-xs text-slate-500 italic">Nenhuma meta configurada no período.</p>
+            ) : (
+              <div className="border border-slate-200 rounded-xl overflow-hidden print:border-slate-300">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
+                    <tr>
+                      <th className="p-3">Título da Meta</th>
+                      <th className="p-3">Responsável</th>
+                      <th className="p-3 text-right">Progresso</th>
+                      <th className="p-3 text-right">Conclusão</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {goals.map(g => {
+                      const p = Math.min(100, Math.round((g.current_value / (g.target_value || 1)) * 100));
+                      return (
+                        <tr key={g.id}>
+                          <td className="p-3 font-semibold text-slate-900">{g.title}</td>
+                          <td className="p-3 text-slate-700">{g.responsible_name || 'Geral'}</td>
+                          <td className="p-3 text-right font-mono">{g.current_value} / {g.target_value} {g.unit}</td>
+                          <td className="p-3 text-right font-bold font-mono text-slate-900">{p}%</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Section 3: Coordinators & Territories */}
+          <div className="space-y-3">
+            <h2 className="text-xs font-bold text-slate-600 uppercase tracking-widest print:text-slate-700">
+              3. Estrutura de Coordenação e Territórios
+            </h2>
+            <div className="border border-slate-200 rounded-xl overflow-hidden print:border-slate-300">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
+                  <tr>
+                    <th className="p-3">Coordenador</th>
+                    <th className="p-3">Território</th>
+                    <th className="p-3">Contato</th>
+                    <th className="p-3">Meta Individual</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {coordinators.map(c => (
+                    <tr key={c.id}>
+                      <td className="p-3 font-semibold text-slate-900">{c.name}</td>
+                      <td className="p-3 text-slate-700">{c.territory}</td>
+                      <td className="p-3 font-mono text-slate-600">{c.phone || '—'}</td>
+                      <td className="p-3 font-mono text-slate-900">{c.target_contacts || 0} contatos</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-
-        {/* Section 3: Leaders by Territory */}
-        <div className="space-y-3">
-          <h2 className="text-xs font-bold text-zinc-400 uppercase tracking-widest print:text-zinc-700">
-            3. Relação de Lideranças Territoriais
-          </h2>
-          <table className="w-full text-xs text-left border-collapse">
-            <thead>
-              <tr className="border-b border-zinc-800 print:border-zinc-400 text-zinc-400 print:text-zinc-600">
-                <th className="py-2">Líder</th>
-                <th className="py-2">Bairro / Território</th>
-                <th className="py-2">Coordenador</th>
-                <th className="py-2 text-right">Meta Alcançada</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-800/60 print:divide-zinc-200">
-              {leaders.map(l => (
-                <tr key={l.id} className="text-zinc-300 print:text-zinc-800">
-                  <td className="py-2 font-medium">{l.name}</td>
-                  <td className="py-2">{l.neighborhood || l.territory}</td>
-                  <td className="py-2">{l.coordinator_name || 'Direto'}</td>
-                  <td className="py-2 text-right font-mono font-bold text-zinc-100 print:text-zinc-900">
-                    {l.goal_reached} / {l.goal_target} ({Math.round((l.goal_reached / l.goal_target) * 100)}%)
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

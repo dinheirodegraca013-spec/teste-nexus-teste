@@ -5,7 +5,7 @@ export interface Organization {
   name: string;
   slug: string;
   document?: string;
-  plan: 'free' | 'starter' | 'professional' | 'premium' | 'enterprise';
+  plan: 'free' | 'starter' | 'professional' | 'pro' | 'premium' | 'enterprise';
   status: 'active' | 'trial' | 'suspended' | 'canceled';
   logo_url?: string;
   settings?: {
@@ -85,8 +85,11 @@ export interface Leader {
   phone?: string;
   territory: string;
   neighborhood?: string;
-  goal_target: number;
+  goal_target: number; // Meta de Apoiadores
   goal_reached: number;
+  goal_cars?: number; // Meta de Carros Adesivados
+  goal_houses?: number; // Meta de Casas Adesivadas
+  goal_presence?: number; // Meta de Presenças / Check-ins
   contacts_count?: number;
   status: 'active' | 'inactive' | 'pending';
   created_at: string;
@@ -103,12 +106,14 @@ export interface CrmContact {
   phone: string;
   territory: string;
   neighborhood?: string;
-  status: 'lead' | 'contacted' | 'supporter' | 'multiplier' | 'unresponsive';
+  status: 'lead' | 'contacted' | 'supporter' | 'multiplier' | 'unresponsive' | 'undecided' | 'volunteer' | 'hostile';
   tags?: string[];
   notes?: string;
   responsible?: string;
   created_at: string;
 }
+
+export type Contact = CrmContact;
 
 export interface Goal {
   id: string;
@@ -123,7 +128,7 @@ export interface Goal {
   responsible_name: string;
   start_date: string;
   end_date: string;
-  status: 'in_progress' | 'completed' | 'delayed' | 'cancelled';
+  status: 'in_progress' | 'completed' | 'delayed' | 'cancelled' | 'on_track' | 'at_risk' | 'behind';
   created_at?: string;
 }
 

@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Users, 
   UserCheck, 
-  Contact, 
   Target, 
   Calendar, 
   Tag, 
@@ -13,10 +12,15 @@ import {
   Plus,
   TrendingUp,
   Smartphone,
-  ChevronRight
+  ChevronRight,
+  Car,
+  Home,
+  Loader2
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { localStore } from '../../lib/supabase';
+import { useToast } from '../../contexts/ToastContext';
+import { Contact, Leader, Coordinator, Goal, CampaignEvent, CarSticker, HouseSticker, PresenceLog } from '../../types';
+import { crmService, leadersService, coordinatorsService, goalsService, eventsService, stickersService, presenceService } from '../../services';
 import { StatCard } from '../../components/ui/StatCard';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -27,15 +31,61 @@ interface DashboardPageProps {
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   const { organization, profile } = useAuth();
-  const orgId = organization?.id || 'org-alpha';
+  const { error: toastError } = useToast();
+  const orgId = organization?.id || '';
 
-  const contacts = localStore.getContacts(orgId);
-  const leaders = localStore.getLeaders(orgId);
-  const coordinators = localStore.getCoordinators(orgId);
-  const goals = localStore.getGoals(orgId);
-  const events = localStore.getEvents(orgId);
-  const carStickers = localStore.getCarStickers(orgId);
-  const houseStickers = localStore.getHouseStickers(orgId);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [leaders, setLeaders] = useState<Leader[]>([]);
+  const [coordinators, setCoordinators] = useState<Coordinator[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [events, setEvents] = useState<CampaignEvent[]>([]);
+  const [carStickers, setCarStickers] = useState<CarSticker[]>([]);
+  const [houseStickers, setHouseStickers] = useState<HouseSticker[]>([]);
+  const [presenceLogs, setPresenceLogs] = useState<PresenceLog[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const loadData = useCallback(async () => {
+    if (!orgId) return;
+    setIsLoading(true);
+    try {
+      const [
+        contactsRes,
+        leadersRes,
+        coordsRes,
+        goalsRes,
+        eventsRes,
+        carsRes,
+        housesRes,
+        presenceRes,
+      ] = await Promise.all([
+        crmService.getAll(orgId),
+        leadersService.getAll(orgId),
+        coordinatorsService.getAll(orgId),
+        goalsService.getAll(orgId),
+        eventsService.getAll(orgId),
+        stickersService.getCarStickers(orgId),
+        stickersService.getHouseStickers(orgId),
+        presenceService.getLogs(orgId),
+      ]);
+
+      setContacts(contactsRes.data || []);
+      setLeaders(leadersRes.data || []);
+      setCoordinators(coordsRes.data || []);
+      setGoals(goalsRes.data || []);
+      setEvents(eventsRes.data || []);
+      setCarStickers(carsRes.data || []);
+      setHouseStickers(housesRes.data || []);
+      setPresenceLogs(presenceRes.data || []);
+    } catch (err: any) {
+      toastError('Erro ao carregar painel geral: ' + err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [orgId, toastError]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // Overall goal percentage calculation
   const totalTarget = goals.reduce((acc, g) => acc + (Number(g.target_value) || 0), 0);
@@ -44,6 +94,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
   // Multiplier contacts count
   const multipliersCount = contacts.filter(c => c.status === 'multiplier').length;
+
+  // Real calculation for contacts added in the last 7 days
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const recentContactsCount = contacts.filter(c => c.created_at && new Date(c.created_at) >= sevenDaysAgo).length;
 
   // Dynamic territorial breakdown from real data
   const territoryMap = new Map<string, { contactsCount: number; leadersCount: number }>();
@@ -99,226 +153,183 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* Primary Metrics Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard
-          label="Contatos CRM"
-          value={contacts.length.toLocaleString('pt-BR')}
-          subValue="Base ativa cadastrada"
-          change={{ value: `${multipliersCount} multiplicadores`, isPositive: true }}
-          icon={<Contact className="w-4 h-4" />}
-        />
-        <StatCard
-          label="Lideranças"
-          value={leaders.length.toLocaleString('pt-BR')}
-          subValue={`${coordinators.length} coordenadores`}
-          change={{ value: `${territoryMap.size} territórios`, isPositive: true }}
-          icon={<UserCheck className="w-4 h-4" />}
-        />
-        <StatCard
-          label="Metas Globais"
-          value={goals.length > 0 ? `${goalsPercentage}%` : '0%'}
-          subValue={`${goals.length} metas cadastradas`}
-          change={{ value: goals.length > 0 ? `${totalCurrent}/${totalTarget}` : 'Sem metas', isPositive: true }}
-          icon={<Target className="w-4 h-4" />}
-        />
-        <StatCard
-          label="Adesivagem Total"
-          value={(carStickers.length + houseStickers.length).toLocaleString('pt-BR')}
-          subValue={`${carStickers.length} carros • ${houseStickers.length} casas`}
-          change={{ value: 'Registros ativos', isPositive: true }}
-          icon={<Tag className="w-4 h-4" />}
-        />
-      </div>
+      {isLoading ? (
+        <div className="py-20 flex flex-col items-center justify-center text-slate-400 gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-slate-600" />
+          <span className="text-sm font-medium">Carregando dados da campanha...</span>
+        </div>
+      ) : (
+        <>
+          {/* Main 4 Eixos KPIs */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <StatCard
+              title="1. Apoiadores Cadastrados"
+              value={contacts.length}
+              subtitle={`${multipliersCount} multiplicadores ativos`}
+              icon={<Users className="w-4 h-4 text-slate-700" />}
+              trend={recentContactsCount > 0 ? `+${recentContactsCount} novos (7d)` : undefined}
+              onClick={() => onNavigate('/app/crm')}
+            />
+            <StatCard
+              title="2. Carros Adesivados"
+              value={carStickers.length}
+              subtitle="Veículos com perfurado/adesivo"
+              icon={<Car className="w-4 h-4 text-emerald-600" />}
+              onClick={() => onNavigate('/app/adesivos')}
+            />
+            <StatCard
+              title="3. Casas Adesivadas"
+              value={houseStickers.length}
+              subtitle="Placas residenciais instaladas"
+              icon={<Home className="w-4 h-4 text-amber-600" />}
+              onClick={() => onNavigate('/app/adesivos')}
+            />
+            <StatCard
+              title="4. Check-ins de Presença"
+              value={presenceLogs.length}
+              subtitle={`${events.length} atos e plenárias`}
+              icon={<UserCheck className="w-4 h-4 text-indigo-600" />}
+              onClick={() => onNavigate('/app/presenca')}
+            />
+          </div>
 
-      {/* Central Split: Metas & Recent Activities */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: Main Goals Progress */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div>
-                <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                  <Target className="w-4 h-4 text-slate-500" />
-                  Metas Estratégicas em Andamento
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">Acompanhamento de volume e entrega por setor</p>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onNavigate('/app/metas')}
-                className="text-xs text-slate-500 hover:text-slate-900"
-                rightIcon={<ChevronRight className="w-3.5 h-3.5" />}
-              >
-                Ver todas
-              </Button>
-            </div>
-
-            {goals.length === 0 ? (
-              <div className="py-8 text-center text-xs text-slate-400">
-                <Target className="w-8 h-8 mx-auto text-slate-300 mb-2" />
-                <p className="font-medium text-slate-600">Nenhuma meta cadastrada ainda</p>
-                <p className="text-slate-400 text-[11px] mt-0.5">Defina metas para contatos, lideranças ou adesivagens.</p>
+          {/* Goals & Next Events Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            {/* 4 Eixos Progress Panel */}
+            <div className="lg:col-span-2 p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">
+                    <Target className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-sm">Metas Globais de Mobilização</h3>
+                    <p className="text-xs text-slate-500">Progresso consolidado das metas operacionais</p>
+                  </div>
+                </div>
                 <Button
+                  variant="ghost"
                   size="sm"
-                  variant="outline"
                   onClick={() => onNavigate('/app/metas')}
-                  className="mt-3 text-xs"
+                  className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold"
                 >
-                  Cadastrar Primeira Meta
+                  Ver Todas ({goals.length})
                 </Button>
               </div>
-            ) : (
-              <div className="divide-y divide-slate-100 mt-2">
-                {goals.slice(0, 4).map((goal) => {
-                  const percent = goal.target_value > 0 ? Math.min(100, Math.round((goal.current_value / goal.target_value) * 100)) : 0;
-                  return (
-                    <div key={goal.id} className="py-3.5 first:pt-2 last:pb-0">
-                      <div className="flex items-start justify-between gap-2 text-xs">
-                        <div>
-                          <div className="font-semibold text-slate-900">{goal.title}</div>
-                          <div className="text-[11px] text-slate-400 mt-0.5 font-medium">{goal.responsible_name || 'Responsável não definido'}</div>
-                        </div>
-                        <div className="text-right font-mono">
-                          <span className="font-semibold text-slate-900">{goal.current_value.toLocaleString('pt-BR')}</span>
-                          <span className="text-slate-400 text-[11px]"> / {goal.target_value.toLocaleString('pt-BR')} {goal.unit}</span>
-                        </div>
-                      </div>
 
-                      {/* Progress Bar */}
-                      <div className="mt-2 flex items-center gap-3">
-                        <div className="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+              {goals.length === 0 ? (
+                <div className="py-8 text-center text-xs text-slate-400">
+                  Nenhuma meta cadastrada ainda. Clique em "Ver Todas" para criar a primeira.
+                </div>
+              ) : (
+                <div className="space-y-3.5">
+                  {goals.slice(0, 4).map((goal) => {
+                    const percent = Math.min(100, Math.round((goal.current_value / (goal.target_value || 1)) * 100));
+                    return (
+                      <div key={goal.id} className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-semibold text-slate-800">{goal.title}</span>
+                          <span className="font-mono text-slate-600 font-medium">
+                            {goal.current_value} / {goal.target_value} {goal.unit} ({percent}%)
+                          </span>
+                        </div>
+                        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-slate-900 rounded-full transition-all duration-300"
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              percent >= 100 ? 'bg-emerald-500' : percent >= 50 ? 'bg-indigo-600' : 'bg-amber-500'
+                            }`}
                             style={{ width: `${percent}%` }}
                           />
                         </div>
-                        <span className="text-[11px] font-semibold text-slate-700 w-9 text-right font-mono">
-                          {percent}%
-                        </span>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Quick Territorial Breakdown */}
-          <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-slate-500" />
-                Destaques por Território
-              </h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onNavigate('/app/inteligencia')}
-                className="text-xs text-slate-500 hover:text-slate-900"
-              >
-                Inteligência Territorial
-              </Button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-            
-            {territoryHighlights.length === 0 ? (
-              <div className="py-6 text-center text-xs text-slate-400">
-                <p className="font-medium text-slate-600">Nenhum território mapeado ainda</p>
-                <p className="text-slate-400 text-[11px] mt-0.5">Os territórios e bairros aparecerão conforme contatos e líderes forem cadastrados.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
-                {territoryHighlights.map(([name, data]) => (
-                  <div key={name} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                    <div className="text-xs font-semibold text-slate-900 truncate">{name}</div>
-                    <div className="text-lg font-bold font-mono text-slate-950 mt-1">{data.contactsCount} contatos</div>
-                    <div className="text-[11px] text-slate-500 mt-0.5 font-medium">{data.leadersCount} lideranças</div>
+
+            {/* Next Events & Quick Agenda */}
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-slate-100 text-slate-700">
+                    <Calendar className="w-4 h-4" />
                   </div>
-                ))}
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-sm">Próximos Eventos</h3>
+                    <p className="text-xs text-slate-500">Agenda de rua da campanha</p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onNavigate('/app/eventos')}
+                  className="text-xs text-slate-600 hover:text-slate-900"
+                >
+                  Ver Todos
+                </Button>
               </div>
-            )}
-          </div>
-        </div>
 
-        {/* Right 1 Col: Upcoming Events & Activity Log */}
-        <div className="space-y-4">
-          {/* Upcoming Events Box */}
-          <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-slate-500" />
-                Próximos Eventos
-              </h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onNavigate('/app/eventos')}
-                className="text-xs text-slate-500 hover:text-slate-900 p-0"
-              >
-                Ver todos
-              </Button>
-            </div>
-
-            <div className="mt-3 space-y-3">
               {events.length === 0 ? (
-                <div className="py-6 text-center text-xs text-slate-400">
-                  <p className="font-medium text-slate-600">Nenhum evento agendado</p>
-                  <p className="text-slate-400 text-[11px] mt-0.5">Agende plenárias, caminhadas ou encontros.</p>
+                <div className="py-8 text-center text-xs text-slate-400">
+                  Nenhum evento agendado para os próximos dias.
                 </div>
               ) : (
-                events.slice(0, 3).map((evt) => (
-                  <div key={evt.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-xs space-y-1.5">
-                    <div className="flex items-center justify-between gap-1">
-                      <span className="font-semibold text-slate-900 truncate">{evt.title}</span>
-                      <Badge variant="neutral" size="sm">
-                        {evt.event_type}
-                      </Badge>
+                <div className="space-y-3">
+                  {events.slice(0, 3).map((evt) => (
+                    <div key={evt.id} className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-slate-900 text-xs">{evt.title}</span>
+                        <Badge variant="primary" size="sm">{evt.event_type}</Badge>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-mono">
+                        <Clock className="w-3 h-3" />
+                        <span>{evt.date} às {evt.time}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-[11px] text-slate-600">
+                        <MapPin className="w-3 h-3 text-slate-400" />
+                        <span className="truncate">{evt.location}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3 text-[11px] text-slate-500 font-medium">
-                      <span className="flex items-center gap-1 font-mono text-slate-700">
-                        <Clock className="w-3 h-3 text-slate-400" />
-                        {new Date(evt.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} • {evt.time}
-                      </span>
-                      <span className="truncate flex items-center gap-1 text-slate-500">
-                        <MapPin className="w-3 h-3 shrink-0" />
-                        {evt.territory || evt.location}
-                      </span>
-                    </div>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
             </div>
           </div>
 
-          {/* Quick Stats Summary */}
-          <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-3 text-xs">
-            <h3 className="font-semibold text-slate-900 border-b border-slate-100 pb-2">
-              Resumo Operacional
-            </h3>
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between text-slate-700">
-                <span className="text-slate-500">Multiplicadores Chave:</span>
-                <span className="font-mono font-semibold text-slate-900">{multipliersCount} líderes</span>
+          {/* Quick Territorial Breakdown */}
+          {territoryHighlights.length > 0 && (
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-slate-600" />
+                  Destaques Territoriais da Operação
+                </h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onNavigate('/app/inteligencia')}
+                  className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold"
+                >
+                  Inteligência Territorial &rarr;
+                </Button>
               </div>
-              <div className="flex items-center justify-between text-slate-700">
-                <span className="text-slate-500">Adesivos Carros:</span>
-                <span className="font-mono font-semibold text-slate-900">{carStickers.length} registros</span>
-              </div>
-              <div className="flex items-center justify-between text-slate-700">
-                <span className="text-slate-500">Adesivos Casas:</span>
-                <span className="font-mono font-semibold text-slate-900">{houseStickers.length} registros</span>
-              </div>
-              <div className="flex items-center justify-between text-slate-700">
-                <span className="text-slate-500">Plano Atual:</span>
-                <span className="uppercase font-mono text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 border border-slate-200">
-                  {organization?.plan || 'Starter'}
-                </span>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {territoryHighlights.map(([territory, data]) => (
+                  <div key={territory} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5">
+                    <div className="font-bold text-slate-900 text-xs">{territory}</div>
+                    <div className="flex items-center justify-between text-xs text-slate-600">
+                      <span>Apoiadores: <strong className="text-slate-900 font-mono">{data.contactsCount}</strong></span>
+                      <span>Lideranças: <strong className="text-slate-900 font-mono">{data.leadersCount}</strong></span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
-        </div>
-      </div>
+          )}
+        </>
+      )}
     </div>
   );
 };

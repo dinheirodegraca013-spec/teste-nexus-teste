@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { UserCheck, Plus, Clock, Trash2, CheckCircle2, FileDown, Image as ImageIcon, Eye, X } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { UserCheck, Plus, Clock, Trash2, CheckCircle2, FileDown, Image as ImageIcon, Eye, X, Loader2, Camera } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
-import { localStore } from '../../lib/supabase';
-import { PresenceLog } from '../../types';
+import { PresenceLog, CampaignEvent, Meeting } from '../../types';
+import { presenceService, eventsService, meetingsService } from '../../services';
 import { Button } from '../../components/ui/Button';
 import { SearchInput } from '../../components/ui/SearchInput';
 import { Badge } from '../../components/ui/Badge';
@@ -17,11 +17,13 @@ import { EmptyState } from '../../components/ui/EmptyState';
 export const PresencePage: React.FC = () => {
   const { organization } = useAuth();
   const { success, error: toastError } = useToast();
-  const orgId = organization?.id || 'org-alpha';
+  const orgId = organization?.id || '';
 
-  const [presenceLogs, setPresenceLogs] = useState<PresenceLog[]>(() => localStore.getPresenceLogs(orgId));
-  const events = localStore.getEvents(orgId);
-  const meetings = localStore.getMeetings(orgId);
+  const [presenceLogs, setPresenceLogs] = useState<PresenceLog[]>([]);
+  const [events, setEvents] = useState<CampaignEvent[]>([]);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -30,26 +32,45 @@ export const PresencePage: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
-    reference_name: events[0]?.title || 'Ato Público',
+    reference_name: 'Ato Público / Reunião',
     status: 'present' as PresenceLog['status'],
     photo_url: '',
     attachment_name: '',
   });
 
-  const reloadData = () => {
-    setPresenceLogs(localStore.getPresenceLogs(orgId));
-  };
+  const loadData = useCallback(async () => {
+    if (!orgId) return;
+    setIsLoading(true);
+    try {
+      const [logsRes, eventsRes, meetingsRes] = await Promise.all([
+        presenceService.getLogs(orgId),
+        eventsService.getAll(orgId),
+        meetingsService.getAll(orgId),
+      ]);
+      setPresenceLogs(logsRes.data || []);
+      setEvents(eventsRes.data || []);
+      setMeetings(meetingsRes.data || []);
+    } catch (err: any) {
+      toastError('Erro ao carregar presença: ' + err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [orgId, toastError]);
 
-  const handleSave = (e: React.FormEvent) => {
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) {
       toastError('Informe o nome do participante.');
       return;
     }
 
+    setIsSubmitting(true);
     try {
-      localStore.savePresenceLog({
-        id: 'pres_' + Math.random().toString(36).substring(2, 9),
+      const { error } = await presenceService.createLog({
         organization_id: orgId,
         name: formData.name.trim(),
         phone: formData.phone.trim() || undefined,
@@ -57,22 +78,31 @@ export const PresencePage: React.FC = () => {
         photo_url: formData.photo_url || undefined,
         attachment_name: formData.attachment_name || undefined,
         status: formData.status,
-        created_at: new Date().toISOString(),
       });
 
-      reloadData();
-      setIsModalOpen(false);
-      success('Presença registrada!');
-    } catch {
-      toastError('Erro ao registrar presença. Tente novamente.');
+      if (error) {
+        toastError('Erro ao registrar presença: ' + error.message);
+      } else {
+        await loadData();
+        setIsModalOpen(false);
+        success('Presença registrada no Supabase com sucesso!');
+      }
+    } catch (err: any) {
+      toastError('Erro ao registrar presença: ' + err.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm('Excluir este registro?')) {
-      localStore.deletePresenceLog(id);
-      reloadData();
-      success('Registro de presença removido.');
+      const { error } = await presenceService.deleteLog(id);
+      if (error) {
+        toastError('Erro ao excluir: ' + error.message);
+      } else {
+        await loadData();
+        success('Registro de presença removido.');
+      }
     }
   };
 
@@ -85,14 +115,14 @@ export const PresencePage: React.FC = () => {
   return (
     <div className="space-y-6 text-left">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-zinc-800/60">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
         <div>
-          <h2 className="text-xl font-bold text-zinc-100 flex items-center gap-2">
-            <UserCheck className="w-5 h-5 text-zinc-400" />
+          <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <UserCheck className="w-5 h-5 text-slate-700" />
             Controle de Presença & Check-ins
           </h2>
-          <p className="text-xs text-zinc-400 mt-0.5">
-            Registro de confirmação de presença em eventos, plenárias e atividades de rua
+          <p className="text-xs text-slate-500 mt-0.5">
+            Registro de confirmação de presença em eventos, plenárias e atividades com upload de fotos
           </p>
         </div>
 
@@ -103,7 +133,7 @@ export const PresencePage: React.FC = () => {
             setFormData({
               name: '',
               phone: '',
-              reference_name: events[0]?.title || 'Atividade Operacional',
+              reference_name: events[0]?.title || meetings[0]?.title || 'Atividade Operacional',
               status: 'present',
               photo_url: '',
               attachment_name: '',
@@ -124,7 +154,12 @@ export const PresencePage: React.FC = () => {
         className="w-full sm:w-80"
       />
 
-      {filteredLogs.length === 0 ? (
+      {isLoading ? (
+        <div className="py-16 flex flex-col items-center justify-center text-slate-400 gap-3">
+          <Loader2 className="w-7 h-7 animate-spin text-slate-600" />
+          <span className="text-xs font-medium">Carregando presenças do Supabase...</span>
+        </div>
+      ) : filteredLogs.length === 0 ? (
         <EmptyState
           icon={<UserCheck className="w-6 h-6" />}
           title="Nenhum check-in registrado"
@@ -138,9 +173,8 @@ export const PresencePage: React.FC = () => {
             <TableRow>
               <TableHead>Participante</TableHead>
               <TableHead>Comprovante / Foto</TableHead>
-              <TableHead>Contato</TableHead>
-              <TableHead>Atividade / Evento</TableHead>
-              <TableHead>Horário do Check-in</TableHead>
+              <TableHead>Evento / Reunião</TableHead>
+              <TableHead>Data & Hora</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -149,65 +183,41 @@ export const PresencePage: React.FC = () => {
             {filteredLogs.map((log) => (
               <TableRow key={log.id}>
                 <TableCell>
-                  <div className="flex items-center gap-2.5">
-                    {log.photo_url ? (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewImage({ url: log.photo_url!, title: `${log.name} - ${log.reference_name || 'Presença'}` })}
-                        className="w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-zinc-700 relative group cursor-pointer"
-                        title="Clique para ver foto"
-                      >
-                        <img
-                          src={log.photo_url}
-                          alt="Foto"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                          referrerPolicy="no-referrer"
-                        />
-                      </button>
-                    ) : (
-                      <div className="w-8 h-8 rounded-lg bg-zinc-800 text-zinc-300 flex items-center justify-center font-bold text-xs shrink-0 border border-zinc-700">
-                        {log.name.slice(0, 2).toUpperCase()}
-                      </div>
-                    )}
-                    <div className="font-medium text-zinc-100">{log.name}</div>
-                  </div>
+                  <div className="font-medium text-slate-900">{log.name}</div>
+                  {log.phone && <div className="text-xs font-mono text-slate-500 mt-0.5">{log.phone}</div>}
                 </TableCell>
                 <TableCell>
                   {log.photo_url ? (
                     <button
                       type="button"
-                      onClick={() => setPreviewImage({ url: log.photo_url!, title: `${log.name} - ${log.reference_name || 'Presença'}` })}
-                      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20 transition-colors"
+                      onClick={() => setPreviewImage({ url: log.photo_url!, title: `Comprovante - ${log.name}` })}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-medium hover:bg-indigo-100 transition-colors cursor-pointer"
                     >
                       <ImageIcon className="w-3.5 h-3.5" />
                       <span>Ver Foto</span>
                     </button>
                   ) : (
-                    <span className="text-xs text-zinc-500">Sem anexo</span>
+                    <span className="text-[11px] text-slate-400">—</span>
                   )}
                 </TableCell>
                 <TableCell>
-                  <div className="text-xs font-mono text-zinc-300">{log.phone || '—'}</div>
+                  <span className="text-xs text-slate-700">{log.reference_name || 'Geral'}</span>
                 </TableCell>
                 <TableCell>
-                  <div className="text-xs text-zinc-200">{log.reference_name || 'Geral'}</div>
+                  <span className="text-xs text-slate-500 font-mono">
+                    {new Date(log.created_at).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
+                  </span>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-1.5 text-xs text-zinc-400 font-mono">
-                    <Clock className="w-3 h-3 text-zinc-500" />
-                    <span>{new Date(log.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} • {new Date(log.created_at).toLocaleDateString('pt-BR')}</span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant={log.status === 'present' ? 'success' : 'warning'} size="sm">
-                    {log.status === 'present' ? 'Presente' : 'Justificado'}
+                  <Badge variant={log.status === 'present' ? 'success' : 'neutral'} size="sm">
+                    {log.status === 'present' ? 'Presente' : log.status}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   <button
                     onClick={() => handleDelete(log.id)}
+                    className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-slate-100 transition-colors cursor-pointer"
                     title="Excluir"
-                    className="p-1.5 rounded text-zinc-400 hover:text-rose-400 hover:bg-zinc-800"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -218,68 +228,71 @@ export const PresencePage: React.FC = () => {
         </Table>
       )}
 
-      {/* Modal */}
+      {/* Modal with image upload button */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Check-in Manual de Presença"
-        description="Confirme a participação de uma liderança ou apoiador."
+        title="Novo Check-in de Presença"
+        description="Confirmação de presença em eventos, plenárias ou comícios."
       >
         <form onSubmit={handleSave} className="space-y-3.5 text-left">
           <Input
             label="Nome do Participante"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            placeholder="Ex.: Paulo Henrique"
+            placeholder="Ex.: Carlos Souza"
             required
-            autoFocus
           />
 
           <Input
-            label="Telefone / WhatsApp"
+            label="Telefone / WhatsApp (opcional)"
             value={formData.phone}
             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            placeholder="(11) 98888-7777"
+            placeholder="(11) 99999-9999"
           />
 
           <Input
-            label="Evento ou Reunião"
+            label="Evento / Plenária / Reunião"
             value={formData.reference_name}
             onChange={(e) => setFormData({ ...formData, reference_name: e.target.value })}
-            placeholder="Ex.: Plenária Central"
+            placeholder="Ex.: Plenária Central 2026"
             required
           />
 
-          <FileUpload
-            label="Foto / Comprovante de Presença (Opcional)"
-            helperText="Foto do participante, selfie ou registro da reunião"
-            value={formData.photo_url || null}
-            fileName={formData.attachment_name || null}
-            onChange={(dataUrl, meta) => {
-              setFormData({
-                ...formData,
-                photo_url: dataUrl || '',
-                attachment_name: meta?.name || '',
-              });
-            }}
-          />
+          {/* Upload Button */}
+          <div className="space-y-1.5 p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <label className="block text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+              <Camera className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Upload de Imagem: Foto da Presença / Lista Assinada</span>
+            </label>
+            <FileUpload
+              accept="image/*"
+              maxSizeMB={10}
+              onFileSelected={(file, dataUrl) => {
+                setFormData(prev => ({
+                  ...prev,
+                  photo_url: dataUrl,
+                  attachment_name: file.name,
+                }));
+              }}
+              onFileRemoved={() => {
+                setFormData(prev => ({
+                  ...prev,
+                  photo_url: '',
+                  attachment_name: '',
+                }));
+              }}
+              currentFileName={formData.attachment_name || undefined}
+              helperText="Carregue foto do participante ou da lista física de presença."
+            />
+          </div>
 
-          <Select
-            label="Status"
-            value={formData.status}
-            onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-            options={[
-              { value: 'present', label: 'Presente no Local' },
-              { value: 'justified', label: 'Ausência Justificada' },
-            ]}
-          />
-
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-800">
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
             <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>
               Cancelar
             </Button>
-            <Button type="submit" variant="primary" size="sm">
-              Confirmar Check-in
+            <Button type="submit" variant="primary" size="sm" isLoading={isSubmitting}>
+              Salvar Check-in
             </Button>
           </div>
         </form>
@@ -287,24 +300,23 @@ export const PresencePage: React.FC = () => {
 
       {/* Image Preview Modal */}
       {previewImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
-          <div className="relative max-w-xl w-full bg-slate-900 rounded-2xl border border-slate-700 overflow-hidden shadow-2xl">
-            <div className="p-3.5 border-b border-slate-800 flex items-center justify-between text-white">
-              <span className="text-xs font-semibold truncate pr-4">{previewImage.title}</span>
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-4 space-y-3 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-bold text-slate-900">{previewImage.title}</h4>
               <button
                 type="button"
                 onClick={() => setPreviewImage(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="p-3 flex items-center justify-center bg-black/60 max-h-[75vh] overflow-auto">
+            <div className="rounded-xl overflow-hidden bg-slate-950 flex items-center justify-center max-h-[70vh]">
               <img
                 src={previewImage.url}
                 alt={previewImage.title}
-                className="max-h-[70vh] w-auto object-contain rounded-lg"
-                referrerPolicy="no-referrer"
+                className="w-full h-auto max-h-[70vh] object-contain"
               />
             </div>
           </div>

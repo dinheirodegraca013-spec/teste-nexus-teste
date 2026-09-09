@@ -37,6 +37,27 @@ import { OrganizationsPage } from './pages/app/OrganizationsPage';
 import { PlansPage } from './pages/app/PlansPage';
 import { ProfilePage } from './pages/app/ProfilePage';
 import { SettingsPage } from './pages/app/SettingsPage';
+import { AppModule } from './types';
+
+const routeModuleMap: Record<string, AppModule> = {
+  '/app': 'dashboard',
+  '/app/dashboard': 'dashboard',
+  '/app/coordenadores': 'coordinators',
+  '/app/liderancas': 'leaders',
+  '/app/crm': 'crm',
+  '/app/metas': 'goals',
+  '/app/campo': 'field',
+  '/app/eventos': 'events',
+  '/app/reunioes': 'meetings',
+  '/app/presenca': 'presence',
+  '/app/materiais': 'materials',
+  '/app/adesivos': 'stickers',
+  '/app/inteligencia': 'intelligence',
+  '/app/relatorios': 'reports',
+  '/app/usuarios': 'users',
+  '/app/organizacoes': 'organizations',
+  '/app/configuracoes': 'settings',
+};
 
 function getPathFromLocation(): string {
   let path = window.location.pathname || '/';
@@ -50,7 +71,7 @@ function getPathFromLocation(): string {
 }
 
 function MainRouter() {
-  const { user, profile, isLoading } = useAuth();
+  const { user, profile, isLoading, hasPermission } = useAuth();
   const [currentPath, setCurrentPath] = useState(() => getPathFromLocation());
 
   useEffect(() => {
@@ -144,6 +165,16 @@ function MainRouter() {
       <PublicLayout currentPath={currentPath} onNavigate={navigate}>
         {publicContent}
       </PublicLayout>
+    );
+  }
+
+  // Route permission gate for private modules
+  const requiredModule = routeModuleMap[currentPath];
+  if (requiredModule && !hasPermission(requiredModule, 'view')) {
+    return (
+      <AppLayout currentPath={currentPath} onNavigate={navigate}>
+        <ForbiddenPage onNavigate={navigate} />
+      </AppLayout>
     );
   }
 
