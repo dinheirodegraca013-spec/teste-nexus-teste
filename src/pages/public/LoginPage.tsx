@@ -10,7 +10,7 @@ interface LoginPageProps {
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
-  const { signIn } = useAuth();
+  const { signIn, getDefaultRoute } = useAuth();
   const { error: toastError, success } = useToast();
 
   const [email, setEmail] = useState('');
@@ -27,7 +27,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
     }
 
     setIsLoading(true);
-    const { error } = await signIn(email.trim(), password);
+    const { error, defaultRoute } = await signIn(email.trim(), password);
     setIsLoading(false);
 
     if (error) {
@@ -35,7 +35,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
       toastError(error.message || 'Erro ao autenticar: Credenciais inválidas.');
     } else {
       success('Sessão iniciada com sucesso!');
-      onNavigate('/app/dashboard');
+      const targetRoute = defaultRoute || getDefaultRoute();
+      onNavigate(targetRoute);
     }
   };
 

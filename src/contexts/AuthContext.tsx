@@ -30,7 +30,8 @@ interface AuthContextType {
   permissions: UserModulePermission[];
   isLoading: boolean;
   isConfigured: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: AuthError | Error | null }>;
+  profileError: string | null;
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | Error | null; defaultRoute?: string }>;
   signUp: (params: SignUpParams) => Promise<SignUpResult>;
   signOut: () => Promise<{ error: AuthError | Error | null }>;
   resetPassword: (email: string) => Promise<{ error: AuthError | Error | null }>;
@@ -38,7 +39,140 @@ interface AuthContextType {
   updateProfile: (data: Partial<Profile>) => Promise<{ error: Error | null }>;
   switchOrganization: (orgId: string) => Promise<void>;
   hasPermission: (module: AppModule, action?: 'view' | 'create' | 'edit' | 'delete') => boolean;
+  getDefaultRoute: () => string;
   refreshUserData: () => Promise<void>;
+}
+
+/**
+ * Normaliza a role apenas para comparação no frontend.
+ * Não altera o valor original armazenado no banco de dados.
+ * superadmin, Super Admin, SUPERADMIN e super_admin -> 'superadmin'
+ * admin, ADMIN etc. -> 'admin'
+ */
+export function normalizeRole(role: unknown): string {
+  if (!role) return '';
+  const clean = String(role).toLowerCase().replace(/[\s_-]/g, '');
+  if (clean === 'superadmin' || clean === 'superadministrador') return 'superadmin';
+  if (clean === 'admin' || clean === 'administrador' || clean === 'adm') return 'admin';
+  if (clean === 'coordinator' || clean === 'coordenador') return 'coordinator';
+  if (clean === 'leader' || clean === 'lider' || clean === 'lideranca') return 'leader';
+  if (clean === 'manager' || clean === 'gerente') return 'manager';
+  if (clean === 'operator' || clean === 'operador') return 'operator';
+  if (clean === 'viewer' || clean === 'visualizador') return 'viewer';
+  return clean;
+}
+
+/**
+ * Avalia se o usuário tem permissão para uma ação sobre um módulo.
+ * Superadmin e admin possuem acesso global irrestrito aos módulos administrativos.
+ * Demais roles respeitam a matriz estrita do sistema e user_module_permissions.
+ */
+export function checkUserPermission(
+  userProfile: Profile | null,
+  perms: UserModulePermission[],
+  module: AppModule,
+  action: 'view' | 'create' | 'edit' | 'delete' = 'view'
+): boolean {
+  if (!userProfile) return false;
+
+  const normRole = normalizeRole(userProfile.role);
+
+  // 1. Superadmin e Admin têm acesso global aos módulos administrativos
+  if (normRole === 'superadmin' || normRole === 'admin') {
+    return true;
+  }
+
+  // 2. Leader tem acesso restrito a field, stickers e crm
+  if (normRole === 'leader') {
+    if (module === 'field' || module === 'stickers' || module === 'crm') return true;
+    return false;
+  }
+
+  // 3. Coordinator tem acesso aos seus módulos operacionais específicos (não inclui dashboard)
+  if (normRole === 'coordinator') {
+    if (
+      module === 'coordinators' ||
+      module === 'leaders' ||
+      module === 'crm' ||
+      module === 'goals' ||
+      module === 'field' ||
+      module === 'stickers' ||
+      module === 'events' ||
+      module === 'meetings' ||
+      module === 'presence'
+    ) {
+      return true;
+    }
+  }
+
+  // 4. Demais roles (manager, operator, viewer) e módulos complementares: consultar user_module_permissions
+  const userPerm = perms.find((p) => p.module === module);
+  if (!userPerm) return false;
+
+  if (action === 'view') return Boolean(userPerm.can_view);
+  if (action === 'create') return Boolean(userPerm.can_create);
+  if (action === 'edit') return Boolean(userPerm.can_edit);
+  if (action === 'delete') return Boolean(userPerm.can_delete);
+
+  return false;
+}
+
+/**
+ * Retorna a rota padrão para onde o usuário deve ser redirecionado após login,
+ * garantindo que ele seja enviado para uma rota que realmente possa visualizar.
+ */
+export function getDefaultRouteForUser(
+  userProfile: Profile | null,
+  perms: UserModulePermission[]
+): string {
+  if (!userProfile) return '/login';
+
+  const hasPerm = (mod: AppModule, act: 'view' | 'create' | 'edit' | 'delete' = 'view') =>
+    checkUserPermission(userProfile, perms, mod, act);
+
+  const normRole = normalizeRole(userProfile.role);
+
+  // superadmin → /app/dashboard
+  // admin → /app/dashboard
+  if (normRole === 'superadmin' || normRole === 'admin') {
+    return '/app/dashboard';
+  }
+
+  // leader → /app/campo, se tiver field.view
+  if (normRole === 'leader') {
+    if (hasPerm('field', 'view')) return '/app/campo';
+    if (hasPerm('crm', 'view')) return '/app/crm';
+    if (hasPerm('stickers', 'view')) return '/app/adesivos';
+    return '/403';
+  }
+
+  // coordinator, manager, operator, viewer → primeiro módulo permitido
+  const candidateModules: Array<{ module: AppModule; route: string }> = [
+    { module: 'dashboard', route: '/app/dashboard' },
+    { module: 'coordinators', route: '/app/coordenadores' },
+    { module: 'leaders', route: '/app/liderancas' },
+    { module: 'crm', route: '/app/crm' },
+    { module: 'goals', route: '/app/metas' },
+    { module: 'field', route: '/app/campo' },
+    { module: 'events', route: '/app/eventos' },
+    { module: 'meetings', route: '/app/reunioes' },
+    { module: 'presence', route: '/app/presenca' },
+    { module: 'materials', route: '/app/materiais' },
+    { module: 'stickers', route: '/app/adesivos' },
+    { module: 'reports', route: '/app/relatorios' },
+    { module: 'intelligence', route: '/app/inteligencia' },
+    { module: 'users', route: '/app/usuarios' },
+    { module: 'organizations', route: '/app/organizacoes' },
+    { module: 'settings', route: '/app/configuracoes' },
+  ];
+
+  for (const candidate of candidateModules) {
+    if (hasPerm(candidate.module, 'view')) {
+      return candidate.route;
+    }
+  }
+
+  return '/403';
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,20 +185,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [permissions, setPermissions] = useState<UserModulePermission[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   // Fetch full user profile, organization, and RBAC permissions from real Supabase
-  const loadUserData = useCallback(async (authUser: User) => {
+  const loadUserData = useCallback(async (authUser: User): Promise<{
+    profile: Profile | null;
+    organization: Organization | null;
+    permissions: UserModulePermission[];
+  }> => {
+    setProfileError(null);
     try {
-      // 1. Fetch user profile
+      // 1. Fetch user profile from public.profiles
       const { data: userProfile, error: profileErr } = await profilesService.getById(authUser.id);
 
       if (profileErr) {
-        console.warn('[Auth] Erro ao carregar perfil do usuário:', profileErr.message);
+        console.error('[Auth] Erro ao carregar perfil de public.profiles:', {
+          userId: authUser.id,
+          message: profileErr.message,
+          code: profileErr.code,
+          details: profileErr.details,
+        });
       }
 
       let activeProfile = userProfile;
 
-      // If user is authenticated in Supabase Auth but profile record does not yet exist in PostgreSQL
+      // Se o usuário está autenticado no Supabase Auth, mas ainda não possui registro em public.profiles
+      // (caso de primeiro login após confirmação de e-mail)
       if (!activeProfile) {
         const metadata = authUser.user_metadata || {};
         const fallbackName = metadata.full_name || metadata.name || authUser.email?.split('@')[0] || 'Usuário';
@@ -72,24 +218,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         let orgId = metadata.organization_id;
         
-        // If no organization provided, create or link default organization
+        // Se organization_id não constar nos metadados, consultar organizações existentes antes de criar
         if (!orgId) {
+          const { data: existingOrgs, error: orgsErr } = await organizationsService.getAll();
+          if (orgsErr) {
+            console.warn('[Auth] Erro ao listar organizações existentes:', orgsErr.message);
+          }
+
           const orgName = metadata.organization_name || `Campanha ${fallbackName.split(' ')[0]}`;
-          const { data: newOrg } = await organizationsService.create({
-            name: orgName,
-            slug: orgName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-            plan: 'professional',
-            status: 'active',
-          });
-          if (newOrg) {
-            orgId = newOrg.id;
+          const orgSlug = orgName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+
+          // Prevenção de duplicação: checar se já existe organização com mesmo slug ou nome
+          const matchedOrg = existingOrgs?.find(
+            (o) => o.slug === orgSlug || o.name.toLowerCase() === orgName.toLowerCase()
+          );
+
+          if (matchedOrg) {
+            orgId = matchedOrg.id;
+          } else {
+            // Provisionar organização para o primeiro login
+            const { data: newOrg, error: newOrgErr } = await organizationsService.create({
+              name: orgName,
+              slug: orgSlug,
+              plan: 'professional',
+              status: 'active',
+            });
+
+            if (newOrg) {
+              orgId = newOrg.id;
+            } else if (newOrgErr) {
+              console.error('[Auth] Falha ao provisionar organização (RLS ou restrição de banco):', {
+                message: newOrgErr.message,
+                code: newOrgErr.code,
+                details: newOrgErr.details,
+              });
+              // Vincular à primeira organização existente disponível, sem criar org-alpha silencioso
+              if (existingOrgs && existingOrgs.length > 0) {
+                orgId = existingOrgs[0].id;
+              }
+            }
           }
         }
 
-        const { data: createdProfile } = await profilesService.create({
+        if (!orgId) {
+          console.error('[Auth] Impossível determinar organization_id válida para o usuário', authUser.id);
+        }
+
+        // Provisionar perfil em public.profiles
+        const { data: createdProfile, error: createProfileErr } = await profilesService.create({
           id: authUser.id,
           user_id: authUser.id,
-          organization_id: orgId || 'org-alpha',
+          organization_id: orgId || '',
           full_name: fallbackName,
           email: authUser.email || '',
           role: fallbackRole,
@@ -97,27 +276,63 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           is_active: true,
         });
 
-        activeProfile = createdProfile;
+        if (createProfileErr) {
+          const errMsg = `Falha ao provisionar perfil em public.profiles para o usuário ${authUser.id} (possível restrição de RLS no PostgreSQL): ${createProfileErr.message}`;
+          console.error('[Auth]', errMsg, {
+            code: createProfileErr.code,
+            details: createProfileErr.details,
+            hint: createProfileErr.hint,
+          });
+          setProfileError(errMsg);
+        } else if (createdProfile) {
+          activeProfile = createdProfile;
+        }
       }
 
       setProfile(activeProfile || null);
 
-      // 2. Fetch active organization and all accessible organizations
+      // 2. Fetch active organization
+      let loadedOrg: Organization | null = null;
       if (activeProfile?.organization_id) {
-        const { data: orgData } = await organizationsService.getById(activeProfile.organization_id);
-        setOrganization(orgData || null);
+        const { data: orgData, error: orgErr } = await organizationsService.getById(activeProfile.organization_id);
+        if (orgErr) {
+          console.warn('[Auth] Erro ao carregar organização ativa:', orgErr.message);
+        }
+        loadedOrg = orgData || null;
+        setOrganization(loadedOrg);
+      } else {
+        setOrganization(null);
       }
 
       const { data: allOrgs } = await organizationsService.getAll();
       setOrganizations(allOrgs || []);
 
-      // 3. Fetch module-level permissions for granular RBAC
+      // 3. Fetch module-level permissions
+      let loadedPerms: UserModulePermission[] = [];
       if (activeProfile?.id) {
-        const { data: perms } = await permissionsService.getByUserId(activeProfile.id);
-        setPermissions(perms || []);
+        const { data: perms, error: permsErr } = await permissionsService.getByUserId(activeProfile.id);
+        if (permsErr) {
+          console.warn('[Auth] Erro ao carregar permissões de módulos:', permsErr.message);
+        }
+        loadedPerms = perms || [];
+        setPermissions(loadedPerms);
+      } else {
+        setPermissions([]);
       }
-    } catch (err) {
+
+      return {
+        profile: activeProfile || null,
+        organization: loadedOrg,
+        permissions: loadedPerms,
+      };
+    } catch (err: any) {
       console.error('[Auth] Erro inesperado ao carregar dados do usuário:', err);
+      setProfileError(err?.message || 'Erro inesperado ao carregar perfil.');
+      return {
+        profile: null,
+        organization: null,
+        permissions: [],
+      };
     }
   }, []);
 
@@ -167,11 +382,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(newSession?.user || null);
 
       if (newSession?.user) {
+        setIsLoading(true);
         await loadUserData(newSession.user);
       } else {
         setProfile(null);
         setOrganization(null);
         setPermissions([]);
+        setProfileError(null);
       }
       setIsLoading(false);
     });
@@ -184,27 +401,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshUserData = async () => {
     if (user) {
+      setIsLoading(true);
       await loadUserData(user);
+      setIsLoading(false);
     }
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (
+    email: string,
+    password: string
+  ): Promise<{ error: AuthError | Error | null; defaultRoute?: string }> => {
+    setIsLoading(true);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
 
-      if (error) return { error };
+      if (error) {
+        logAuthError('signIn', error);
+        setIsLoading(false);
+        return { error };
+      }
 
       if (data.user) {
         setUser(data.user);
         setSession(data.session);
-        await loadUserData(data.user);
+        const { profile: loadedProfile, permissions: loadedPerms } = await loadUserData(data.user);
+        const route = getDefaultRouteForUser(loadedProfile, loadedPerms);
+        setIsLoading(false);
+        return { error: null, defaultRoute: route };
       }
 
-      return { error: null };
+      setIsLoading(false);
+      return { error: null, defaultRoute: '/app/dashboard' };
     } catch (err: any) {
+      logAuthError('signIn:catch', err);
+      setIsLoading(false);
       return { error: err };
     }
   };
@@ -392,48 +625,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const hasPermission = (
-    module: AppModule,
-    action: 'view' | 'create' | 'edit' | 'delete' = 'view'
-  ): boolean => {
-    if (!profile) return false;
-    // Superadmin and Admin have global access across all modules
-    if (profile.role === 'superadmin' || profile.role === 'admin') return true;
+  const hasPermission = useCallback(
+    (module: AppModule, action: 'view' | 'create' | 'edit' | 'delete' = 'view'): boolean => {
+      return checkUserPermission(profile, permissions, module, action);
+    },
+    [profile, permissions]
+  );
 
-    // Leader has access to field, stickers, and crm
-    if (profile.role === 'leader') {
-      if (module === 'field' || module === 'stickers' || module === 'crm') return true;
-      return false;
-    }
-
-    // Coordinator has access to coordinators, leaders, crm, goals, field, stickers, events, meetings, presence
-    if (profile.role === 'coordinator') {
-      if (
-        module === 'coordinators' ||
-        module === 'leaders' ||
-        module === 'crm' ||
-        module === 'goals' ||
-        module === 'field' ||
-        module === 'stickers' ||
-        module === 'events' ||
-        module === 'meetings' ||
-        module === 'presence'
-      ) {
-        return true;
-      }
-    }
-
-    // Check granular module permissions if explicitly assigned
-    const userPerm = permissions.find((p) => p.module === module);
-    if (!userPerm) return false;
-
-    if (action === 'view') return Boolean(userPerm.can_view);
-    if (action === 'create') return Boolean(userPerm.can_create);
-    if (action === 'edit') return Boolean(userPerm.can_edit);
-    if (action === 'delete') return Boolean(userPerm.can_delete);
-
-    return false;
-  };
+  const getDefaultRoute = useCallback((): string => {
+    return getDefaultRouteForUser(profile, permissions);
+  }, [profile, permissions]);
 
   return (
     <AuthContext.Provider
@@ -446,6 +647,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         permissions,
         isLoading,
         isConfigured: isSupabaseConfigured,
+        profileError,
         signIn,
         signUp,
         signOut,
@@ -454,6 +656,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updateProfile,
         switchOrganization,
         hasPermission,
+        getDefaultRoute,
         refreshUserData,
       }}
     >

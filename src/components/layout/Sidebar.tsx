@@ -21,7 +21,7 @@ import {
   LogOut,
   ChevronDown
 } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth, normalizeRole } from '../../contexts/AuthContext';
 import { AppModule } from '../../types';
 
 interface SidebarProps {
@@ -51,7 +51,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { profile, organization, organizations, switchOrganization, signOut, hasPermission } = useAuth();
   const [isOrgDropdownOpen, setIsOrgDropdownOpen] = React.useState(false);
 
-  const isLeader = profile?.role === 'leader';
+  const isLeader = normalizeRole(profile?.role) === 'leader';
 
   const leaderNavGroups: NavGroup[] = [
     {

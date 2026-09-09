@@ -4,6 +4,8 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { PublicLayout } from './components/layout/PublicLayout';
 import { AppLayout } from './components/layout/AppLayout';
 import { LoadingState } from './components/ui/LoadingState';
+import { Button } from './components/ui/Button';
+import { ErrorState } from './components/ui/ErrorState';
 
 // Public Pages
 import { LandingPage } from './pages/public/LandingPage';
@@ -71,7 +73,16 @@ function getPathFromLocation(): string {
 }
 
 function MainRouter() {
-  const { user, profile, isLoading, hasPermission } = useAuth();
+  const {
+    user,
+    profile,
+    isLoading,
+    profileError,
+    hasPermission,
+    getDefaultRoute,
+    refreshUserData,
+    signOut,
+  } = useAuth();
   const [currentPath, setCurrentPath] = useState(() => getPathFromLocation());
 
   useEffect(() => {
@@ -88,6 +99,28 @@ function MainRouter() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const isAppRoute = currentPath.startsWith('/app');
+  const isAuthRoute = currentPath === '/login' || currentPath === '/cadastro' || currentPath === '/recuperar-senha';
+  const hasInviteParam = typeof window !== 'undefined' && window.location.search.includes('convite=');
+
+  // Redirecionamento automático quando o usuário já está logado e visita /login ou /cadastro
+  useEffect(() => {
+    if (isAuthRoute && user && !hasInviteParam && !isLoading && profile) {
+      const target = getDefaultRoute();
+      navigate(target);
+    }
+  }, [isAuthRoute, user, hasInviteParam, isLoading, profile, getDefaultRoute]);
+
+  // Redirecionamento de /app para a primeira rota autorizada
+  useEffect(() => {
+    if (currentPath === '/app' && user && !isLoading && profile) {
+      const target = getDefaultRoute();
+      if (target !== '/app') {
+        navigate(target);
+      }
+    }
+  }, [currentPath, user, isLoading, profile, getDefaultRoute]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-6">
@@ -96,12 +129,7 @@ function MainRouter() {
     );
   }
 
-  // Route protection
-  const isAppRoute = currentPath.startsWith('/app');
-  const isAuthRoute = currentPath === '/login' || currentPath === '/cadastro' || currentPath === '/recuperar-senha';
-  const hasInviteParam = typeof window !== 'undefined' && window.location.search.includes('convite=');
-
-  // If trying to access /app/* but not logged in -> redirect to /login
+  // Se tentar acessar /app/* sem estar logado -> redirecionar para /login
   if (isAppRoute && !user) {
     return (
       <PublicLayout currentPath="/login" onNavigate={navigate}>
@@ -110,17 +138,42 @@ function MainRouter() {
     );
   }
 
-  // If user is already logged in and visits /login or /cadastro without invite, redirect to dashboard or field
-  if (isAuthRoute && user && !hasInviteParam) {
-    const initialRoute = profile?.role === 'leader' ? '/app/campo' : '/app/dashboard';
+  // Se o usuário está autenticado e em rota privada, mas o perfil ainda não está pronto
+  if (isAppRoute && user && !profile) {
+    // Se ocorreu um erro de banco/RLS na leitura ou provisionamento do perfil, exibir diagnóstico claro em vez de 403
+    if (profileError) {
+      return (
+        <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-6">
+          <div className="max-w-md w-full bg-white p-6 rounded-2xl border border-rose-200 shadow-sm text-center">
+            <ErrorState
+              title="Erro de Perfil no Banco de Dados"
+              message={profileError}
+              onRetry={() => refreshUserData()}
+            />
+            <div className="mt-4 flex justify-center gap-2">
+              <Button size="sm" variant="outline" onClick={() => signOut()}>
+                Encerrar Sessão
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Perfil ainda em carregamento assíncrono: aguardar sem acionar falso 403
     return (
-      <AppLayout currentPath={initialRoute} onNavigate={navigate}>
-        {profile?.role === 'leader' ? (
-          <FieldPage onNavigate={navigate} />
-        ) : (
-          <DashboardPage onNavigate={navigate} />
-        )}
-      </AppLayout>
+      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-6">
+        <LoadingState message="Carregando perfil e permissões do usuário..." />
+      </div>
+    );
+  }
+
+  // Se logado e em tela de auth, aguardar redirecionamento
+  if (isAuthRoute && user && !hasInviteParam) {
+    return (
+      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-6">
+        <LoadingState message="Redirecionando para seu módulo..." />
+      </div>
     );
   }
 
@@ -173,7 +226,15 @@ function MainRouter() {
   if (requiredModule && !hasPermission(requiredModule, 'view')) {
     return (
       <AppLayout currentPath={currentPath} onNavigate={navigate}>
-        <ForbiddenPage onNavigate={navigate} />
+        <ForbiddenPage
+          onNavigate={(path) => {
+            if (path === '/app/dashboard') {
+              navigate(getDefaultRoute());
+            } else {
+              navigate(path);
+            }
+          }}
+        />
       </AppLayout>
     );
   }
