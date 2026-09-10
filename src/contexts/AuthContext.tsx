@@ -48,7 +48,7 @@ interface AuthContextType {
  * Utilitário para envolver chamadas assíncronas com timeout estrito.
  * Impede que queries travadas na rede ou no Supabase deixem o estado em loading infinito.
  */
-function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> {
+function withTimeout<T>(promise: PromiseLike<T>, timeoutMs: number, errorMessage: string): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | null = null;
   const timeoutPromise = new Promise<never>((_, reject) => {
     timer = setTimeout(() => {
@@ -58,7 +58,7 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: st
       reject(err);
     }, timeoutMs);
   });
-  return Promise.race([promise, timeoutPromise]).finally(() => {
+  return Promise.race([Promise.resolve(promise), timeoutPromise]).finally(() => {
     if (timer) clearTimeout(timer);
   });
 }
@@ -267,133 +267,74 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('[NEXUS FLOW] PROFILE_LOADED', { role: activeProfile.role, hasOrg: Boolean(activeProfile.organization_id) });
         console.log('[NEXUS AUTH] profile:success', { role: activeProfile.role });
       } else {
-        // Se o usuário está autenticado no Supabase Auth, mas ainda não possui registro em public.profiles
-        // (caso de primeiro login após confirmação de e-mail)
+        // Provisionamento atômico via RPC provision_new_user do Supabase
+        // Executado exclusivamente quando o usuário autenticado ainda não possui profile (executado uma única vez)
         const metadata = authUser.user_metadata || {};
-        const fallbackName = metadata.full_name || metadata.name || authUser.email?.split('@')[0] || 'Usuário';
-        const fallbackRole = (metadata.role as UserRole) || 'admin';
-        
-        // Determinar organization_id garantindo estritamente um UUID válido
-        let validOrgId: string | null = null;
-        if (metadata.organization_id && isValidUUID(metadata.organization_id)) {
-          validOrgId = metadata.organization_id;
-        }
+        const profileName = metadata.full_name || metadata.name || authUser.email?.split('@')[0] || 'Usuário';
+        const orgName = metadata.organization_name || `Campanha de ${profileName.split(' ')[0]}`;
+        const orgSlug = orgName.toLowerCase().replace(/[^a-z0-9]/g, '-');
 
-        // Se organization_id não constar ou não for UUID válido nos metadados, consultar organizações existentes antes de criar
-        if (!validOrgId) {
-          try {
-            const { data: existingOrgs, error: orgsErr } = await withTimeout(
-              organizationsService.getAll(),
-              5000,
-              'Tempo limite ao buscar organizações existentes'
-            );
+        console.log('[NEXUS PROVISION] Usuário autenticado sem profile. Invocando RPC provision_new_user...', {
+          userId: authUser.id,
+          orgName,
+          orgSlug,
+        });
 
-            if (orgsErr) {
-              console.warn('[NEXUS AUTH] organization:warn', {
-                stage: 'organization_query',
-                name: orgsErr.name,
-                message: orgsErr.message,
-                status: orgsErr.code,
-              });
-            }
-
-            const orgName = metadata.organization_name || `Campanha ${fallbackName.split(' ')[0]}`;
-            const orgSlug = orgName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-
-            const matchedOrg = existingOrgs?.find(
-              (o) => isValidUUID(o.id) && (o.slug === orgSlug || o.name.toLowerCase() === orgName.toLowerCase())
-            );
-
-            if (matchedOrg && isValidUUID(matchedOrg.id)) {
-              validOrgId = matchedOrg.id;
-            } else if (existingOrgs && existingOrgs.length > 0 && isValidUUID(existingOrgs[0].id)) {
-              validOrgId = existingOrgs[0].id;
-            } else {
-              const { data: newOrg, error: newOrgErr } = await withTimeout(
-                organizationsService.create({
-                  name: orgName,
-                  slug: orgSlug,
-                  plan: 'professional',
-                  status: 'active',
-                }),
-                6000,
-                'Tempo limite ao provisionar organização'
-              );
-
-              if (newOrg && isValidUUID(newOrg.id)) {
-                validOrgId = newOrg.id;
-              } else if (newOrgErr) {
-                console.error('[NEXUS AUTH] organization_provision:error', {
-                  stage: 'organization_provision',
-                  name: newOrgErr.name,
-                  message: newOrgErr.message,
-                  status: newOrgErr.code,
-                });
-              }
-            }
-          } catch (orgEx: any) {
-            console.error('[NEXUS AUTH] organization_provision:error', {
-              stage: 'organization_provision',
-              name: orgEx?.name,
-              message: orgEx?.message,
-              status: orgEx?.status || 500,
-            });
-          }
-        }
-
-        // Regra Estrita: Se não houver organization_id UUID válido, NÃO chamar profilesService.create
-        if (!validOrgId || !isValidUUID(validOrgId)) {
-          const orgErrMsg = 'Não foi possível associar uma organização válida (UUID) ao seu usuário. O provisionamento de perfil foi interrompido para evitar inconsistências no banco de dados.';
-          console.error('[NEXUS AUTH] profile_provision:aborted_missing_organization_uuid', {
-            stage: 'organization_validation',
-            metadataOrgId: metadata.organization_id,
-          });
-          setProfileError(orgErrMsg);
-          setInitializationError(orgErrMsg);
-          return { profile: null, organization: null, permissions: [] };
-        }
-
-        // Provisionar perfil em public.profiles exclusivamente com UUID real validado
         try {
-          const { data: createdProfile, error: createProfileErr } = await withTimeout(
-            profilesService.create({
-              id: authUser.id,
-              organization_id: validOrgId,
-              name: fallbackName,
-              email: authUser.email || '',
-              role: fallbackRole,
-            }),
-            6000,
-            'Tempo limite ao provisionar perfil'
+          const { data: rpcOrgId, error: rpcErr } = await withTimeout<any>(
+            Promise.resolve(
+              supabase.rpc('provision_new_user', {
+                p_org_name: orgName,
+                p_org_slug: orgSlug,
+                p_campaign_type: 'DEPUTADO_FEDERAL',
+                p_profile_name: profileName,
+              })
+            ),
+            8000,
+            'Tempo limite ao provisionar usuário via RPC'
           );
 
-          if (createProfileErr) {
-            const errMsg = `Falha ao provisionar perfil em public.profiles: ${createProfileErr.message}`;
-            console.error('[NEXUS AUTH] profile:error', {
-              stage: 'profile_provision',
-              name: createProfileErr.name,
-              message: createProfileErr.message,
-              code: createProfileErr.code,
-              details: createProfileErr.details,
-              hint: createProfileErr.hint,
-              status: (createProfileErr as any)?.status || createProfileErr.code,
+          if (rpcErr) {
+            const errMsg = `Falha no provisionamento do usuário (RPC): ${rpcErr.message}`;
+            console.error('[NEXUS PROVISION] RPC_ERROR', {
+              code: rpcErr.code,
+              message: rpcErr.message,
+              details: rpcErr.details,
+              hint: rpcErr.hint,
             });
             setProfileError(errMsg);
             setInitializationError(errMsg);
-          } else if (createdProfile) {
-            activeProfile = createdProfile;
-            console.log('[NEXUS AUTH] profile:success', { role: createdProfile.role, provisioned: true });
+            return { profile: null, organization: null, permissions: [] };
           }
-        } catch (createEx: any) {
-          const errMsg = createEx?.message || 'Falha ao provisionar perfil';
-          console.error('[NEXUS AUTH] profile:error', {
-            stage: 'profile_provision',
-            name: createEx?.name,
-            message: createEx?.message,
-            status: createEx?.status || 500,
+
+          console.log('[NEXUS PROVISION] RPC provision_new_user concluída com sucesso:', { rpcOrgId });
+
+          // Após a RPC provisionar organization e profile atomicamente, carregar o profile recém-criado
+          const { data: createdProfile, error: reloadErr } = await withTimeout(
+            profilesService.getById(authUser.id),
+            6000,
+            'Tempo limite ao carregar perfil recém-provisionado'
+          );
+
+          if (reloadErr || !createdProfile) {
+            const errMsg = reloadErr?.message || 'Perfil de usuário não encontrado após provisionamento.';
+            console.error('[NEXUS PROVISION] Falha ao consultar profile pós-RPC:', errMsg);
+            setProfileError(errMsg);
+            setInitializationError(errMsg);
+            return { profile: null, organization: null, permissions: [] };
+          }
+
+          activeProfile = createdProfile;
+          console.log('[NEXUS AUTH] profile:provisioned_successfully', {
+            role: activeProfile.role,
+            orgId: activeProfile.organization_id,
           });
+        } catch (rpcEx: any) {
+          const errMsg = rpcEx?.message || 'Erro inesperado durante provisionamento via RPC.';
+          console.error('[NEXUS PROVISION] RPC_EXCEPTION', { message: errMsg });
           setProfileError(errMsg);
           setInitializationError(errMsg);
+          return { profile: null, organization: null, permissions: [] };
         }
       }
 
@@ -862,46 +803,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error: null, requiresConfirmation: true, user: data.user };
       }
 
-      // 4. Se houver data.session (usuário autenticado imediatamente)
+      // 4. Se houver data.session (usuário autenticado imediatamente - ex.: confirmação de e-mail desativada)
       if (data.user && data.session) {
         setUser(data.user);
         setSession(data.session);
 
-        let finalOrgId: string | null = sanitizedOrgId;
+        const orgName = organizationName?.trim() || `Campanha de ${name.trim().split(' ')[0]}`;
+        const orgSlug = orgName.toLowerCase().replace(/[^a-z0-9]/g, '-');
 
-        // Criar organização no PostgreSQL caso seja uma nova campanha e tenhamos sessão ativa
-        if (!finalOrgId && organizationName) {
-          try {
-            const { data: newOrg, error: orgErr } = await organizationsService.create({
-              name: organizationName.trim(),
-              slug: organizationName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-              status: 'active',
-            });
-            if (newOrg?.id && isValidUUID(newOrg.id)) {
-              finalOrgId = newOrg.id;
-            } else if (orgErr) {
-              console.warn('[Auth] Aviso ao criar organização após autenticação:', orgErr.message);
-            }
-          } catch (orgErr) {
-            console.warn('[Auth] Falha na criação da organização pós-autenticação:', orgErr);
+        try {
+          console.log('[NEXUS PROVISION] Invocando RPC provision_new_user via signUp com sessão ativa...');
+          const { data: rpcOrgId, error: rpcErr } = await supabase.rpc('provision_new_user', {
+            p_org_name: orgName,
+            p_org_slug: orgSlug,
+            p_campaign_type: 'DEPUTADO_FEDERAL',
+            p_profile_name: name.trim(),
+          });
+          if (rpcErr) {
+            console.error('[NEXUS PROVISION] Erro na RPC provision_new_user no signUp:', rpcErr);
+          } else {
+            console.log('[NEXUS PROVISION] RPC provision_new_user bem-sucedida no signUp:', { rpcOrgId });
           }
-        }
-
-        // Criar profile no PostgreSQL com a sessão do usuário autenticado SOMENTE se finalOrgId for UUID válido
-        if (finalOrgId && isValidUUID(finalOrgId)) {
-          try {
-            await profilesService.create({
-              id: data.user.id,
-              organization_id: finalOrgId,
-              name: name.trim(),
-              email: email.trim(),
-              role,
-            });
-          } catch (profErr) {
-            console.warn('[Auth] Aviso ao registrar profile após autenticação:', profErr);
-          }
-        } else {
-          console.warn('[Auth] Provisionamento direto de profile no signUp postergado para loadUserData (aguardando resolução de organização com UUID válido).');
+        } catch (rpcEx) {
+          console.error('[NEXUS PROVISION] Exceção na RPC provision_new_user no signUp:', rpcEx);
         }
 
         // Carregar os dados completos do usuário recém-criado

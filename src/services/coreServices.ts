@@ -33,15 +33,6 @@ export const organizationsService = {
       .select()
       .maybeSingle();
     return { data: data as Organization | null, error };
-  },
-
-  async create(organization: Partial<Organization>) {
-    const { data, error } = await supabase
-      .from('organizations')
-      .insert([organization])
-      .select()
-      .maybeSingle();
-    return { data: data as Organization | null, error };
   }
 };
 
@@ -106,10 +97,10 @@ export const profilesService = {
 
   async create(profile: Partial<Profile> & { name?: string }) {
     // Regra Obrigatória: Bloquear qualquer INSERT se organization_id não for UUID válido
-    if (!profile.organization_id || !isValidUUID(profile.organization_id)) {
+    if (!isValidUUID(profile.organization_id)) {
       const uuidErr = {
         name: 'ValidationError',
-        message: `organization_id inválido ou ausente: "${profile.organization_id || ''}". Um UUID válido é estritamente obrigatório para criar o perfil.`,
+        message: `organization_id inválido ou ausente: "${String(profile.organization_id)}". Um UUID válido é estritamente obrigatório para criar o perfil.`,
         code: 'INVALID_ORGANIZATION_UUID',
       };
       console.error('[NEXUS PROFILE] INSERT_BLOCKED_INVALID_ORG_UUID', uuidErr);
@@ -238,10 +229,10 @@ export const membersService = {
   },
 
   async invite(params: { organization_id: string; email: string; role: string; name?: string; full_name?: string }) {
-    if (!params.organization_id || !isValidUUID(params.organization_id)) {
+    if (!isValidUUID(params.organization_id)) {
       const validationError = {
         name: 'ValidationError',
-        message: `organization_id inválido para convite: "${params.organization_id || ''}". Um UUID válido é obrigatório.`,
+        message: `organization_id inválido para convite: "${String(params.organization_id)}". Um UUID válido é obrigatório.`,
         code: 'INVALID_ORGANIZATION_UUID',
       };
       console.error('[NEXUS MEMBERS] INVITE_BLOCKED_INVALID_ORG_UUID', validationError);

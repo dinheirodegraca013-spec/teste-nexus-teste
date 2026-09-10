@@ -4,9 +4,10 @@ export interface Organization {
   id: string;
   name: string;
   slug: string;
+  campaign_type?: string;
   document?: string;
-  plan: 'free' | 'starter' | 'professional' | 'pro' | 'premium' | 'enterprise';
-  status: 'active' | 'trial' | 'suspended' | 'canceled';
+  plan?: 'free' | 'starter' | 'professional' | 'pro' | 'premium' | 'enterprise';
+  status?: 'active' | 'trial' | 'suspended' | 'canceled';
   logo_url?: string;
   settings?: {
     primary_color?: string;
@@ -14,6 +15,7 @@ export interface Organization {
     territory_type?: 'bairro' | 'municipio' | 'zona' | 'regiao';
   };
   created_at: string;
+  updated_at?: string;
 }
 
 export interface DatabaseProfile {
