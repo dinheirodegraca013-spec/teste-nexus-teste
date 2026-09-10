@@ -31,6 +31,7 @@ interface AuthContextType {
   isLoading: boolean;
   isConfigured: boolean;
   profileError: string | null;
+  initializationError: string | null;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | Error | null; defaultRoute?: string }>;
   signUp: (params: SignUpParams) => Promise<SignUpResult>;
   signOut: () => Promise<{ error: AuthError | Error | null }>;
@@ -41,6 +42,25 @@ interface AuthContextType {
   hasPermission: (module: AppModule, action?: 'view' | 'create' | 'edit' | 'delete') => boolean;
   getDefaultRoute: () => string;
   refreshUserData: () => Promise<void>;
+}
+
+/**
+ * Utilitário para envolver chamadas assíncronas com timeout estrito.
+ * Impede que queries travadas na rede ou no Supabase deixem o estado em loading infinito.
+ */
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      const err = new Error(errorMessage);
+      err.name = 'TimeoutError';
+      (err as any).status = 408;
+      reject(err);
+    }, timeoutMs);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    if (timer) clearTimeout(timer);
+  });
 }
 
 /**
@@ -186,6 +206,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [permissions, setPermissions] = useState<UserModulePermission[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const [initializationError, setInitializationError] = useState<string | null>(null);
 
   // Fetch full user profile, organization, and RBAC permissions from real Supabase
   const loadUserData = useCallback(async (authUser: User): Promise<{
@@ -193,25 +214,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     organization: Organization | null;
     permissions: UserModulePermission[];
   }> => {
+    console.log('[NEXUS AUTH] loadUserData:start', { userId: authUser.id });
     setProfileError(null);
-    try {
-      // 1. Fetch user profile from public.profiles
-      const { data: userProfile, error: profileErr } = await profilesService.getById(authUser.id);
 
-      if (profileErr) {
-        console.error('[Auth] Erro ao carregar perfil de public.profiles:', {
-          userId: authUser.id,
-          message: profileErr.message,
-          code: profileErr.code,
-          details: profileErr.details,
+    let activeProfile: Profile | null = null;
+    try {
+      // 1. Fetch user profile from public.profiles with timeout
+      console.log('[NEXUS AUTH] profile:start', { userId: authUser.id });
+      try {
+        const { data: userProfile, error: profileErr } = await withTimeout(
+          profilesService.getById(authUser.id),
+          7000,
+          'Tempo limite excedido ao consultar public.profiles'
+        );
+
+        if (profileErr) {
+          console.error('[NEXUS AUTH] profile:error', {
+            stage: 'profile',
+            name: profileErr.name || 'PostgrestError',
+            message: profileErr.message,
+            status: profileErr.code || (profileErr as any).status || 500,
+          });
+        } else {
+          activeProfile = userProfile;
+        }
+      } catch (profEx: any) {
+        console.error('[NEXUS AUTH] profile:error', {
+          stage: 'profile',
+          name: profEx?.name || 'Error',
+          message: profEx?.message || 'Erro ao consultar perfil',
+          status: profEx?.status || 504,
         });
       }
 
-      let activeProfile = userProfile;
-
-      // Se o usuário está autenticado no Supabase Auth, mas ainda não possui registro em public.profiles
-      // (caso de primeiro login após confirmação de e-mail)
-      if (!activeProfile) {
+      // Se perfil localizado com sucesso
+      if (activeProfile) {
+        console.log('[NEXUS AUTH] profile:success', { role: activeProfile.role });
+      } else {
+        // Se o usuário está autenticado no Supabase Auth, mas ainda não possui registro em public.profiles
+        // (caso de primeiro login após confirmação de e-mail)
         const metadata = authUser.user_metadata || {};
         const fallbackName = metadata.full_name || metadata.name || authUser.email?.split('@')[0] || 'Usuário';
         const fallbackRole = (metadata.role as UserRole) || 'admin';
@@ -220,73 +261,115 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Se organization_id não constar nos metadados, consultar organizações existentes antes de criar
         if (!orgId) {
-          const { data: existingOrgs, error: orgsErr } = await organizationsService.getAll();
-          if (orgsErr) {
-            console.warn('[Auth] Erro ao listar organizações existentes:', orgsErr.message);
-          }
+          try {
+            const { data: existingOrgs, error: orgsErr } = await withTimeout(
+              organizationsService.getAll(),
+              5000,
+              'Tempo limite ao buscar organizações existentes'
+            );
 
-          const orgName = metadata.organization_name || `Campanha ${fallbackName.split(' ')[0]}`;
-          const orgSlug = orgName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-
-          // Prevenção de duplicação: checar se já existe organização com mesmo slug ou nome
-          const matchedOrg = existingOrgs?.find(
-            (o) => o.slug === orgSlug || o.name.toLowerCase() === orgName.toLowerCase()
-          );
-
-          if (matchedOrg) {
-            orgId = matchedOrg.id;
-          } else {
-            // Provisionar organização para o primeiro login
-            const { data: newOrg, error: newOrgErr } = await organizationsService.create({
-              name: orgName,
-              slug: orgSlug,
-              plan: 'professional',
-              status: 'active',
-            });
-
-            if (newOrg) {
-              orgId = newOrg.id;
-            } else if (newOrgErr) {
-              console.error('[Auth] Falha ao provisionar organização (RLS ou restrição de banco):', {
-                message: newOrgErr.message,
-                code: newOrgErr.code,
-                details: newOrgErr.details,
+            if (orgsErr) {
+              console.warn('[NEXUS AUTH] organization:warn', {
+                stage: 'organization_query',
+                name: orgsErr.name,
+                message: orgsErr.message,
+                status: orgsErr.code,
               });
-              // Vincular à primeira organização existente disponível, sem criar org-alpha silencioso
-              if (existingOrgs && existingOrgs.length > 0) {
-                orgId = existingOrgs[0].id;
+            }
+
+            const orgName = metadata.organization_name || `Campanha ${fallbackName.split(' ')[0]}`;
+            const orgSlug = orgName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+
+            const matchedOrg = existingOrgs?.find(
+              (o) => o.slug === orgSlug || o.name.toLowerCase() === orgName.toLowerCase()
+            );
+
+            if (matchedOrg) {
+              orgId = matchedOrg.id;
+            } else {
+              const { data: newOrg, error: newOrgErr } = await withTimeout(
+                organizationsService.create({
+                  name: orgName,
+                  slug: orgSlug,
+                  plan: 'professional',
+                  status: 'active',
+                }),
+                6000,
+                'Tempo limite ao provisionar organização'
+              );
+
+              if (newOrg) {
+                orgId = newOrg.id;
+              } else if (newOrgErr) {
+                console.error('[NEXUS AUTH] organization_provision:error', {
+                  stage: 'organization_provision',
+                  name: newOrgErr.name,
+                  message: newOrgErr.message,
+                  status: newOrgErr.code,
+                });
+                if (existingOrgs && existingOrgs.length > 0) {
+                  orgId = existingOrgs[0].id;
+                }
               }
             }
+          } catch (orgEx: any) {
+            console.error('[NEXUS AUTH] organization_provision:error', {
+              stage: 'organization_provision',
+              name: orgEx?.name,
+              message: orgEx?.message,
+              status: orgEx?.status || 500,
+            });
           }
-        }
-
-        if (!orgId) {
-          console.error('[Auth] Impossível determinar organization_id válida para o usuário', authUser.id);
         }
 
         // Provisionar perfil em public.profiles
-        const { data: createdProfile, error: createProfileErr } = await profilesService.create({
-          id: authUser.id,
-          user_id: authUser.id,
-          organization_id: orgId || '',
-          full_name: fallbackName,
-          email: authUser.email || '',
-          role: fallbackRole,
-          status: 'active',
-          is_active: true,
-        });
+        try {
+          const { data: createdProfile, error: createProfileErr } = await withTimeout(
+            profilesService.create({
+              id: authUser.id,
+              user_id: authUser.id,
+              organization_id: orgId || '',
+              full_name: fallbackName,
+              email: authUser.email || '',
+              role: fallbackRole,
+              status: 'active',
+              is_active: true,
+            }),
+            6000,
+            'Tempo limite ao provisionar perfil'
+          );
 
-        if (createProfileErr) {
-          const errMsg = `Falha ao provisionar perfil em public.profiles para o usuário ${authUser.id} (possível restrição de RLS no PostgreSQL): ${createProfileErr.message}`;
-          console.error('[Auth]', errMsg, {
-            code: createProfileErr.code,
-            details: createProfileErr.details,
-            hint: createProfileErr.hint,
+          if (createProfileErr) {
+            const errMsg = `Falha ao provisionar perfil em public.profiles: ${createProfileErr.message}`;
+            console.error('[NEXUS AUTH] profile:error', {
+              stage: 'profile_provision',
+              name: createProfileErr.name,
+              message: createProfileErr.message,
+              status: createProfileErr.code,
+            });
+            setProfileError(errMsg);
+            setInitializationError(errMsg);
+          } else if (createdProfile) {
+            activeProfile = createdProfile;
+            console.log('[NEXUS AUTH] profile:success', { role: createdProfile.role, provisioned: true });
+          }
+        } catch (createEx: any) {
+          const errMsg = createEx?.message || 'Falha ao provisionar perfil';
+          console.error('[NEXUS AUTH] profile:error', {
+            stage: 'profile_provision',
+            name: createEx?.name,
+            message: createEx?.message,
+            status: createEx?.status || 500,
           });
           setProfileError(errMsg);
-        } else if (createdProfile) {
-          activeProfile = createdProfile;
+          setInitializationError(errMsg);
         }
+      }
+
+      if (!activeProfile) {
+        const notFoundMsg = 'Perfil de usuário não encontrado em public.profiles.';
+        setProfileError((prev) => prev || notFoundMsg);
+        setInitializationError((prev) => prev || notFoundMsg);
       }
 
       setProfile(activeProfile || null);
@@ -294,31 +377,83 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // 2. Fetch active organization
       let loadedOrg: Organization | null = null;
       if (activeProfile?.organization_id) {
-        const { data: orgData, error: orgErr } = await organizationsService.getById(activeProfile.organization_id);
-        if (orgErr) {
-          console.warn('[Auth] Erro ao carregar organização ativa:', orgErr.message);
+        try {
+          const { data: orgData, error: orgErr } = await withTimeout(
+            organizationsService.getById(activeProfile.organization_id),
+            6000,
+            'Tempo limite ao carregar organização ativa'
+          );
+          if (orgErr) {
+            console.warn('[NEXUS AUTH] organization:warn', {
+              stage: 'organization',
+              name: orgErr.name,
+              message: orgErr.message,
+              status: (orgErr as any).code,
+            });
+          } else if (orgData) {
+            loadedOrg = orgData;
+          }
+        } catch (orgEx: any) {
+          console.warn('[NEXUS AUTH] organization:warn', {
+            stage: 'organization',
+            name: orgEx?.name,
+            message: orgEx?.message,
+            status: orgEx?.status || 408,
+          });
         }
-        loadedOrg = orgData || null;
-        setOrganization(loadedOrg);
-      } else {
-        setOrganization(null);
       }
+      setOrganization(loadedOrg);
 
-      const { data: allOrgs } = await organizationsService.getAll();
-      setOrganizations(allOrgs || []);
+      // Carregar lista de organizações (não-bloqueante com fallback)
+      try {
+        const { data: allOrgs } = await withTimeout(
+          organizationsService.getAll(),
+          5000,
+          'Tempo limite ao listar organizações'
+        );
+        setOrganizations(allOrgs || (loadedOrg ? [loadedOrg] : []));
+      } catch {
+        setOrganizations(loadedOrg ? [loadedOrg] : []);
+      }
 
       // 3. Fetch module-level permissions
+      console.log('[NEXUS AUTH] permissions:start', { profileId: activeProfile?.id });
       let loadedPerms: UserModulePermission[] = [];
       if (activeProfile?.id) {
-        const { data: perms, error: permsErr } = await permissionsService.getByUserId(activeProfile.id);
-        if (permsErr) {
-          console.warn('[Auth] Erro ao carregar permissões de módulos:', permsErr.message);
+        try {
+          const { data: perms, error: permsErr } = await withTimeout(
+            permissionsService.getByUserId(activeProfile.id),
+            7000,
+            'Tempo limite excedido ao consultar user_module_permissions'
+          );
+          if (permsErr) {
+            console.error('[NEXUS AUTH] permissions:error', {
+              stage: 'permissions',
+              name: permsErr.name || 'PostgrestError',
+              message: permsErr.message,
+              status: (permsErr as any).code || (permsErr as any).status || 500,
+            });
+          } else {
+            loadedPerms = perms || [];
+            console.log('[NEXUS AUTH] permissions:success', { count: loadedPerms.length });
+          }
+        } catch (permsEx: any) {
+          console.error('[NEXUS AUTH] permissions:error', {
+            stage: 'permissions',
+            name: permsEx?.name || 'Error',
+            message: permsEx?.message,
+            status: permsEx?.status || 504,
+          });
         }
-        loadedPerms = perms || [];
-        setPermissions(loadedPerms);
       } else {
-        setPermissions([]);
+        console.log('[NEXUS AUTH] permissions:success', { count: 0, reason: 'no_profile' });
       }
+      setPermissions(loadedPerms);
+
+      console.log('[NEXUS AUTH] loadUserData:complete', {
+        hasProfile: Boolean(activeProfile),
+        permissionsCount: loadedPerms.length,
+      });
 
       return {
         profile: activeProfile || null,
@@ -326,8 +461,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         permissions: loadedPerms,
       };
     } catch (err: any) {
-      console.error('[Auth] Erro inesperado ao carregar dados do usuário:', err);
+      console.error('[NEXUS AUTH] loadUserData:error', {
+        stage: 'loadUserData',
+        name: err?.name || 'Error',
+        message: err?.message || 'Erro inesperado ao carregar dados do usuário',
+        status: err?.status || err?.code || 500,
+      });
       setProfileError(err?.message || 'Erro inesperado ao carregar perfil.');
+      setInitializationError(err?.message || 'Erro inesperado ao carregar sessão.');
       return {
         profile: null,
         organization: null,
@@ -336,20 +477,83 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  // Mutex para evitar execuções concorrentes duplicadas de loadUserData
+  const inFlightPromiseRef = React.useRef<Promise<{
+    profile: Profile | null;
+    organization: Organization | null;
+    permissions: UserModulePermission[];
+  }> | null>(null);
+
+  const loadUserDataSafe = useCallback(
+    async (authUser: User) => {
+      if (inFlightPromiseRef.current) {
+        return inFlightPromiseRef.current;
+      }
+      const promise = loadUserData(authUser).finally(() => {
+        inFlightPromiseRef.current = null;
+      });
+      inFlightPromiseRef.current = promise;
+      return promise;
+    },
+    [loadUserData]
+  );
+
   // Initialize session and subscribe to Supabase Auth state changes
   useEffect(() => {
     let isMounted = true;
 
+    // Safety watchdog timer: maximum 10 seconds in loading state
+    const watchdog = setTimeout(() => {
+      if (isMounted) {
+        setIsLoading((currentLoading) => {
+          if (currentLoading) {
+            console.warn('[NEXUS AUTH] loading:watchdog_timeout', {
+              stage: 'watchdog',
+              name: 'WatchdogTimeout',
+              message: 'Tempo limite global de inicialização (10s) excedido.',
+              status: 408,
+            });
+            console.log('[NEXUS AUTH] loading:false');
+            setInitializationError(
+              'Tempo limite excedido ao sincronizar com o banco de dados. Verifique sua conexão e tente novamente.'
+            );
+            return false;
+          }
+          return false;
+        });
+      }
+    }, 10000);
+
     async function initAuth() {
       if (!isSupabaseConfigured) {
-        setIsLoading(false);
+        console.log('[NEXUS AUTH] supabase:not_configured');
+        if (isMounted) {
+          console.log('[NEXUS AUTH] loading:false');
+          setIsLoading(false);
+        }
         return;
       }
 
+      console.log('[NEXUS AUTH] getSession:start');
       try {
-        const { data, error } = await supabase.auth.getSession();
+        const { data, error } = await withTimeout(
+          supabase.auth.getSession(),
+          7000,
+          'Tempo limite excedido ao recuperar sessão do Supabase'
+        );
+
         if (error) {
-          console.warn('[Auth] Erro ao recuperar sessão Supabase:', error.message);
+          console.error('[NEXUS AUTH] getSession:error', {
+            stage: 'getSession',
+            name: error.name,
+            message: error.message,
+            status: error.status || 500,
+          });
+          if (isMounted) {
+            setInitializationError(error.message);
+          }
+        } else {
+          console.log('[NEXUS AUTH] getSession:success', { hasSession: Boolean(data?.session) });
         }
 
         if (isMounted) {
@@ -358,13 +562,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(currentSession?.user || null);
 
           if (currentSession?.user) {
-            await loadUserData(currentSession.user);
+            await loadUserDataSafe(currentSession.user);
           }
         }
-      } catch (err) {
-        console.error('[Auth] Falha na inicialização da autenticação:', err);
+      } catch (err: any) {
+        console.error('[NEXUS AUTH] initAuth:error', {
+          stage: 'initAuth',
+          name: err?.name,
+          message: err?.message,
+          status: err?.status || err?.code || 500,
+        });
+        if (isMounted) {
+          setInitializationError(err?.message || 'Falha ao inicializar a autenticação.');
+        }
       } finally {
         if (isMounted) {
+          console.log('[NEXUS AUTH] loading:false');
           setIsLoading(false);
         }
       }
@@ -378,31 +591,76 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (!isMounted) return;
 
-      setSession(newSession);
-      setUser(newSession?.user || null);
+      console.log(`[NEXUS AUTH] onAuthStateChange:${event}`, { hasUser: Boolean(newSession?.user) });
 
-      if (newSession?.user) {
-        setIsLoading(true);
-        await loadUserData(newSession.user);
-      } else {
-        setProfile(null);
-        setOrganization(null);
-        setPermissions([]);
-        setProfileError(null);
+      try {
+        setSession(newSession);
+        setUser(newSession?.user || null);
+
+        if (newSession?.user) {
+          setIsLoading(true);
+          await loadUserDataSafe(newSession.user);
+        } else {
+          setProfile(null);
+          setOrganization(null);
+          setPermissions([]);
+          setProfileError(null);
+          setInitializationError(null);
+        }
+      } catch (authChangeErr: any) {
+        console.error('[NEXUS AUTH] onAuthStateChange:error', {
+          stage: 'onAuthStateChange',
+          name: authChangeErr?.name,
+          message: authChangeErr?.message,
+          status: authChangeErr?.status || authChangeErr?.code || 500,
+        });
+        if (isMounted) {
+          setInitializationError(authChangeErr?.message || 'Erro ao sincronizar sessão.');
+        }
+      } finally {
+        if (isMounted) {
+          console.log('[NEXUS AUTH] loading:false');
+          setIsLoading(false);
+        }
       }
-      setIsLoading(false);
     });
 
     return () => {
       isMounted = false;
+      clearTimeout(watchdog);
       subscription.unsubscribe();
     };
-  }, [loadUserData]);
+  }, [loadUserDataSafe]);
 
   const refreshUserData = async () => {
-    if (user) {
-      setIsLoading(true);
-      await loadUserData(user);
+    setIsLoading(true);
+    setInitializationError(null);
+    setProfileError(null);
+    try {
+      if (user) {
+        await loadUserDataSafe(user);
+      } else {
+        const { data } = await withTimeout(
+          supabase.auth.getSession(),
+          7000,
+          'Tempo limite ao recuperar sessão'
+        );
+        if (data?.session?.user) {
+          setUser(data.session.user);
+          setSession(data.session);
+          await loadUserDataSafe(data.session.user);
+        }
+      }
+    } catch (err: any) {
+      console.error('[NEXUS AUTH] refreshUserData:error', {
+        stage: 'refreshUserData',
+        name: err?.name,
+        message: err?.message,
+        status: err?.status || 500,
+      });
+      setInitializationError(err?.message || 'Falha ao recarregar dados do usuário.');
+    } finally {
+      console.log('[NEXUS AUTH] loading:false');
       setIsLoading(false);
     }
   };
@@ -412,6 +670,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     password: string
   ): Promise<{ error: AuthError | Error | null; defaultRoute?: string }> => {
     setIsLoading(true);
+    setInitializationError(null);
+    setProfileError(null);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
@@ -420,6 +680,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         logAuthError('signIn', error);
+        console.log('[NEXUS AUTH] loading:false');
         setIsLoading(false);
         return { error };
       }
@@ -427,16 +688,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.user) {
         setUser(data.user);
         setSession(data.session);
-        const { profile: loadedProfile, permissions: loadedPerms } = await loadUserData(data.user);
+        const { profile: loadedProfile, permissions: loadedPerms } = await loadUserDataSafe(data.user);
         const route = getDefaultRouteForUser(loadedProfile, loadedPerms);
+        console.log('[NEXUS AUTH] loading:false');
         setIsLoading(false);
         return { error: null, defaultRoute: route };
       }
 
+      console.log('[NEXUS AUTH] loading:false');
       setIsLoading(false);
       return { error: null, defaultRoute: '/app/dashboard' };
     } catch (err: any) {
       logAuthError('signIn:catch', err);
+      console.log('[NEXUS AUTH] loading:false');
       setIsLoading(false);
       return { error: err };
     }
@@ -648,6 +912,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         isConfigured: isSupabaseConfigured,
         profileError,
+        initializationError,
         signIn,
         signUp,
         signOut,

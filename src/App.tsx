@@ -78,6 +78,7 @@ function MainRouter() {
     profile,
     isLoading,
     profileError,
+    initializationError,
     hasPermission,
     getDefaultRoute,
     refreshUserData,
@@ -121,6 +122,26 @@ function MainRouter() {
     }
   }, [currentPath, user, isLoading, profile, getDefaultRoute]);
 
+  // Se a inicialização do Supabase Auth falhou (timeout, rede ou restrição)
+  if (initializationError) {
+    return (
+      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white p-6 rounded-2xl border border-rose-200 shadow-sm text-center">
+          <ErrorState
+            title="Erro de Inicialização da Sessão"
+            message={initializationError}
+            onRetry={() => refreshUserData()}
+          />
+          <div className="mt-4 flex justify-center gap-2">
+            <Button size="sm" variant="outline" onClick={() => signOut()}>
+              Voltar ao Login
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-6">
@@ -138,32 +159,25 @@ function MainRouter() {
     );
   }
 
-  // Se o usuário está autenticado e em rota privada, mas o perfil ainda não está pronto
+  // Se o usuário está autenticado e em rota privada, mas o perfil não está disponível
   if (isAppRoute && user && !profile) {
-    // Se ocorreu um erro de banco/RLS na leitura ou provisionamento do perfil, exibir diagnóstico claro em vez de 403
-    if (profileError) {
-      return (
-        <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-6">
-          <div className="max-w-md w-full bg-white p-6 rounded-2xl border border-rose-200 shadow-sm text-center">
-            <ErrorState
-              title="Erro de Perfil no Banco de Dados"
-              message={profileError}
-              onRetry={() => refreshUserData()}
-            />
-            <div className="mt-4 flex justify-center gap-2">
-              <Button size="sm" variant="outline" onClick={() => signOut()}>
-                Encerrar Sessão
-              </Button>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    // Perfil ainda em carregamento assíncrono: aguardar sem acionar falso 403
+    const errorMsg =
+      profileError ||
+      'Perfil do usuário não encontrado em public.profiles. Verifique suas credenciais ou contate o administrador.';
     return (
       <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-6">
-        <LoadingState message="Carregando perfil e permissões do usuário..." />
+        <div className="max-w-md w-full bg-white p-6 rounded-2xl border border-rose-200 shadow-sm text-center">
+          <ErrorState
+            title="Erro de Perfil no Banco de Dados"
+            message={errorMsg}
+            onRetry={() => refreshUserData()}
+          />
+          <div className="mt-4 flex justify-center gap-2">
+            <Button size="sm" variant="outline" onClick={() => signOut()}>
+              Encerrar Sessão
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
