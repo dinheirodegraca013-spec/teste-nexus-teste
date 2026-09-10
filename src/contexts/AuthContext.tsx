@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured, supabaseUrl } from '../lib/supabase';
 import { Organization, Profile, UserRole, AppModule, UserModulePermission } from '../types';
@@ -145,7 +145,18 @@ export function getDefaultRouteForUser(
   userProfile: Profile | null,
   perms: UserModulePermission[]
 ): string {
-  if (!userProfile) return '/login';
+  console.log('[NEXUS FLOW] DEFAULT_ROUTE_START', {
+    hasProfile: Boolean(userProfile),
+    role: userProfile?.role || 'none',
+    permsCount: perms?.length || 0,
+  });
+
+  // CRÍTICO: Usuário autenticado NUNCA pode ser redirecionado para /login.
+  // Se o perfil ainda estiver carregando ou não disponível, utilizar fallback interno seguro (/app/dashboard).
+  if (!userProfile) {
+    console.log('[NEXUS FLOW] DEFAULT_ROUTE_RESULT', { route: '/app/dashboard', reason: 'profile_pending_fallback' });
+    return '/app/dashboard';
+  }
 
   const hasPerm = (mod: AppModule, act: 'view' | 'create' | 'edit' | 'delete' = 'view') =>
     checkUserPermission(userProfile, perms, mod, act);
@@ -155,15 +166,15 @@ export function getDefaultRouteForUser(
   // superadmin → /app/dashboard
   // admin → /app/dashboard
   if (normRole === 'superadmin' || normRole === 'admin') {
+    console.log('[NEXUS FLOW] DEFAULT_ROUTE_RESULT', { route: '/app/dashboard', role: normRole });
     return '/app/dashboard';
   }
 
   // leader → /app/campo, se tiver field.view
   if (normRole === 'leader') {
-    if (hasPerm('field', 'view')) return '/app/campo';
-    if (hasPerm('crm', 'view')) return '/app/crm';
-    if (hasPerm('stickers', 'view')) return '/app/adesivos';
-    return '/403';
+    const route = hasPerm('field', 'view') ? '/app/campo' : hasPerm('crm', 'view') ? '/app/crm' : hasPerm('stickers', 'view') ? '/app/adesivos' : '/403';
+    console.log('[NEXUS FLOW] DEFAULT_ROUTE_RESULT', { route, role: normRole });
+    return route;
   }
 
   // coordinator, manager, operator, viewer → primeiro módulo permitido
@@ -188,16 +199,19 @@ export function getDefaultRouteForUser(
 
   for (const candidate of candidateModules) {
     if (hasPerm(candidate.module, 'view')) {
+      console.log('[NEXUS FLOW] DEFAULT_ROUTE_RESULT', { route: candidate.route, role: normRole, module: candidate.module });
       return candidate.route;
     }
   }
 
+  console.log('[NEXUS FLOW] DEFAULT_ROUTE_RESULT', { route: '/403', role: normRole });
   return '/403';
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const isSigningInRef = useRef<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -214,6 +228,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     organization: Organization | null;
     permissions: UserModulePermission[];
   }> => {
+    console.log('[NEXUS FLOW] LOAD_USER_START', { userId: authUser.id });
     console.log('[NEXUS AUTH] loadUserData:start', { userId: authUser.id });
     setProfileError(null);
 
@@ -249,6 +264,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Se perfil localizado com sucesso
       if (activeProfile) {
+        console.log('[NEXUS FLOW] PROFILE_LOADED', { role: activeProfile.role, hasOrg: Boolean(activeProfile.organization_id) });
         console.log('[NEXUS AUTH] profile:success', { role: activeProfile.role });
       } else {
         // Se o usuário está autenticado no Supabase Auth, mas ainda não possui registro em public.profiles
@@ -448,8 +464,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         console.log('[NEXUS AUTH] permissions:success', { count: 0, reason: 'no_profile' });
       }
+      console.log('[NEXUS FLOW] PERMISSIONS_LOADED', { count: loadedPerms.length });
       setPermissions(loadedPerms);
 
+      console.log('[NEXUS FLOW] LOAD_USER_COMPLETE', {
+        hasProfile: Boolean(activeProfile),
+        role: activeProfile?.role || 'none',
+        permissionsCount: loadedPerms.length,
+      });
       console.log('[NEXUS AUTH] loadUserData:complete', {
         hasProfile: Boolean(activeProfile),
         permissionsCount: loadedPerms.length,
@@ -577,6 +599,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } finally {
         if (isMounted) {
+          console.log('[NEXUS FLOW] LOADING_FALSE', { source: 'initAuth' });
           console.log('[NEXUS AUTH] loading:false');
           setIsLoading(false);
         }
@@ -591,13 +614,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (!isMounted) return;
 
-      console.log(`[NEXUS AUTH] onAuthStateChange:${event}`, { hasUser: Boolean(newSession?.user) });
+      console.log('[NEXUS FLOW] AUTH_EVENT', {
+        event,
+        hasSession: Boolean(newSession),
+        userId: newSession?.user?.id,
+        isSigningIn: isSigningInRef.current,
+      });
+
+      // Se o signIn já está processando ativamente, não iniciar outro ciclo de loading concorrente
+      if (isSigningInRef.current) {
+        console.log('[NEXUS FLOW] AUTH_EVENT:skipped_concurrent_signin', { event });
+        if (newSession?.user) {
+          setUser(newSession.user);
+          setSession(newSession);
+        }
+        return;
+      }
+
+      // Se for INITIAL_SESSION, sincronizar usuário/sessão sem disparar loading redundante
+      if (event === 'INITIAL_SESSION') {
+        if (newSession?.user) {
+          setUser(newSession.user);
+          setSession(newSession);
+        }
+        return;
+      }
 
       try {
         setSession(newSession);
         setUser(newSession?.user || null);
 
         if (newSession?.user) {
+          console.log('[NEXUS FLOW] LOADING_CHANGE', { isLoading: true, source: `onAuthStateChange:${event}` });
           setIsLoading(true);
           await loadUserDataSafe(newSession.user);
         } else {
@@ -619,6 +667,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } finally {
         if (isMounted) {
+          console.log('[NEXUS FLOW] LOADING_CHANGE', { isLoading: false, source: `onAuthStateChange:${event}` });
           console.log('[NEXUS AUTH] loading:false');
           setIsLoading(false);
         }
@@ -669,9 +718,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     email: string,
     password: string
   ): Promise<{ error: AuthError | Error | null; defaultRoute?: string }> => {
+    console.log('[NEXUS FLOW] LOGIN_START', {
+      email: email.trim().replace(/(.{2})(.*)(@.*)/, '$1***$3'),
+    });
+    isSigningInRef.current = true;
     setIsLoading(true);
+    console.log('[NEXUS FLOW] LOADING_CHANGE', { isLoading: true, source: 'signIn:start' });
     setInitializationError(null);
     setProfileError(null);
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
@@ -680,29 +735,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         logAuthError('signIn', error);
-        console.log('[NEXUS AUTH] loading:false');
-        setIsLoading(false);
         return { error };
       }
 
       if (data.user) {
         setUser(data.user);
         setSession(data.session);
+
+        console.log('[NEXUS FLOW] LOGIN_SUCCESS', {
+          userId: data.user.id,
+          email: data.user.email?.replace(/(.{2})(.*)(@.*)/, '$1***$3'),
+        });
+
+        // Carregar profile, organization e permissions de forma consistente e esperada
         const { profile: loadedProfile, permissions: loadedPerms } = await loadUserDataSafe(data.user);
+
+        if (loadedProfile) {
+          console.log('[NEXUS FLOW] PROFILE_READY', {
+            role: loadedProfile.role,
+            normRole: normalizeRole(loadedProfile.role),
+            hasOrg: Boolean(loadedProfile.organization_id),
+          });
+        }
+
         const route = getDefaultRouteForUser(loadedProfile, loadedPerms);
-        console.log('[NEXUS AUTH] loading:false');
-        setIsLoading(false);
+        console.log('[NEXUS FLOW] DEFAULT_ROUTE_RESULT', {
+          target: route,
+          source: 'signIn:calculated',
+        });
+
         return { error: null, defaultRoute: route };
       }
 
-      console.log('[NEXUS AUTH] loading:false');
-      setIsLoading(false);
       return { error: null, defaultRoute: '/app/dashboard' };
     } catch (err: any) {
       logAuthError('signIn:catch', err);
-      console.log('[NEXUS AUTH] loading:false');
-      setIsLoading(false);
       return { error: err };
+    } finally {
+      isSigningInRef.current = false;
+      setIsLoading(false);
+      console.log('[NEXUS FLOW] LOADING_CHANGE', { isLoading: false, source: 'signIn:finally' });
     }
   };
 
@@ -824,6 +896,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
+    isSigningInRef.current = false;
     try {
       const { error } = await supabase.auth.signOut();
       setUser(null);

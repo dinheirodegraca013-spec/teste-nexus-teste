@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ToastProvider } from './contexts/ToastContext';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider, useAuth, getDefaultRouteForUser } from './contexts/AuthContext';
 import { PublicLayout } from './components/layout/PublicLayout';
 import { AppLayout } from './components/layout/AppLayout';
 import { LoadingState } from './components/ui/LoadingState';
@@ -76,6 +76,7 @@ function MainRouter() {
   const {
     user,
     profile,
+    permissions,
     isLoading,
     profileError,
     initializationError,
@@ -94,8 +95,13 @@ function MainRouter() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  const navigate = (path: string) => {
-    window.history.pushState({}, '', path);
+  const navigate = (path: string, options?: { replace?: boolean }) => {
+    console.log('[NEXUS FLOW] NAVIGATE', { from: currentPath, to: path, replace: options?.replace, source: 'App.navigate' });
+    if (options?.replace) {
+      window.history.replaceState({}, '', path);
+    } else {
+      window.history.pushState({}, '', path);
+    }
     setCurrentPath(getPathFromLocation());
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -104,23 +110,64 @@ function MainRouter() {
   const isAuthRoute = currentPath === '/login' || currentPath === '/cadastro' || currentPath === '/recuperar-senha';
   const hasInviteParam = typeof window !== 'undefined' && window.location.search.includes('convite=');
 
+  console.log('[NEXUS FLOW] APP_RENDER', {
+    currentPath,
+    hasUser: Boolean(user),
+    hasProfile: Boolean(profile),
+    isLoading,
+    isAuthRoute,
+    isAppRoute,
+  });
+
+  // Watchdog de 10s para o estado de redirecionamento pós-login
+  const [redirectTimeout, setRedirectTimeout] = useState(false);
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    if (user && isAuthRoute && !profile && !hasInviteParam) {
+      timer = setTimeout(() => {
+        setRedirectTimeout(true);
+      }, 10000);
+    } else {
+      setRedirectTimeout(false);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [user, isAuthRoute, profile, hasInviteParam]);
+
   // Redirecionamento automático quando o usuário já está logado e visita /login ou /cadastro
   useEffect(() => {
-    if (isAuthRoute && user && !hasInviteParam && !isLoading && profile) {
-      const target = getDefaultRoute();
-      navigate(target);
+    if (user && profile && !isLoading && isAuthRoute && !hasInviteParam) {
+      const target = getDefaultRouteForUser(profile, permissions);
+      console.log('[NEXUS FLOW] DEFAULT_ROUTE_RESULT', {
+        target,
+        currentPath,
+        role: profile.role,
+      });
+
+      // Proteção contra loop de /login para /login ou navegação redundante para mesma rota
+      if (target && target !== currentPath && target !== '/login') {
+        console.log('[NEXUS FLOW] NAVIGATE', {
+          from: currentPath,
+          to: target,
+          replace: true,
+          source: 'useEffect:authRedirect',
+        });
+        navigate(target, { replace: true });
+      }
     }
-  }, [isAuthRoute, user, hasInviteParam, isLoading, profile, getDefaultRoute]);
+  }, [user, profile, isLoading, isAuthRoute, hasInviteParam, permissions, currentPath]);
 
   // Redirecionamento de /app para a primeira rota autorizada
   useEffect(() => {
     if (currentPath === '/app' && user && !isLoading && profile) {
-      const target = getDefaultRoute();
-      if (target !== '/app') {
-        navigate(target);
+      const target = getDefaultRouteForUser(profile, permissions);
+      if (target && target !== '/app' && target !== '/login') {
+        navigate(target, { replace: true });
       }
     }
-  }, [currentPath, user, isLoading, profile, getDefaultRoute]);
+  }, [currentPath, user, isLoading, profile, permissions]);
 
   // Se a inicialização do Supabase Auth falhou (timeout, rede ou restrição)
   if (initializationError) {
@@ -182,7 +229,30 @@ function MainRouter() {
     );
   }
 
-  // Se logado e em tela de auth, aguardar redirecionamento
+  // D) Usuário autenticado em rota de autenticação cujo perfil não carregou dentro do timeout (ou erro de perfil)
+  if (isAuthRoute && user && !hasInviteParam && (redirectTimeout || profileError)) {
+    return (
+      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white p-6 rounded-2xl border border-rose-200 shadow-sm text-center">
+          <ErrorState
+            title="Não foi possível carregar seu perfil"
+            message={profileError || 'Não foi possível carregar as informações do seu perfil após a autenticação. Verifique sua conexão e tente novamente.'}
+            onRetry={() => {
+              setRedirectTimeout(false);
+              refreshUserData();
+            }}
+          />
+          <div className="mt-4 flex justify-center gap-2">
+            <Button size="sm" variant="outline" onClick={() => signOut()}>
+              Tentar novamente
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // B) Se logado e em tela de auth, aguardar brevemente o perfil e o redirecionamento
   if (isAuthRoute && user && !hasInviteParam) {
     return (
       <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-6">
@@ -237,6 +307,11 @@ function MainRouter() {
 
   // Route permission gate for private modules
   const requiredModule = routeModuleMap[currentPath];
+  console.log('[NEXUS FLOW] ROUTE_GATE', {
+    currentPath,
+    requiredModule,
+    hasViewPermission: requiredModule ? hasPermission(requiredModule, 'view') : true,
+  });
   if (requiredModule && !hasPermission(requiredModule, 'view')) {
     return (
       <AppLayout currentPath={currentPath} onNavigate={navigate}>

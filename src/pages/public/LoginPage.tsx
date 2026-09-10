@@ -6,7 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 
 interface LoginPageProps {
-  onNavigate: (path: string) => void;
+  onNavigate: (path: string, options?: { replace?: boolean }) => void;
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
@@ -27,16 +27,28 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
     }
 
     setIsLoading(true);
-    const { error, defaultRoute } = await signIn(email.trim(), password);
+    const result = await signIn(email.trim(), password);
     setIsLoading(false);
 
-    if (error) {
-      setErrorMessage(error.message || 'Credenciais inválidas. Verifique seu e-mail e senha.');
-      toastError(error.message || 'Erro ao autenticar: Credenciais inválidas.');
+    if (result.error) {
+      setErrorMessage(result.error.message || 'Credenciais inválidas. Verifique seu e-mail e senha.');
+      toastError(result.error.message || 'Erro ao autenticar: Credenciais inválidas.');
     } else {
+      console.log('[NEXUS FLOW] LOGIN_SUCCESS', { email: email.trim().replace(/(.{2})(.*)(@.*)/, '$1***$3') });
       success('Sessão iniciada com sucesso!');
-      const targetRoute = defaultRoute || getDefaultRoute();
-      onNavigate(targetRoute);
+      const targetRoute = result.defaultRoute || getDefaultRoute();
+      const safeTarget = targetRoute && targetRoute !== '/login' ? targetRoute : '/app/dashboard';
+      console.log('[NEXUS FLOW] DEFAULT_ROUTE_RESULT', {
+        target: safeTarget,
+        source: 'LoginPage.handleSubmit',
+      });
+      console.log('[NEXUS FLOW] NAVIGATE', {
+        from: '/login',
+        to: safeTarget,
+        replace: true,
+        source: 'LoginPage.handleSubmit',
+      });
+      onNavigate(safeTarget, { replace: true });
     }
   };
 
