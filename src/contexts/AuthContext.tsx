@@ -347,7 +347,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               name: fallbackName,
               email: authUser.email || '',
               role: fallbackRole,
-              status: 'active',
             }),
             6000,
             'Tempo limite ao provisionar perfil'
@@ -875,7 +874,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             name: name.trim(),
             email: email.trim(),
             role,
-            status: 'active',
           });
         } catch (profErr) {
           console.warn('[Auth] Aviso ao registrar profile após autenticação:', profErr);

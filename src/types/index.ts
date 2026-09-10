@@ -21,10 +21,7 @@ export interface DatabaseProfile {
   organization_id: string;
   name: string;
   email: string;
-  phone?: string;
   role: UserRole;
-  status?: 'active' | 'pending' | 'inactive';
-  avatar_url?: string;
   created_at?: string;
 }
 

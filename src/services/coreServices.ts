@@ -46,8 +46,9 @@ function normalizeProfile(dbRecord: any): Profile | null {
     ...dbRecord,
     name: nameValue,
     full_name: nameValue,
+    status: 'active',
+    is_active: true,
     user_id: dbRecord.user_id || dbRecord.id,
-    is_active: dbRecord.status === 'active' || dbRecord.is_active === true,
   } as Profile;
 }
 
@@ -79,10 +80,8 @@ export const profilesService = {
     }
 
     if (updates.role !== undefined) dbUpdates.role = updates.role;
-    if (updates.status !== undefined) dbUpdates.status = updates.status;
-    if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
-    if (updates.avatar_url !== undefined) dbUpdates.avatar_url = updates.avatar_url;
     if (updates.organization_id !== undefined) dbUpdates.organization_id = updates.organization_id;
+    if (updates.email !== undefined) dbUpdates.email = updates.email;
 
     const { data, error } = await supabase
       .from('profiles')
@@ -95,16 +94,13 @@ export const profilesService = {
 
   async create(profile: Partial<Profile> & { name?: string }) {
     const name = profile.name || profile.full_name || '';
-    const dbPayload: Record<string, any> = {
+    const dbPayload = {
       id: profile.id,
       organization_id: profile.organization_id,
       name,
       email: profile.email,
       role: profile.role || 'operator',
-      status: profile.status || 'active',
     };
-    if (profile.phone) dbPayload.phone = profile.phone;
-    if (profile.avatar_url) dbPayload.avatar_url = profile.avatar_url;
 
     const { data, error } = await supabase
       .from('profiles')
@@ -160,7 +156,8 @@ export const membersService = {
           name: nameVal,
           full_name: nameVal,
           role: p.role || 'operator',
-          status: p.status || 'active',
+          status: 'active' as const,
+          is_active: true,
           created_at: p.created_at || new Date().toISOString(),
         };
       }), 
@@ -177,7 +174,6 @@ export const membersService = {
         email: params.email,
         name: nameVal,
         role: params.role,
-        status: 'active',
       }])
       .select()
       .maybeSingle();
