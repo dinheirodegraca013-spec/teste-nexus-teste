@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured, supabaseUrl } from '../lib/supabase';
 import { Organization, Profile, UserRole, AppModule, UserModulePermission } from '../types';
-import { organizationsService, profilesService, permissionsService } from '../services';
+import { organizationsService, profilesService, permissionsService, isValidUUID } from '../services';
 
 interface SignUpParams {
   name: string;
@@ -273,10 +273,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const fallbackName = metadata.full_name || metadata.name || authUser.email?.split('@')[0] || 'Usuário';
         const fallbackRole = (metadata.role as UserRole) || 'admin';
         
-        let orgId = metadata.organization_id;
-        
-        // Se organization_id não constar nos metadados, consultar organizações existentes antes de criar
-        if (!orgId) {
+        // Determinar organization_id garantindo estritamente um UUID válido
+        let validOrgId: string | null = null;
+        if (metadata.organization_id && isValidUUID(metadata.organization_id)) {
+          validOrgId = metadata.organization_id;
+        }
+
+        // Se organization_id não constar ou não for UUID válido nos metadados, consultar organizações existentes antes de criar
+        if (!validOrgId) {
           try {
             const { data: existingOrgs, error: orgsErr } = await withTimeout(
               organizationsService.getAll(),
@@ -297,11 +301,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const orgSlug = orgName.toLowerCase().replace(/[^a-z0-9]/g, '-');
 
             const matchedOrg = existingOrgs?.find(
-              (o) => o.slug === orgSlug || o.name.toLowerCase() === orgName.toLowerCase()
+              (o) => isValidUUID(o.id) && (o.slug === orgSlug || o.name.toLowerCase() === orgName.toLowerCase())
             );
 
-            if (matchedOrg) {
-              orgId = matchedOrg.id;
+            if (matchedOrg && isValidUUID(matchedOrg.id)) {
+              validOrgId = matchedOrg.id;
+            } else if (existingOrgs && existingOrgs.length > 0 && isValidUUID(existingOrgs[0].id)) {
+              validOrgId = existingOrgs[0].id;
             } else {
               const { data: newOrg, error: newOrgErr } = await withTimeout(
                 organizationsService.create({
@@ -314,8 +320,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 'Tempo limite ao provisionar organização'
               );
 
-              if (newOrg) {
-                orgId = newOrg.id;
+              if (newOrg && isValidUUID(newOrg.id)) {
+                validOrgId = newOrg.id;
               } else if (newOrgErr) {
                 console.error('[NEXUS AUTH] organization_provision:error', {
                   stage: 'organization_provision',
@@ -323,9 +329,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   message: newOrgErr.message,
                   status: newOrgErr.code,
                 });
-                if (existingOrgs && existingOrgs.length > 0) {
-                  orgId = existingOrgs[0].id;
-                }
               }
             }
           } catch (orgEx: any) {
@@ -338,12 +341,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
 
-        // Provisionar perfil em public.profiles
+        // Regra Estrita: Se não houver organization_id UUID válido, NÃO chamar profilesService.create
+        if (!validOrgId || !isValidUUID(validOrgId)) {
+          const orgErrMsg = 'Não foi possível associar uma organização válida (UUID) ao seu usuário. O provisionamento de perfil foi interrompido para evitar inconsistências no banco de dados.';
+          console.error('[NEXUS AUTH] profile_provision:aborted_missing_organization_uuid', {
+            stage: 'organization_validation',
+            metadataOrgId: metadata.organization_id,
+          });
+          setProfileError(orgErrMsg);
+          setInitializationError(orgErrMsg);
+          return { profile: null, organization: null, permissions: [] };
+        }
+
+        // Provisionar perfil em public.profiles exclusivamente com UUID real validado
         try {
           const { data: createdProfile, error: createProfileErr } = await withTimeout(
             profilesService.create({
               id: authUser.id,
-              organization_id: orgId || '',
+              organization_id: validOrgId,
               name: fallbackName,
               email: authUser.email || '',
               role: fallbackRole,
@@ -358,7 +373,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               stage: 'profile_provision',
               name: createProfileErr.name,
               message: createProfileErr.message,
-              status: createProfileErr.code,
+              code: createProfileErr.code,
+              details: createProfileErr.details,
+              hint: createProfileErr.hint,
+              status: (createProfileErr as any)?.status || createProfileErr.code,
             });
             setProfileError(errMsg);
             setInitializationError(errMsg);
@@ -813,6 +831,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
+      // Validação estrita de organizationId fornecido no cadastro/convite
+      const sanitizedOrgId = (organizationId && isValidUUID(organizationId)) ? organizationId : null;
+
       // 2. Executar supabase.auth.signUp primeiro, passando metadados
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
@@ -822,10 +843,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             name: name.trim(),
             full_name: name.trim(),
             role,
-            organization_id: organizationId || null,
+            organization_id: sanitizedOrgId,
             organization_name: organizationName || null,
-            leader_id: leaderId || null,
-            coordinator_id: coordinatorId || null,
+            leader_id: (leaderId && isValidUUID(leaderId)) ? leaderId : null,
+            coordinator_id: (coordinatorId && isValidUUID(coordinatorId)) ? coordinatorId : null,
           },
         },
       });
@@ -846,7 +867,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(data.user);
         setSession(data.session);
 
-        let finalOrgId = organizationId;
+        let finalOrgId: string | null = sanitizedOrgId;
 
         // Criar organização no PostgreSQL caso seja uma nova campanha e tenhamos sessão ativa
         if (!finalOrgId && organizationName) {
@@ -856,7 +877,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               slug: organizationName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
               status: 'active',
             });
-            if (newOrg?.id) {
+            if (newOrg?.id && isValidUUID(newOrg.id)) {
               finalOrgId = newOrg.id;
             } else if (orgErr) {
               console.warn('[Auth] Aviso ao criar organização após autenticação:', orgErr.message);
@@ -866,17 +887,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
 
-        // Criar profile no PostgreSQL com a sessão do usuário autenticado
-        try {
-          await profilesService.create({
-            id: data.user.id,
-            organization_id: finalOrgId || 'org-alpha',
-            name: name.trim(),
-            email: email.trim(),
-            role,
-          });
-        } catch (profErr) {
-          console.warn('[Auth] Aviso ao registrar profile após autenticação:', profErr);
+        // Criar profile no PostgreSQL com a sessão do usuário autenticado SOMENTE se finalOrgId for UUID válido
+        if (finalOrgId && isValidUUID(finalOrgId)) {
+          try {
+            await profilesService.create({
+              id: data.user.id,
+              organization_id: finalOrgId,
+              name: name.trim(),
+              email: email.trim(),
+              role,
+            });
+          } catch (profErr) {
+            console.warn('[Auth] Aviso ao registrar profile após autenticação:', profErr);
+          }
+        } else {
+          console.warn('[Auth] Provisionamento direto de profile no signUp postergado para loadUserData (aguardando resolução de organização com UUID válido).');
         }
 
         // Carregar os dados completos do usuário recém-criado
@@ -942,7 +967,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const switchOrganization = async (orgId: string) => {
-    if (!profile) return;
+    if (!profile || !isValidUUID(orgId)) {
+      console.warn('[Auth] switchOrganization abortado: ID de organização inválido (não é UUID).', { orgId });
+      return;
+    }
     try {
       const { data: updatedProfile } = await profilesService.update(profile.id, {
         organization_id: orgId,
