@@ -343,13 +343,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const { data: createdProfile, error: createProfileErr } = await withTimeout(
             profilesService.create({
               id: authUser.id,
-              user_id: authUser.id,
               organization_id: orgId || '',
-              full_name: fallbackName,
+              name: fallbackName,
               email: authUser.email || '',
               role: fallbackRole,
               status: 'active',
-              is_active: true,
             }),
             6000,
             'Tempo limite ao provisionar perfil'
@@ -822,6 +820,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password: password || '123456',
         options: {
           data: {
+            name: name.trim(),
             full_name: name.trim(),
             role,
             organization_id: organizationId || null,
@@ -872,13 +871,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           await profilesService.create({
             id: data.user.id,
-            user_id: data.user.id,
             organization_id: finalOrgId || 'org-alpha',
-            full_name: name.trim(),
+            name: name.trim(),
             email: email.trim(),
             role,
             status: 'active',
-            is_active: true,
           });
         } catch (profErr) {
           console.warn('[Auth] Aviso ao registrar profile após autenticação:', profErr);

@@ -16,10 +16,23 @@ export interface Organization {
   created_at: string;
 }
 
+export interface DatabaseProfile {
+  id: string;
+  organization_id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  role: UserRole;
+  status?: 'active' | 'pending' | 'inactive';
+  avatar_url?: string;
+  created_at?: string;
+}
+
 export interface Profile {
   id: string;
   organization_id: string;
   user_id?: string;
+  name?: string;
   full_name: string;
   email: string;
   phone?: string;
