@@ -24,15 +24,72 @@ import { crmService, leadersService, coordinatorsService, goalsService, eventsSe
 import { StatCard } from '../../components/ui/StatCard';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
+import { ErrorState } from '../../components/ui/ErrorState';
 
 interface DashboardPageProps {
   onNavigate: (path: string) => void;
 }
 
+/**
+ * Utilitário com timeout estrito para garantir que nenhuma consulta individual
+ * trave a renderização do Dashboard.
+ */
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, serviceName: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      const err = new Error(`Tempo limite de ${timeoutMs}ms excedido ao consultar ${serviceName}`);
+      (err as any).code = 'TIMEOUT';
+      (err as any).details = `A requisição para ${serviceName} não respondeu em ${timeoutMs}ms.`;
+      (err as any).hint = 'Verifique se há bloqueio de RLS, conectividade ou latência do Supabase.';
+      reject(err);
+    }, timeoutMs);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    if (timer) clearTimeout(timer);
+  });
+}
+
+/**
+ * Trata o resultado de cada consulta sem mascarar o erro.
+ * Registra no console: tabela/serviço, error.code, error.message, error.details, error.hint.
+ * Se a tabela estiver vazia, retorna array vazio sem registrar erro.
+ */
+function processQueryResult<T>(
+  result: PromiseSettledResult<{ data?: T[] | null; error?: any }>,
+  serviceName: string
+): T[] {
+  if (result.status === 'rejected') {
+    const err = result.reason;
+    console.error(`[NEXUS DASHBOARD] Erro no serviço: ${serviceName}`, {
+      service: serviceName,
+      code: err?.code || 'FETCH_REJECTED',
+      message: err?.message || String(err),
+      details: err?.details || null,
+      hint: err?.hint || null,
+    });
+    return [];
+  }
+
+  const { data, error } = result.value;
+  if (error) {
+    console.error(`[NEXUS DASHBOARD] Erro retornado pela tabela/serviço: ${serviceName}`, {
+      service: serviceName,
+      code: error.code || 'UNKNOWN_ERROR',
+      message: error.message || 'Erro retornado pelo Supabase',
+      details: error.details || null,
+      hint: error.hint || null,
+    });
+    return [];
+  }
+
+  return Array.isArray(data) ? data : [];
+}
+
 export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   const { organization, profile } = useAuth();
   const { error: toastError } = useToast();
-  const orgId = organization?.id || '';
+  const orgId = organization?.id || profile?.organization_id || '';
 
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [leaders, setLeaders] = useState<Leader[]>([]);
@@ -43,11 +100,18 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   const [houseStickers, setHouseStickers] = useState<HouseSticker[]>([]);
   const [presenceLogs, setPresenceLogs] = useState<PresenceLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
-    if (!orgId) return;
     setIsLoading(true);
     try {
+      if (!orgId) {
+        console.warn('[NEXUS DASHBOARD] Nenhum organization_id válido encontrado no perfil ou organização.');
+        setLoadError('Nenhuma organização vinculada ao seu usuário. Entre em contato com o administrador para vincular sua conta.');
+        return;
+      }
+      setLoadError(null);
+
       const [
         contactsRes,
         leadersRes,
@@ -57,27 +121,34 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         carsRes,
         housesRes,
         presenceRes,
-      ] = await Promise.all([
-        crmService.getAll(orgId),
-        leadersService.getAll(orgId),
-        coordinatorsService.getAll(orgId),
-        goalsService.getAll(orgId),
-        eventsService.getAll(orgId),
-        stickersService.getCarStickers(orgId),
-        stickersService.getHouseStickers(orgId),
-        presenceService.getLogs(orgId),
+      ] = await Promise.allSettled([
+        withTimeout(crmService.getAll(orgId), 6000, 'crm_contacts'),
+        withTimeout(leadersService.getAll(orgId), 6000, 'leaders'),
+        withTimeout(coordinatorsService.getAll(orgId), 6000, 'coordinators'),
+        withTimeout(goalsService.getAll(orgId), 6000, 'goals'),
+        withTimeout(eventsService.getAll(orgId), 6000, 'campaign_events'),
+        withTimeout(stickersService.getCarStickers(orgId), 6000, 'car_stickers'),
+        withTimeout(stickersService.getHouseStickers(orgId), 6000, 'house_stickers'),
+        withTimeout(presenceService.getLogs(orgId), 6000, 'field_presences'),
       ]);
 
-      setContacts(contactsRes.data || []);
-      setLeaders(leadersRes.data || []);
-      setCoordinators(coordsRes.data || []);
-      setGoals(goalsRes.data || []);
-      setEvents(eventsRes.data || []);
-      setCarStickers(carsRes.data || []);
-      setHouseStickers(housesRes.data || []);
-      setPresenceLogs(presenceRes.data || []);
+      setContacts(processQueryResult(contactsRes, 'crm_contacts'));
+      setLeaders(processQueryResult(leadersRes, 'leaders'));
+      setCoordinators(processQueryResult(coordsRes, 'coordinators'));
+      setGoals(processQueryResult(goalsRes, 'goals'));
+      setEvents(processQueryResult(eventsRes, 'campaign_events'));
+      setCarStickers(processQueryResult(carsRes, 'car_stickers'));
+      setHouseStickers(processQueryResult(housesRes, 'house_stickers'));
+      setPresenceLogs(processQueryResult(presenceRes, 'field_presences'));
     } catch (err: any) {
-      toastError('Erro ao carregar painel geral: ' + err.message);
+      console.error('[NEXUS DASHBOARD] Erro inesperado ao carregar dados da dashboard:', {
+        service: 'dashboard_general',
+        code: err?.code || 'UNEXPECTED_ERROR',
+        message: err?.message || String(err),
+        details: err?.details || null,
+        hint: err?.hint || null,
+      });
+      toastError('Erro ao carregar painel geral: ' + (err?.message || 'Erro inesperado'));
     } finally {
       setIsLoading(false);
     }
@@ -157,6 +228,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         <div className="py-20 flex flex-col items-center justify-center text-slate-400 gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-slate-600" />
           <span className="text-sm font-medium">Carregando dados da campanha...</span>
+        </div>
+      ) : loadError ? (
+        <div className="py-12">
+          <ErrorState
+            title="Organização não identificada"
+            message={loadError}
+            onRetry={() => loadData()}
+          />
         </div>
       ) : (
         <>
