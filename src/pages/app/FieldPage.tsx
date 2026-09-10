@@ -142,18 +142,22 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
     setIsSubmittingContact(true);
     const assignedLeader = leaders.find(l => l.id === contactLeader) || currentLeader;
 
+    const fieldTags = [
+      'campo',
+      isMultiplier ? 'multiplier' : 'supporter',
+      wantsSticker ? 'adesivo' : null,
+    ].filter(Boolean) as string[];
+
     try {
       const { error: crmErr } = await crmService.create({
         organization_id: orgId,
         leader_id: assignedLeader?.id,
-        leader_name: assignedLeader?.name,
-        full_name: contactName.trim(),
-        phone: contactPhone.trim(),
-        territory: contactNeighborhood.trim() || assignedLeader?.territory || 'Campo',
+        name: contactName.trim(),
+        whatsapp: contactPhone.trim(),
+        city: contactNeighborhood.trim() || assignedLeader?.territory || 'Campo',
         neighborhood: contactNeighborhood.trim() || assignedLeader?.neighborhood || undefined,
-        status: isMultiplier ? 'multiplier' : 'supporter',
-        tags: wantsSticker ? ['campo', 'adesivo'] : ['campo'],
-        notes: `Cadastrado via Modo de Campo por ${profile?.full_name || 'Líder'}`,
+        origin: 'field',
+        tags: fieldTags,
       });
 
       if (crmErr) {

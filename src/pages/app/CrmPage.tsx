@@ -109,19 +109,21 @@ export const CrmPage: React.FC = () => {
       ? formData.tagsString.split(',').map(t => t.trim().toLowerCase()).filter(Boolean)
       : [];
 
+    const combinedTags = Array.from(new Set([
+      ...tagsArray,
+      formData.status,
+    ].filter(Boolean)));
+
     try {
       if (selectedContact) {
         const { data: updated, error } = await crmService.update(selectedContact.id, {
           leader_id: formData.leader_id || undefined,
-          leader_name: assignedLeader ? assignedLeader.name : undefined,
-          full_name: formData.full_name.trim(),
-          phone: formData.phone.trim(),
+          name: formData.full_name.trim(),
+          whatsapp: formData.phone.trim(),
           email: formData.email.trim() || undefined,
-          territory: formData.territory.trim() || 'Geral',
+          city: formData.territory.trim() || 'Geral',
           neighborhood: formData.neighborhood.trim() || undefined,
-          status: formData.status,
-          tags: tagsArray,
-          notes: formData.notes.trim() || undefined,
+          tags: combinedTags,
         });
 
         if (error) {
@@ -135,15 +137,13 @@ export const CrmPage: React.FC = () => {
         const { data: created, error } = await crmService.create({
           organization_id: orgId,
           leader_id: formData.leader_id || undefined,
-          leader_name: assignedLeader ? assignedLeader.name : undefined,
-          full_name: formData.full_name.trim(),
-          phone: formData.phone.trim(),
+          name: formData.full_name.trim(),
+          whatsapp: formData.phone.trim(),
           email: formData.email.trim() || undefined,
-          territory: formData.territory.trim() || 'Geral',
+          city: formData.territory.trim() || 'Geral',
           neighborhood: formData.neighborhood.trim() || undefined,
-          status: formData.status,
-          tags: tagsArray,
-          notes: formData.notes.trim() || undefined,
+          origin: 'crm',
+          tags: combinedTags,
         });
 
         if (error) {

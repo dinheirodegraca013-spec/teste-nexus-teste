@@ -102,6 +102,36 @@ export const leadersService = {
 };
 
 // CRM Contacts Service
+function mapCrmContactRow(row: any): CrmContact {
+  const tags = Array.isArray(row.tags) ? row.tags : [];
+  let status: CrmContact['status'] = 'supporter';
+  if (tags.includes('multiplier')) status = 'multiplier';
+  else if (tags.includes('lead')) status = 'lead';
+  else if (tags.includes('contacted')) status = 'contacted';
+  else if (tags.includes('volunteer')) status = 'volunteer';
+  else if (tags.includes('undecided')) status = 'undecided';
+  else if (tags.includes('unresponsive')) status = 'unresponsive';
+  else if (tags.includes('hostile')) status = 'hostile';
+
+  return {
+    id: row.id,
+    organization_id: row.organization_id,
+    leader_id: row.leader_id || undefined,
+    name: row.name || '',
+    full_name: row.name || '',
+    email: row.email || undefined,
+    whatsapp: row.whatsapp || '',
+    phone: row.whatsapp || '',
+    city: row.city || '',
+    territory: row.city || row.neighborhood || 'Geral',
+    neighborhood: row.neighborhood || undefined,
+    origin: row.origin || 'crm',
+    tags,
+    status,
+    created_at: row.created_at,
+  };
+}
+
 export const crmService = {
   async getAll(organizationId: string) {
     const { data, error } = await supabase
@@ -109,26 +139,64 @@ export const crmService = {
       .select('*')
       .eq('organization_id', organizationId)
       .order('created_at', { ascending: false });
-    return { data: (data as CrmContact[]) || [], error };
+    return { data: ((data as any[]) || []).map(mapCrmContactRow), error };
   },
 
-  async create(contact: Partial<CrmContact>) {
+  async create(contact: Partial<CrmContact> & Record<string, any>) {
+    // Filtra e mapeia EXCLUSIVAMENTE para as colunas físicas reais de crm_contacts:
+    // [organization_id, leader_id, name, email, whatsapp, neighborhood, city, origin, tags]
+    const dbPayload: Record<string, any> = {
+      organization_id: contact.organization_id,
+      name: (contact.name || contact.full_name || '').trim(),
+    };
+
+    if (contact.leader_id) dbPayload.leader_id = contact.leader_id;
+    if (contact.email) dbPayload.email = contact.email.trim();
+    if (contact.whatsapp || contact.phone) dbPayload.whatsapp = (contact.whatsapp || contact.phone).trim();
+    if (contact.neighborhood) dbPayload.neighborhood = contact.neighborhood.trim();
+    if (contact.city || contact.territory) dbPayload.city = (contact.city || contact.territory).trim();
+    if (contact.origin) dbPayload.origin = contact.origin;
+    if (contact.tags && Array.isArray(contact.tags)) dbPayload.tags = contact.tags;
+
     const { data, error } = await supabase
       .from('crm_contacts')
-      .insert([contact])
+      .insert([dbPayload])
       .select()
       .maybeSingle();
-    return { data: data as CrmContact | null, error };
+    return { data: data ? mapCrmContactRow(data) : null, error };
   },
 
-  async update(id: string, updates: Partial<CrmContact>) {
+  async update(id: string, updates: Partial<CrmContact> & Record<string, any>) {
+    // Filtra e mapeia EXCLUSIVAMENTE para as colunas físicas reais de crm_contacts
+    const dbPayload: Record<string, any> = {};
+
+    if (updates.organization_id !== undefined) dbPayload.organization_id = updates.organization_id;
+    if (updates.leader_id !== undefined) dbPayload.leader_id = updates.leader_id || null;
+    if (updates.name !== undefined || updates.full_name !== undefined) {
+      dbPayload.name = (updates.name || updates.full_name || '').trim();
+    }
+    if (updates.email !== undefined) dbPayload.email = updates.email ? updates.email.trim() : null;
+    if (updates.whatsapp !== undefined || updates.phone !== undefined) {
+      const phoneVal = updates.whatsapp || updates.phone;
+      dbPayload.whatsapp = phoneVal ? phoneVal.trim() : null;
+    }
+    if (updates.neighborhood !== undefined) {
+      dbPayload.neighborhood = updates.neighborhood ? updates.neighborhood.trim() : null;
+    }
+    if (updates.city !== undefined || updates.territory !== undefined) {
+      const cityVal = updates.city || updates.territory;
+      dbPayload.city = cityVal ? cityVal.trim() : null;
+    }
+    if (updates.origin !== undefined) dbPayload.origin = updates.origin;
+    if (updates.tags !== undefined) dbPayload.tags = updates.tags;
+
     const { data, error } = await supabase
       .from('crm_contacts')
-      .update(updates)
+      .update(dbPayload)
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as CrmContact | null, error };
+    return { data: data ? mapCrmContactRow(data) : null, error };
   },
 
   async delete(id: string) {

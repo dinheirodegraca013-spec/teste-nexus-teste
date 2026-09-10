@@ -116,13 +116,37 @@ export interface CrmContact {
   leader_name?: string;
   /** Propriedade virtual/derivada via leader_id -> leaders.coordinator_id; não é coluna física em crm_contacts */
   coordinator_id?: string;
+  
+  /** Coluna real no banco: name */
+  name?: string;
+  /** Campo virtual/mapeado no frontend a partir da coluna real 'name' */
   full_name: string;
+  
   email?: string;
+  
+  /** Coluna real no banco: whatsapp */
+  whatsapp?: string;
+  /** Campo virtual/mapeado no frontend a partir da coluna real 'whatsapp' */
   phone: string;
+  
+  /** Coluna real no banco: city */
+  city?: string;
+  /** Campo virtual/mapeado no frontend a partir da coluna real 'city' */
   territory: string;
+  
+  /** Coluna real no banco: neighborhood */
   neighborhood?: string;
-  status: 'lead' | 'contacted' | 'supporter' | 'multiplier' | 'unresponsive' | 'undecided' | 'volunteer' | 'hostile';
+  
+  /** Coluna real no banco: origin */
+  origin?: string;
+  
+  /** Campo virtual no frontend mapeado via tags; não é coluna física no banco */
+  status?: 'lead' | 'contacted' | 'supporter' | 'multiplier' | 'unresponsive' | 'undecided' | 'volunteer' | 'hostile';
+  
+  /** Coluna real no banco: tags (text[]) */
   tags?: string[];
+  
+  /** Campo virtual no frontend; não é coluna física no banco */
   notes?: string;
   responsible?: string;
   created_at: string;
