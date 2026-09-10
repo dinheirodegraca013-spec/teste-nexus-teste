@@ -220,7 +220,6 @@ export const CoordinatorsPage: React.FC = () => {
           region: formData.region.trim() || undefined,
           status: formData.status,
           notes: formData.notes.trim() || undefined,
-          leaders_count: 0,
         });
 
         if (error) {

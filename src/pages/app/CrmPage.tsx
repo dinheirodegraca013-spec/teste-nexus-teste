@@ -114,7 +114,6 @@ export const CrmPage: React.FC = () => {
         const { data: updated, error } = await crmService.update(selectedContact.id, {
           leader_id: formData.leader_id || undefined,
           leader_name: assignedLeader ? assignedLeader.name : undefined,
-          coordinator_id: assignedLeader ? assignedLeader.coordinator_id : undefined,
           full_name: formData.full_name.trim(),
           phone: formData.phone.trim(),
           email: formData.email.trim() || undefined,
@@ -137,7 +136,6 @@ export const CrmPage: React.FC = () => {
           organization_id: orgId,
           leader_id: formData.leader_id || undefined,
           leader_name: assignedLeader ? assignedLeader.name : undefined,
-          coordinator_id: assignedLeader ? assignedLeader.coordinator_id : undefined,
           full_name: formData.full_name.trim(),
           phone: formData.phone.trim(),
           email: formData.email.trim() || undefined,

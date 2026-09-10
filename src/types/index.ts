@@ -83,6 +83,7 @@ export interface Coordinator {
   region?: string;
   status: 'active' | 'inactive';
   notes?: string;
+  /** Métrica virtual/calculada em memória no frontend; não é coluna física no banco de dados */
   leaders_count?: number;
   created_at: string;
 }
@@ -102,6 +103,7 @@ export interface Leader {
   goal_cars?: number; // Meta de Carros Adesivados
   goal_houses?: number; // Meta de Casas Adesivadas
   goal_presence?: number; // Meta de Presenças / Check-ins
+  /** Métrica virtual/calculada em memória no frontend; não é coluna física no banco de dados */
   contacts_count?: number;
   status: 'active' | 'inactive' | 'pending';
   created_at: string;
@@ -112,6 +114,7 @@ export interface CrmContact {
   organization_id: string;
   leader_id?: string;
   leader_name?: string;
+  /** Propriedade virtual/derivada via leader_id -> leaders.coordinator_id; não é coluna física em crm_contacts */
   coordinator_id?: string;
   full_name: string;
   email?: string;

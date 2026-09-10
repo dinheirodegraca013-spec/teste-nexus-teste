@@ -179,7 +179,6 @@ export const LeadersPage: React.FC = () => {
           goal_cars: Number(formData.goal_cars) || 0,
           goal_houses: Number(formData.goal_houses) || 0,
           goal_presence: Number(formData.goal_presence) || 0,
-          contacts_count: Number(formData.goal_reached) || 0,
           status: formData.status,
         });
 
@@ -205,7 +204,6 @@ export const LeadersPage: React.FC = () => {
           goal_cars: Number(formData.goal_cars) || 50,
           goal_houses: Number(formData.goal_houses) || 30,
           goal_presence: Number(formData.goal_presence) || 20,
-          contacts_count: Number(formData.goal_reached) || 0,
           status: formData.status,
         });
 
