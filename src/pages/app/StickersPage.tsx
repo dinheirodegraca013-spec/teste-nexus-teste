@@ -487,6 +487,7 @@ export const StickersPage: React.FC = () => {
               <span>Foto do Veículo Adesivado</span>
             </label>
             <FileUpload
+              disabled
               accept="image/*"
               maxSizeMB={8}
               onFileSelected={(file, dataUrl) => {
@@ -564,6 +565,7 @@ export const StickersPage: React.FC = () => {
               <span>Foto da Fachada com a Placa / Adesivo</span>
             </label>
             <FileUpload
+              disabled
               accept="image/*"
               maxSizeMB={8}
               onFileSelected={(file, dataUrl) => {
