@@ -65,6 +65,7 @@ export function normalizeRole(role: unknown): string {
   if (clean === 'superadmin' || clean === 'superadministrador') return 'superadmin';
   if (clean === 'admin' || clean === 'administrador' || clean === 'adm') return 'admin';
   if (clean === 'coordinator' || clean === 'coordenador') return 'coordinator';
+  if (clean === 'controller' || clean === 'controlador') return 'controller';
   if (clean === 'leader' || clean === 'lider' || clean === 'lideranca') return 'leader';
   if (clean === 'manager' || clean === 'gerente') return 'manager';
   if (clean === 'operator' || clean === 'operador') return 'operator';
@@ -184,7 +185,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const metadata = authUser.user_metadata || {};
         const metadataRole = normalizeRole(metadata.role);
         const hasInvitedOrganization = isValidUUID(metadata.organization_id);
-        const isInvitedRole = ['coordinator', 'leader', 'manager', 'operator', 'viewer'].includes(metadataRole);
+        const isInvitedRole = ['coordinator', 'controller', 'leader', 'manager', 'operator', 'viewer'].includes(metadataRole);
 
         // A missing profile for an invited account must never trigger creation of a new tenant.
         // The existing provision_new_user RPC always creates a new organization and an admin profile.
