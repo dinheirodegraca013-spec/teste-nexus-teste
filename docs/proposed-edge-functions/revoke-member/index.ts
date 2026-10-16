@@ -62,7 +62,7 @@ Deno.serve(async (request: Request) => {
   const actor = actorLookup.data as MemberRecord | null;
   const target = targetLookup.data as MemberRecord | null;
   const decision = mayRevokeMember(actor,target,authUserId);
-  if (!decision.allowed) {
+  if (decision.allowed === false) {
     return response(403,{error:decision.message,code:decision.code});
   }
 
