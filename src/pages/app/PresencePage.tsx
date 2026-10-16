@@ -266,6 +266,7 @@ export const PresencePage: React.FC = () => {
               <span>Upload de Imagem: Foto da Presença / Lista Assinada</span>
             </label>
             <FileUpload
+              disabled
               accept="image/*"
               maxSizeMB={10}
               onFileSelected={(file, dataUrl) => {
