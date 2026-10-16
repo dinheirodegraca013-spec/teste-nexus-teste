@@ -67,7 +67,8 @@ export const UsersPage: React.FC = () => {
     if (!orgId) return;
     setIsLoading(true);
     try {
-      const { data } = await membersService.getAll(orgId);
+      const { data, error } = await membersService.getAll(orgId);
+      if (error) throw error;
       setMembers(data || []);
     } catch (err: any) {
       toastError('Erro ao carregar equipe: ' + err.message);
@@ -237,7 +238,7 @@ export const UsersPage: React.FC = () => {
         return;
       }
       setIsScopeModalOpen(false);
-      success('Coordenação revogada e alteração registrada na auditoria.');
+      success('Solicitação de revogação processada e registrada na auditoria.');
     } catch (err: any) {
       toastError('Falha ao revogar coordenação: ' + (err?.message || 'Erro inesperado.'));
     } finally {
