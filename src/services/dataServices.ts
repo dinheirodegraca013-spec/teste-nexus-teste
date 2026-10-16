@@ -170,7 +170,8 @@ export const crmService = {
     // Filtra e mapeia EXCLUSIVAMENTE para as colunas físicas reais de crm_contacts
     const dbPayload: Record<string, any> = {};
 
-    if (updates.organization_id !== undefined) dbPayload.organization_id = updates.organization_id;
+    // organization_id is immutable: tenant reassignment must never be attempted by the client.
+    // The database RLS remains the authoritative authorization boundary.
     if (updates.leader_id !== undefined) dbPayload.leader_id = updates.leader_id || null;
     if (updates.name !== undefined || updates.full_name !== undefined) {
       dbPayload.name = (updates.name || updates.full_name || '').trim();
