@@ -36,6 +36,9 @@ jobs:
       - name: TypeScript typecheck
         run: npm run lint
 
+      - name: Auth regression tests
+        run: npm test
+
       - name: Production build
         run: npm run build
 

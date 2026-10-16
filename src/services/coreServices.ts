@@ -36,15 +36,15 @@ export const organizationsService = {
   }
 };
 
-function normalizeProfile(dbRecord: any): Profile | null {
+export function normalizeProfile(dbRecord: any): Profile | null {
   if (!dbRecord) return null;
   const nameValue = dbRecord.name || dbRecord.full_name || '';
   return {
     ...dbRecord,
     name: nameValue,
     full_name: nameValue,
-    status: 'active',
-    is_active: true,
+    status: dbRecord.is_blocked ? 'inactive' : 'active',
+    is_active: !dbRecord.is_blocked,
     user_id: dbRecord.user_id || dbRecord.id,
   } as Profile;
 }
@@ -249,8 +249,9 @@ export const membersService = {
           name: nameVal,
           full_name: nameVal,
           role: p.role || 'operator',
-          status: 'active' as const,
-          is_active: true,
+          status: (p.is_blocked ? 'inactive' : 'active') as 'inactive' | 'active',
+          is_active: !p.is_blocked,
+          is_blocked: Boolean(p.is_blocked),
           created_at: p.created_at || new Date().toISOString(),
         };
       }), 

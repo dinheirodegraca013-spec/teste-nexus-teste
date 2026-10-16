@@ -78,7 +78,7 @@ export function checkUserPermission(
   module: AppModule,
   action: 'view' | 'create' | 'edit' | 'delete' = 'view'
 ): boolean {
-  if (!userProfile) return false;
+  if (!userProfile || userProfile.is_blocked) return false;
 
   const normRole = normalizeRole(userProfile.role);
   if (normRole === 'superadmin' || normRole === 'admin') return true;
@@ -110,6 +110,7 @@ export function checkUserPermission(
 }
 
 export function getDefaultRouteForUser(userProfile: Profile | null, perms: UserModulePermission[]): string {
+  if (userProfile?.is_blocked) return '/403';
   if (!userProfile) return '/app/dashboard';
   const hasPerm = (mod: AppModule, act: 'view' | 'create' | 'edit' | 'delete' = 'view') =>
     checkUserPermission(userProfile, perms, mod, act);

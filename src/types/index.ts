@@ -39,6 +39,7 @@ export interface Profile {
   status?: 'active' | 'pending' | 'inactive';
   avatar_url?: string;
   is_active?: boolean;
+  is_blocked?: boolean;
   created_at: string;
 }
 
