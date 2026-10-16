@@ -27,12 +27,12 @@ export const ProfilePage: React.FC = () => {
     setIsLoadingProfile(true);
     const { error } = await updateProfile({
       full_name: fullName.trim(),
-      phone: phone.trim() || undefined,
+      phone: phone.trim(),
     });
     setIsLoadingProfile(false);
 
     if (error) {
-      toastError('Erro ao atualizar perfil.');
+      toastError('Erro ao atualizar perfil: ' + error.message);
     } else {
       success('Dados do perfil atualizados com sucesso!');
     }
@@ -40,8 +40,8 @@ export const ProfilePage: React.FC = () => {
 
   const handleSavePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newPassword.length < 6) {
-      toastError('A senha deve conter no mínimo 6 caracteres.');
+    if (newPassword.length < 8) {
+      toastError('A senha deve conter no mínimo 8 caracteres.');
       return;
     }
     if (newPassword !== confirmPassword) {
