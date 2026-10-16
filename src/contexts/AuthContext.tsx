@@ -181,7 +181,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const metadata = authUser.user_metadata || {};
         const metadataRole = normalizeRole(metadata.role);
         const hasInvitedOrganization = isValidUUID(metadata.organization_id);
-        const isInvitedRole = metadataRole === 'coordinator' || metadataRole === 'leader';
+        const isInvitedRole = ['coordinator', 'leader', 'manager', 'operator', 'viewer'].includes(metadataRole);
 
         // A missing profile for an invited account must never trigger creation of a new tenant.
         // The existing provision_new_user RPC always creates a new organization and an admin profile.
