@@ -14,6 +14,12 @@ interface FieldPageProps {
   onNavigate?: (path: string) => void;
 }
 
+const definedGoal = (goal: number | null | undefined): number | null =>
+  typeof goal === 'number' && Number.isFinite(goal) && goal > 0 ? goal : null;
+
+const goalPercent = (reached: number, target: number | null): number | null =>
+  target === null ? null : Math.min(100, Math.max(0, Math.round((reached / target) * 100)));
+
 export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
   const { organization, profile } = useAuth();
   const { success, error: toastError } = useToast();
@@ -124,21 +130,21 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
   }, [loadData]);
 
   // Target metrics calculation (4 Goals: Apoiador, Carros, Casas, Presença)
-  const contactsGoal = currentLeader?.goal_target || 10;
+  const contactsGoal = definedGoal(currentLeader?.goal_target);
   const contactsReached = recentContacts.filter(c => !currentLeader?.id || c.leader_id === currentLeader.id).length;
-  const contactsPercent = Math.min(100, Math.round(((contactsReached || 0) / (contactsGoal || 1)) * 100));
+  const contactsPercent = goalPercent(contactsReached, contactsGoal);
 
-  const carsGoal = currentLeader?.goal_cars || 50;
+  const carsGoal = definedGoal(currentLeader?.goal_cars);
   const carsReached = carStickers.length;
-  const carsPercent = Math.min(100, Math.round(((carsReached || 0) / (carsGoal || 1)) * 100));
+  const carsPercent = goalPercent(carsReached, carsGoal);
 
-  const housesGoal = currentLeader?.goal_houses || 30;
+  const housesGoal = definedGoal(currentLeader?.goal_houses);
   const housesReached = houseStickers.length;
-  const housesPercent = Math.min(100, Math.round(((housesReached || 0) / (housesGoal || 1)) * 100));
+  const housesPercent = goalPercent(housesReached, housesGoal);
 
-  const presenceGoal = currentLeader?.goal_presence || 20;
+  const presenceGoal = definedGoal(currentLeader?.goal_presence);
   const presenceReached = presenceLogs.length;
-  const presencePercent = Math.min(100, Math.round(((presenceReached || 0) / (presenceGoal || 1)) * 100));
+  const presencePercent = goalPercent(presenceReached, presenceGoal);
 
   const handleSaveContact = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -357,12 +363,12 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
             </div>
             <div className="mt-1 flex items-baseline gap-1">
               <span className="font-mono text-base font-bold text-slate-900">{contactsReached}</span>
-              <span className="text-[10px] text-slate-500 font-medium">/ {contactsGoal}</span>
+              <span className="text-[10px] text-slate-500 font-medium">/ {contactsGoal ?? '—'}</span>
             </div>
             <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mt-1.5">
-              <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${contactsPercent}%` }} />
+              <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${contactsPercent ?? 0}%` }} />
             </div>
-            <div className="text-[10px] font-bold text-emerald-700 mt-1">{contactsPercent}%</div>
+            <div className="text-[10px] font-bold text-emerald-700 mt-1">{contactsPercent === null ? 'Sem meta' : contactsPercent + '%'}</div>
           </div>
 
           {/* 2. Carros Adesivados */}
@@ -372,12 +378,12 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
             </div>
             <div className="mt-1 flex items-baseline gap-1">
               <span className="font-mono text-base font-bold text-emerald-950">{carsReached}</span>
-              <span className="text-[10px] text-emerald-700 font-medium">/ {carsGoal}</span>
+              <span className="text-[10px] text-emerald-700 font-medium">/ {carsGoal ?? '—'}</span>
             </div>
             <div className="w-full bg-emerald-200 h-1.5 rounded-full overflow-hidden mt-1.5">
-              <div className="h-full bg-emerald-600 rounded-full transition-all duration-500" style={{ width: `${carsPercent}%` }} />
+              <div className="h-full bg-emerald-600 rounded-full transition-all duration-500" style={{ width: `${carsPercent ?? 0}%` }} />
             </div>
-            <div className="text-[10px] font-bold text-emerald-800 mt-1">{carsPercent}%</div>
+            <div className="text-[10px] font-bold text-emerald-800 mt-1">{carsPercent === null ? 'Sem meta' : carsPercent + '%'}</div>
           </div>
 
           {/* 3. Casas Adesivadas */}
@@ -387,12 +393,12 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
             </div>
             <div className="mt-1 flex items-baseline gap-1">
               <span className="font-mono text-base font-bold text-amber-950">{housesReached}</span>
-              <span className="text-[10px] text-amber-700 font-medium">/ {housesGoal}</span>
+              <span className="text-[10px] text-amber-700 font-medium">/ {housesGoal ?? '—'}</span>
             </div>
             <div className="w-full bg-amber-200 h-1.5 rounded-full overflow-hidden mt-1.5">
-              <div className="h-full bg-amber-600 rounded-full transition-all duration-500" style={{ width: `${housesPercent}%` }} />
+              <div className="h-full bg-amber-600 rounded-full transition-all duration-500" style={{ width: `${housesPercent ?? 0}%` }} />
             </div>
-            <div className="text-[10px] font-bold text-amber-800 mt-1">{housesPercent}%</div>
+            <div className="text-[10px] font-bold text-amber-800 mt-1">{housesPercent === null ? 'Sem meta' : housesPercent + '%'}</div>
           </div>
 
           {/* 4. Presença em Eventos */}
@@ -402,12 +408,12 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
             </div>
             <div className="mt-1 flex items-baseline gap-1">
               <span className="font-mono text-base font-bold text-indigo-950">{presenceReached}</span>
-              <span className="text-[10px] text-indigo-700 font-medium">/ {presenceGoal}</span>
+              <span className="text-[10px] text-indigo-700 font-medium">/ {presenceGoal ?? '—'}</span>
             </div>
             <div className="w-full bg-indigo-200 h-1.5 rounded-full overflow-hidden mt-1.5">
-              <div className="h-full bg-indigo-600 rounded-full transition-all duration-500" style={{ width: `${presencePercent}%` }} />
+              <div className="h-full bg-indigo-600 rounded-full transition-all duration-500" style={{ width: `${presencePercent ?? 0}%` }} />
             </div>
-            <div className="text-[10px] font-bold text-indigo-800 mt-1">{presencePercent}%</div>
+            <div className="text-[10px] font-bold text-indigo-800 mt-1">{presencePercent === null ? 'Sem meta' : presencePercent + '%'}</div>
           </div>
         </div>
       </div>
