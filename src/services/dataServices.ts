@@ -15,6 +15,24 @@ import {
   PopularDemand 
 } from '../types';
 
+// A PostgREST DELETE can return error=null even when RLS deleted zero rows.
+// Require the deleted row id before telling the operator the action succeeded.
+function confirmDeletedRow(
+  data: { id: string } | null,
+  error: { message: string; code?: string } | null,
+) {
+  if (error) return { error };
+  if (!data?.id) {
+    return {
+      error: {
+        code: 'DELETE_NOT_APPLIED',
+        message: 'A exclusão não foi confirmada. O registro pode não existir ou você pode não ter permissão.',
+      },
+    };
+  }
+  return { error: null };
+}
+
 // Coordinators Service
 export const coordinatorsService = {
   async getAll(organizationId: string) {
@@ -370,11 +388,13 @@ export const presenceService = {
   },
 
   async delete(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('field_presences')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   },
 
   async deleteLog(id: string) {
@@ -478,11 +498,13 @@ export const stickersService = {
   },
 
   async deleteCarSticker(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('car_stickers')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   },
 
   async getHouseStickers(organizationId: string) {
@@ -518,11 +540,13 @@ export const stickersService = {
   },
 
   async deleteHouseSticker(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('house_stickers')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
 
