@@ -11,7 +11,7 @@ const result = await build({
   plugins: [{ name: 'isolated-auth', setup(build) {
     build.onResolve({ filter: /^(react(?:\/jsx-runtime)?|\.\.\/lib\/supabase|\.\.\/services)$/ }, args => ({ path: args.path, namespace: 'mock' }));
     build.onLoad({ filter: /.*/, namespace: 'mock' }, args => ({ contents:
-      args.path === 'react/jsx-runtime' ? 'export const jsx = () => null, jsxs = jsx;' : args.path === 'react' ? `
+      args.path === 'react/jsx-runtime' ? 'export const jsx = (_type, props) => { if (props.value) globalThis.__authContext = props.value; return null; }, jsxs = jsx;' : args.path === 'react' ? `
         export const callbacks = [], states = [];
         export const createContext = () => ({ Provider: {} });
         export const useContext = () => null;
@@ -22,13 +22,16 @@ const result = await build({
           const index = states.push(value) - 1;
           return [value, next => { states[index] = next; }];
         };
-        export default { useRef, createElement: () => null };
+        export default { useRef, createElement: (_type, props) => { if (props.value) globalThis.__authContext = props.value; return null; } };
       ` : args.path.endsWith('/supabase') ? `
-        export const supabase = { rpc: (...args) => globalThis.__authProfileTest.rpc(...args) };
+        export const supabase = { auth: { signOut: async () => ({ error: null }) }, rpc: (...args) => globalThis.__authProfileTest.rpc(...args) };
         export const isSupabaseConfigured = true, supabaseUrl = '';
       ` : `
         export const profilesService = { getById: (...args) => globalThis.__authProfileTest.lookup(...args) };
-        export const organizationsService = {}, permissionsService = {};
+        export const organizationsService = {
+          getById: async id => globalThis.__authProfileTest.organization ? globalThis.__authProfileTest.organization(id) : ({ data: { id }, error: null }),
+          getAll: async () => ({ data: [], error: null }),
+        }, permissionsService = { getByUserId: async id => ({ data: [{ user_id: id, module: 'crm', can_view: true }], error: null }) };
         export const isValidUUID = () => false;
       `,
     }));
@@ -84,3 +87,67 @@ test('confirmed missing profile still reaches existing provisioning flow', async
   assert.match(states[7], /Synthetic provisioning stop/);
   delete globalThis.__authProfileTest;
 });
+
+for (const staleOutcome of ['profile', 'missing', 'error']) {
+  test(`session B does not reuse session A or accept its late ${staleOutcome}`, async () => {
+    let releaseA;
+    const pendingA = new Promise(resolve => { releaseA = resolve; });
+    const lookups = [];
+    let rpcCalls = 0;
+    globalThis.__authProfileTest = {
+      lookup: id => {
+        lookups.push(id);
+        return id === 'user-a' ? pendingA : Promise.resolve({ data: { id, organization_id: 'tenant-b', role: 'viewer' }, error: null });
+      },
+      rpc: async () => { rpcCalls++; return { error: new Error('Unexpected provisioning') }; },
+    };
+    callbacks.length = 0;
+    states.length = 0;
+    AuthProvider({ children: null });
+    const load = callbacks[1];
+    const first = load({ id: 'user-a' });
+    const duplicate = load({ id: 'user-a' });
+    const second = load({ id: 'user-b' });
+    // Release after B has had the opportunity to query, without hanging on a broken deduplicator.
+    await new Promise(resolve => setImmediate(resolve));
+    releaseA(staleOutcome === 'error'
+      ? { data: null, error: new Error('Stale error') }
+      : { data: staleOutcome === 'missing' ? null : { id: 'user-a', organization_id: 'tenant-a', role: 'admin' }, error: null });
+    const [, , loadedB] = await Promise.all([first, duplicate, second]);
+    assert.deepEqual(lookups, ['user-a', 'user-b']);
+    assert.equal(loadedB.profile.id, 'user-b');
+    assert.equal(states[2].id, 'user-b');
+    assert.equal(states[3].id, 'tenant-b');
+    assert.equal(states[5][0].user_id, 'user-b');
+    assert.equal(states[7], null);
+    assert.equal(rpcCalls, 0);
+    delete globalThis.__authProfileTest;
+  });
+}
+
+for (const stage of ['profile', 'organization']) {
+  test(`logout discards a late ${stage} response`, async () => {
+    let release;
+    const pending = new Promise(resolve => { release = resolve; });
+    globalThis.__authProfileTest = {
+      lookup: async () => stage === 'profile' ? pending : ({ data: { id: 'user-a', organization_id: 'tenant-a', role: 'admin' }, error: null }),
+      organization: () => pending,
+      rpc: () => { throw new Error('Unexpected provisioning'); },
+    };
+    callbacks.length = 0;
+    states.length = 0;
+    AuthProvider({ children: null });
+    const loading = callbacks[1]({ id: 'user-a' });
+    await new Promise(resolve => setImmediate(resolve));
+    await globalThis.__authContext.signOut();
+    release({ data: stage === 'profile' ? { id: 'user-a', role: 'admin' } : { id: 'tenant-a' }, error: null });
+    const loaded = await loading;
+    assert.equal(loaded.profile, null);
+    assert.equal(states[2], null);
+    assert.equal(states[3], null);
+    assert.deepEqual(states[4], []);
+    assert.deepEqual(states[5], []);
+    delete globalThis.__authProfileTest;
+    delete globalThis.__authContext;
+  });
+}

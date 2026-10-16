@@ -153,11 +153,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profileError, setProfileError] = useState<string | null>(null);
   const [initializationError, setInitializationError] = useState<string | null>(null);
 
-  const loadUserData = useCallback(async (authUser: User): Promise<{
+  const loadUserData = useCallback(async (authUser: User, isCurrent = () => true): Promise<{
     profile: Profile | null;
     organization: Organization | null;
     permissions: UserModulePermission[];
   }> => {
+    const empty = { profile: null, organization: null, permissions: [] };
     setProfileError(null);
     let activeProfile: Profile | null = null;
     try {
@@ -167,9 +168,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           7000,
           'Tempo limite excedido ao consultar public.profiles'
         );
+        if (!isCurrent()) return empty;
         if (profileErr) throw profileErr;
         activeProfile = userProfile;
       } catch (profEx: any) {
+        if (!isCurrent()) return empty;
         console.error('[NEXUS AUTH] profile:error', profEx?.message || profEx);
         throw profEx;
       }
@@ -208,6 +211,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             8000,
             'Tempo limite ao provisionar usuário via RPC'
           );
+          if (!isCurrent()) return empty;
           if (rpcErr) {
             const errMsg = `Falha no provisionamento do usuário (RPC): ${rpcErr.message}`;
             setProfileError(errMsg);
@@ -220,6 +224,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             6000,
             'Tempo limite ao carregar perfil recém-provisionado'
           );
+          if (!isCurrent()) return empty;
           if (reloadErr || !createdProfile) {
             const errMsg = reloadErr?.message || 'Perfil de usuário não encontrado após provisionamento.';
             setProfileError(errMsg);
@@ -228,6 +233,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
           activeProfile = createdProfile;
         } catch (rpcEx: any) {
+          if (!isCurrent()) return empty;
           const errMsg = rpcEx?.message || 'Erro inesperado durante provisionamento via RPC.';
           setProfileError(errMsg);
           setInitializationError(errMsg);
@@ -245,8 +251,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             6000,
             'Tempo limite ao carregar organização ativa'
           );
+          if (!isCurrent()) return empty;
           if (!orgErr && orgData) loadedOrg = orgData;
         } catch (orgEx: any) {
+          if (!isCurrent()) return empty;
           console.warn('[NEXUS AUTH] organization:warn', orgEx?.message || orgEx);
         }
       }
@@ -258,8 +266,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           5000,
           'Tempo limite ao listar organizações'
         );
+        if (!isCurrent()) return empty;
         setOrganizations(allOrgs || (loadedOrg ? [loadedOrg] : []));
       } catch {
+        if (!isCurrent()) return empty;
         setOrganizations(loadedOrg ? [loadedOrg] : []);
       }
 
@@ -271,8 +281,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             7000,
             'Tempo limite excedido ao consultar user_module_permissions'
           );
+          if (!isCurrent()) return empty;
           if (!permsErr) loadedPerms = perms || [];
         } catch (permsEx: any) {
+          if (!isCurrent()) return empty;
           console.error('[NEXUS AUTH] permissions:error', permsEx?.message || permsEx);
         }
       }
@@ -280,6 +292,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return { profile: activeProfile || null, organization: loadedOrg, permissions: loadedPerms };
     } catch (err: any) {
+      if (!isCurrent()) return empty;
       // A failed lookup does not establish that the profile is absent.
       // Clear cached access and never provision a tenant on this path.
       setProfile(null);
@@ -292,18 +305,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const inFlightPromiseRef = React.useRef<Promise<{
-    profile: Profile | null;
-    organization: Organization | null;
-    permissions: UserModulePermission[];
-  }> | null>(null);
+  const loadGenerationRef = useRef(0);
+  const inFlightPromiseRef = useRef<{
+    userId: string;
+    promise: ReturnType<typeof loadUserData>;
+  } | null>(null);
+
+  const invalidateUserData = () => {
+    loadGenerationRef.current++;
+    inFlightPromiseRef.current = null;
+    setProfile(null);
+    setOrganization(null);
+    setOrganizations([]);
+    setPermissions([]);
+  };
 
   const loadUserDataSafe = useCallback(async (authUser: User) => {
-    if (inFlightPromiseRef.current) return inFlightPromiseRef.current;
-    const promise = loadUserData(authUser).finally(() => {
-      inFlightPromiseRef.current = null;
+    const pending = inFlightPromiseRef.current;
+    if (pending?.userId === authUser.id) return pending.promise;
+    invalidateUserData();
+    const generation = loadGenerationRef.current;
+    const promise = loadUserData(authUser, () => generation === loadGenerationRef.current).finally(() => {
+      if (generation === loadGenerationRef.current) inFlightPromiseRef.current = null;
     });
-    inFlightPromiseRef.current = promise;
+    inFlightPromiseRef.current = { userId: authUser.id, promise };
     return promise;
   }, [loadUserData]);
 
@@ -363,9 +388,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setIsLoading(true);
           await loadUserDataSafe(newSession.user);
         } else {
-          setProfile(null);
-          setOrganization(null);
-          setPermissions([]);
+          invalidateUserData();
           setProfileError(null);
           setInitializationError(null);
         }
@@ -378,6 +401,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       isMounted = false;
+      loadGenerationRef.current++;
+      inFlightPromiseRef.current = null;
       clearTimeout(watchdog);
       subscription.unsubscribe();
     };
@@ -522,7 +547,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.error('[NEXUS PROVISION] Exceção na RPC provision_new_user no signUp:', rpcEx);
           return { error: new Error('Conta criada, mas houve uma falha ao configurar a organização. Tente entrar novamente ou contate o suporte.'), user: data.user };
         }
-        const loaded = await loadUserData(data.user);
+        const loaded = await loadUserDataSafe(data.user);
         if (!loaded.profile || !loaded.organization) {
           return { error: new Error('Conta criada, mas o perfil ou a organização não está disponível. Tente entrar novamente ou contate o suporte.'), user: data.user };
         }
@@ -536,6 +561,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     isSigningInRef.current = false;
+    invalidateUserData();
     try {
       const { error } = await supabase.auth.signOut();
       setUser(null);
