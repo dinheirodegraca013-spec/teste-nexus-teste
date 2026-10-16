@@ -17,6 +17,24 @@ import {
 
 // A PostgREST DELETE can return error=null even when RLS deleted zero rows.
 // Require the deleted row id before telling the operator the action succeeded.
+function confirmUpdatedRow<T>(
+  data: T | null,
+  error: { message: string; code?: string } | null,
+): { data: T | null; error: { message: string; code?: string } | null } {
+  if (error) return { data: null, error };
+  if (!data) {
+    return {
+      data: null,
+      error: {
+        code: 'UPDATE_NOT_APPLIED',
+        message: 'A atualização não foi confirmada. O registro pode não existir ou você pode não ter permissão.',
+      },
+    };
+  }
+  return { data, error: null };
+}
+
+// All update methods must confirm a returned row: RLS can silently affect zero rows.
 function confirmDeletedRow(
   data: { id: string } | null,
   error: { message: string; code?: string } | null,
@@ -60,7 +78,7 @@ export const coordinatorsService = {
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as Coordinator | null, error };
+    return confirmUpdatedRow(data as Coordinator | null, error);
   },
 
   async delete(id: string) {
@@ -110,7 +128,7 @@ export const leadersService = {
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as Leader | null, error };
+    return confirmUpdatedRow(data as Leader | null, error);
   },
 
   async delete(id: string) {
@@ -220,7 +238,7 @@ export const crmService = {
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data ? mapCrmContactRow(data) : null, error };
+    return confirmUpdatedRow(data ? mapCrmContactRow(data) : null, error);
   },
 
   async delete(id: string) {
@@ -261,7 +279,7 @@ export const goalsService = {
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as Goal | null, error };
+    return confirmUpdatedRow(data as Goal | null, error);
   },
 
   async delete(id: string) {
@@ -302,7 +320,7 @@ export const eventsService = {
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as CampaignEvent | null, error };
+    return confirmUpdatedRow(data as CampaignEvent | null, error);
   },
 
   async delete(id: string) {
@@ -343,7 +361,7 @@ export const meetingsService = {
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as Meeting | null, error };
+    return confirmUpdatedRow(data as Meeting | null, error);
   },
 
   async delete(id: string) {
@@ -396,7 +414,7 @@ export const presenceService = {
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as FieldPresence | null, error };
+    return confirmUpdatedRow(data as FieldPresence | null, error);
   },
 
   async delete(id: string) {
@@ -454,7 +472,7 @@ export const materialsService = {
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as MaterialInventory | null, error };
+    return confirmUpdatedRow(data as MaterialInventory | null, error);
   },
 
   async createDistribution(dist: Partial<MaterialDistribution>) {
@@ -508,7 +526,7 @@ export const stickersService = {
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as CarSticker | null, error };
+    return confirmUpdatedRow(data as CarSticker | null, error);
   },
 
   async deleteCarSticker(id: string) {
@@ -550,7 +568,7 @@ export const stickersService = {
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as HouseSticker | null, error };
+    return confirmUpdatedRow(data as HouseSticker | null, error);
   },
 
   async deleteHouseSticker(id: string) {
@@ -591,7 +609,7 @@ export const intelligenceService = {
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as PopularDemand | null, error };
+    return confirmUpdatedRow(data as PopularDemand | null, error);
   },
 
   async deleteDemand(id: string) {
