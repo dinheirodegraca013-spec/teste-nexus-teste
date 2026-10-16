@@ -112,18 +112,6 @@ export const UsersPage: React.FC = () => {
     }
   };
 
-  const handleDeleteMember = async (id: string) => {
-    if (window.confirm('Remover o acesso deste membro?')) {
-      const { error } = await membersService.remove(id);
-      if (error) {
-        toastError('Erro ao remover: ' + error.message);
-      } else {
-        await loadData();
-        success('Acesso removido.');
-      }
-    }
-  };
-
   const handleOpenPerms = async (member: OrganizationMember) => {
     setSelectedMember(member);
     setIsSubmitting(true);
@@ -238,6 +226,25 @@ export const UsersPage: React.FC = () => {
     }
   };
 
+  const handleRevokeControllerScope = async () => {
+    if (!selectedMember || selectedMember.role !== 'controller' || !scopeId) return;
+    if (!window.confirm('Revogar esta coordenação do controlador?')) return;
+    setIsSubmitting(true);
+    try {
+      const { error } = await teamScopeService.revokeController(selectedMember.id, scopeId);
+      if (error) {
+        toastError('Falha ao revogar coordenação: ' + error.message);
+        return;
+      }
+      setIsScopeModalOpen(false);
+      success('Coordenação revogada e alteração registrada na auditoria.');
+    } catch (err: any) {
+      toastError('Falha ao revogar coordenação: ' + (err?.message || 'Erro inesperado.'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const getRoleBadge = (role: UserRole) => {
     switch (role) {
       case 'admin': return <Badge variant="success" size="sm">Administrador</Badge>;
@@ -341,9 +348,10 @@ export const UsersPage: React.FC = () => {
                       <Shield className="w-3.5 h-3.5" />
                     </button>
                     <button
-                      onClick={() => handleDeleteMember(member.id)}
-                      className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-slate-100 transition-colors cursor-pointer"
-                      title="Remover Acesso"
+                      type="button"
+                      disabled
+                      className="p-1.5 rounded text-slate-300 cursor-not-allowed"
+                      title="Revogação de acesso temporariamente indisponível: exige fluxo administrativo seguro"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -428,6 +436,12 @@ export const UsersPage: React.FC = () => {
               : 'A nova atribuição substitui o vínculo anterior do membro.'}
           </p>
           <div className="flex justify-end gap-2">
+            {selectedMember?.role === 'controller' && (
+              <Button type="button" variant="outline" size="sm"
+                onClick={handleRevokeControllerScope} isLoading={isSubmitting} disabled={!scopeId}>
+                Revogar coordenação
+              </Button>
+            )}
             <Button type="button" variant="outline" size="sm" onClick={() => setIsScopeModalOpen(false)}>
               Cancelar
             </Button>
