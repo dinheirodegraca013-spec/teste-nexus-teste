@@ -23,3 +23,13 @@ test('loading an empty leader list resets stale leader selection', () => {
   assert.match(loader, /setContactLeader\(''\)/);
   assert.doesNotMatch(loader, /if \(loadedLeaders\.length > 0\)\s*\{[\s\S]*?setContactLeader\(''\);\s*\}/);
 });
+
+test('missing leader is validated before submit loading state starts', () => {
+  const start = source.indexOf('const handleSaveContact =');
+  const end = source.indexOf('const handleSaveCar =', start);
+  assert.ok(start >= 0 && end > start);
+  const submit = source.slice(start, end);
+  const guard = submit.indexOf('if (!assignedLeader)');
+  const loading = submit.indexOf('setIsSubmittingContact(true)');
+  assert.ok(guard >= 0 && loading > guard, 'Loading must start only after the missing-leader guard');
+});
