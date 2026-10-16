@@ -188,6 +188,7 @@ export const UsersPage: React.FC = () => {
       case 'admin': return <Badge variant="success" size="sm">Administrador</Badge>;
       case 'manager': return <Badge variant="primary" size="sm">Gerente</Badge>;
       case 'coordinator': return <Badge variant="neutral" size="sm">Coordenador</Badge>;
+      case 'controller': return <Badge variant="neutral" size="sm">Controlador</Badge>;
       case 'operator': return <Badge variant="warning" size="sm">Operador de Campo</Badge>;
       case 'viewer': return <Badge variant="neutral" size="sm">Visualizador</Badge>;
       default: return <Badge variant="neutral" size="sm">{role}</Badge>;
