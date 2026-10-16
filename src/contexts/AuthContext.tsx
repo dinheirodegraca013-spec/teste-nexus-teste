@@ -456,11 +456,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error: configError };
     }
 
+    if (!password || password.length < 8) {
+      return { error: new Error('Informe uma senha com pelo menos 8 caracteres para criar sua conta.') };
+    }
+
     try {
       const sanitizedOrgId = (organizationId && isValidUUID(organizationId)) ? organizationId : null;
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
-        password: password || '123456',
+        password,
         options: {
           data: {
             name: name.trim(),
