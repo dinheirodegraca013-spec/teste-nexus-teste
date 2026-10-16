@@ -1,0 +1,136 @@
+name: NEXUS Autonomous Engineering Cycle
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nexus-autonomous-engineering
+  cancel-in-progress: false
+
+jobs:
+  autonomous:
+    name: Inspect, improve, validate, and persist
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check API credential availability
+        id: api-key
+        shell: bash
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Autonomous cycle skipped. Configure the repository Actions secret OPENAI_API_KEY to enable Codex."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout NEXUS work branch
+        if: steps.api-key.outputs.configured == 'true'
+        uses: actions/checkout@v5
+        with:
+          ref: fix/persist-rbac-permissions
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Node.js
+        if: steps.api-key.outputs.configured == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install frontend dependencies
+        if: steps.api-key.outputs.configured == 'true'
+        run: npm install --no-audit --no-fund
+
+      - name: Set up Deno
+        if: steps.api-key.outputs.configured == 'true'
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Prepare Edge Function dependency cache
+        if: steps.api-key.outputs.configured == 'true'
+        run: deno check --node-modules-dir=auto supabase/functions/invite-organization-member/index.ts
+
+      - name: Run Codex autonomous engineering cycle
+        if: steps.api-key.outputs.configured == 'true'
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          permission-profile: ":workspace"
+          safety-strategy: drop-sudo
+          prompt: |
+            You are the autonomous engineering maintainer for the NEXUS project.
+            Read docs/AUTONOMIA_NEXUS.md first and inspect the current repository state.
+            Perform exactly one bounded, high-value task this cycle. Prioritize confirmed bugs,
+            security, tenant isolation, tests, authentication/invitation flow, and build/deployment
+            diagnosis. Do not create work merely to appear active.
+
+            Safety boundaries:
+            - Work only in this checked-out repository and its current branch.
+            - Never modify .github/workflows/**, secrets, credentials, or environment files.
+            - Never merge a pull request, deploy to production, or apply database migrations.
+            - Never connect to production databases or use real user data as test fixtures.
+            - Never create/promote superadmin, delete data, disable RLS, or weaken security.
+            - You may prepare a reviewed SQL migration in the repository, but do not apply it.
+            - Do not overwrite human changes; inspect git status and diff first.
+            - Use existing schema/code as source of truth; do not invent tables or columns.
+            - Run relevant tests and update docs/AUTONOMIA_NEXUS.md with evidence, failures,
+              blockers, and the next action. Mark tests as approved, failed, unverified, or blocked.
+            - If a safe task cannot be completed, document the blocker and make no speculative edits.
+            - Do not claim a test passed unless you ran it and observed success.
+
+      - name: Reject protected workflow or secret changes
+        if: steps.api-key.outputs.configured == 'true'
+        shell: bash
+        run: |
+          if git status --porcelain | grep -E '(^| )\.github/workflows/|(^| )\.env([^/ ]*)?$|(^| )supabase/\.temp/'; then
+            echo "Agent modified a protected workflow, environment file, or Supabase temp path; refusing to persist changes."
+            exit 1
+          fi
+
+      - name: Validate TypeScript and production build
+        if: steps.api-key.outputs.configured == 'true'
+        run: |
+          npm run lint
+          npm run build
+
+      - name: Validate Supabase Edge Function
+        if: steps.api-key.outputs.configured == 'true'
+        run: deno check --node-modules-dir=auto supabase/functions/invite-organization-member/index.ts
+
+      - name: Commit and push validated changes
+        if: steps.api-key.outputs.configured == 'true'
+        shell: bash
+        run: |
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "No changes to persist; cycle completed without a commit."
+            exit 0
+          fi
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore(agent): autonomous NEXUS maintenance"
+          git push origin HEAD:fix/persist-rbac-permissions
+
+      - name: Preserve failure diff for diagnosis
+        if: failure() && steps.api-key.outputs.configured == 'true'
+        shell: bash
+        run: git diff --binary > /tmp/nexus-agent-failure.patch
+
+      - name: Upload failure diff
+        if: failure() && steps.api-key.outputs.configured == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexus-agent-failure-diff
+          path: /tmp/nexus-agent-failure.patch
+          if-no-files-found: ignore
+          retention-days: 7
