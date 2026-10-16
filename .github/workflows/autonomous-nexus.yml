@@ -48,7 +48,7 @@ jobs:
 
       - name: Install frontend dependencies
         if: steps.api-key.outputs.configured == 'true'
-        run: npm install --no-audit --no-fund
+        run: npm install --no-package-lock --no-audit --no-fund
 
       - name: Set up Deno
         if: steps.api-key.outputs.configured == 'true'
@@ -58,7 +58,7 @@ jobs:
 
       - name: Prepare Edge Function dependency cache
         if: steps.api-key.outputs.configured == 'true'
-        run: deno check --node-modules-dir=auto supabase/functions/invite-organization-member/index.ts
+        run: deno check --no-lock --node-modules-dir=auto supabase/functions/invite-organization-member/index.ts
 
       - name: Run Codex autonomous engineering cycle
         if: steps.api-key.outputs.configured == 'true'
