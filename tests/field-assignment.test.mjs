@@ -20,7 +20,8 @@ test('loading an empty leader list resets stale leader selection', () => {
   const end = source.indexOf('useEffect(', start);
   assert.ok(start >= 0 && end > start);
   const loader = source.slice(start, end);
-  assert.match(loader, /setContactLeader\(''\)/);
+  assert.match(loader, /profile\?\.role === 'leader' && loadedLeaders\.length === 1/);
+  assert.match(loader, /loadedLeaders\.some\(\(leader\) => leader\.id === previous\) \? previous : ''/);
   assert.doesNotMatch(loader, /if \(loadedLeaders\.length > 0\)\s*\{[\s\S]*?setContactLeader\(''\);\s*\}/);
 });
 
