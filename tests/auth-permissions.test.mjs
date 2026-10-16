@@ -33,3 +33,29 @@ test('blocked database profile is displayed as inactive', () => {
   assert.equal(profile.is_active, false);
   assert.equal(profile.status, 'inactive');
 });
+
+for (const role of ['superadmin', 'admin', 'manager', 'coordinator', 'leader', 'operator', 'viewer']) {
+  test(`blocked ${role} cannot use saved CRM permissions`, () => {
+    const permissions = [{ module: 'crm', can_view: true, can_create: true, can_edit: true, can_delete: true }];
+    for (const action of ['view', 'create', 'edit', 'delete']) {
+      assert.equal(checkUserPermission({ role, is_blocked: true }, permissions, 'crm', action), false);
+    }
+    assert.equal(getDefaultRouteForUser({ role, is_blocked: true }, permissions), '/403');
+  });
+}
+
+test('active operator retains only explicitly granted actions', () => {
+  const profile = { role: 'operator', is_blocked: false };
+  const permissions = [{ module: 'crm', can_view: true, can_create: false, can_edit: false, can_delete: false }];
+  assert.equal(checkUserPermission(profile, permissions, 'crm', 'view'), true);
+  assert.equal(checkUserPermission(profile, permissions, 'crm', 'delete'), false);
+  assert.equal(checkUserPermission(profile, permissions, 'users', 'view'), false);
+});
+
+test('unblocked database profile is active and keeps its identity', () => {
+  const profile = normalizeProfile({ id: 'test-profile', name: 'Test', is_blocked: false });
+  assert.equal(profile.is_active, true);
+  assert.equal(profile.status, 'active');
+  assert.equal(profile.id, 'test-profile');
+  assert.equal(profile.full_name, 'Test');
+});
