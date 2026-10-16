@@ -86,6 +86,10 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
         presenceService.getLogs(orgId),
       ]);
 
+      const failed = [leadsRes, contactsRes, carsRes, housesRes, presenceRes]
+        .find((result) => result.error);
+      if (failed?.error) throw failed.error;
+
       const loadedLeaders = leadsRes.data || [];
       setLeaders(loadedLeaders);
       setRecentContacts(contactsRes.data || []);
@@ -171,12 +175,9 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
       // of a car sticker actually applied. Only the dedicated vehicle form
       // may create an applied sticker record with its own confirmation.
 
-      // Update leader progress if assigned
-      if (assignedLeader) {
-        await leadersService.update(assignedLeader.id, {
-          goal_reached: (assignedLeader.goal_reached || 0) + 1,
-        });
-      }
+      // No client-side read-modify-write of goal_reached: concurrent
+      // registrations would overwrite each other's increments. Progress
+      // in this screen is derived from saved CRM rows after reload.
 
       setContactName('');
       setContactPhone('');
