@@ -598,6 +598,7 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
                 <span>Foto de Comprovação da Adesivagem</span>
               </label>
               <FileUpload
+              disabled
                 accept="image/*"
                 maxSizeMB={8}
                 onFileSelected={(file, dataUrl) => {
@@ -677,6 +678,7 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
                 <span>Foto da Fachada / Portão com Placa ou Adesivo</span>
               </label>
               <FileUpload
+              disabled
                 accept="image/*"
                 maxSizeMB={8}
                 onFileSelected={(file, dataUrl) => {
@@ -759,6 +761,7 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
               </p>
               
               <FileUpload
+              disabled
                 accept="image/*"
                 maxSizeMB={10}
                 onFileSelected={(file, dataUrl) => {
