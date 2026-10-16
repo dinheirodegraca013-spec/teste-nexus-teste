@@ -107,3 +107,21 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **NÃO VERIFICADO:** a API de projeto confirma Vite e Node 24.x, mas não disponibiliza parâmetros suficientes para identificar a origem do provisionamento que falhou.
 - **EVIDÊNCIA NEGATIVA:** a listagem de configurações de integrações de provisionamento do time, na visão de projeto, retornou vazia. Isso reduz a hipótese de uma integração de provisionamento configurada nesse projeto, mas não exclui indisponibilidade, cota ou erro interno da plataforma.
 - **DECISÃO:** nenhuma alteração de configuração ou novo redeploy foi feito por tentativa e erro. PR #1 permanece em rascunho, sem merge.
+
+## Auditoria ampliada — 2026-10-16
+
+- APROVADO: GitHub CI #36, run 38855763078, commit fff73ab4eb339b942be36ff01aaf4c29715b610f, conclusão success.
+- VERIFICADO: profiles possui id, organization_id, name, email, role, is_blocked, created_at e updated_at. Existem FKs para auth.users e organizations, e email único.
+- VERIFICADO: Edge Function invite-organization-member está ACTIVE, versão 2, verify_jwt=true; campos utilizados no insert existem. NÃO VERIFICADO: convite ponta a ponta e recuperação de provisionamento parcial.
+- VERIFICADO: as 20 tabelas públicas enumeradas têm RLS habilitado e pelo menos uma policy. CRM e Finance têm políticas de escrita por tenant e permissões; organizations possui somente SELECT por tenant. Policies de profiles e user_module_permissions foram inspecionadas estaticamente; isolamento real com duas identidades ainda NÃO VERIFICADO.
+- RISCO A REVISAR: SELECT de crm_contacts e finance_transactions filtra tenant, mas não verifica nexus_can_read por módulo. Determinar regra de negócio e preparar testes antes de alterar políticas.
+- BLOQUEADO: deployment Vercel dpl_B76yLj4LDnTiWn9wzAwdp7T9Aa8V falhou com BUILD_FAILED / Resource provisioning failed e sem eventos de build; Vite e Node 24.x confirmados. Não há causa raiz identificada.
+- ATENÇÃO: existem commits concorrentes na branch e função implantada na versão 2; reler HEAD e comparar código antes de alterações ou redeploy.
+
+### Prioridades do próximo ciclo
+
+1. Obter evidências de provisionamento no painel/suporte da Vercel, citando deployment ID.
+2. Testar RLS/RBAC com duas organizações e identidades controladas sem tocar dados reais; revisar leitura por módulo.
+3. Testar convites E2E, duplicidade e recuperação de falhas parciais com conta autorizada.
+4. Comparar código da função implantada versão 2 com a branch atual antes de nova implantação.
+5. Manter PR #1 aberto e produção inalterada até validação.
