@@ -67,7 +67,8 @@ BEGIN
       scoped := format(
         '(EXISTS (SELECT 1 FROM public.profiles p
            WHERE p.id=(SELECT auth.uid())
-             AND p.organization_id=organization_id AND p.is_blocked=false
+             AND p.organization_id=(SELECT private.nexus_auth_org_id())
+             AND p.is_blocked=false
              AND p.role IN (''manager'',''operator'',''viewer'')))'
       );
     ELSIF rec.scope='leader' THEN
