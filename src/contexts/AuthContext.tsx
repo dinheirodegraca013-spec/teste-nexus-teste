@@ -83,26 +83,25 @@ export function checkUserPermission(
 
   const normRole = normalizeRole(userProfile.role);
   if (normRole === 'superadmin' || normRole === 'admin') return true;
-  // Until hierarchy-scoped write policies are implemented and tested, the
-  // frontend must not expose create/edit/delete actions to field roles.
-  // Stored permissions do not override this temporary database restriction.
-  if (normRole === 'leader') {
-    return action === 'view' && (module === 'crm' || module === 'presence');
-  }
-  if (normRole === 'coordinator') {
-    return action === 'view' && (
-      module === 'coordinators' || module === 'leaders' ||
-      module === 'crm' || module === 'presence'
-    );
-  }
 
-  const userPerm = perms.find((p) => p.module === module);
-  if (!userPerm) return false;
-  if (action === 'view') return Boolean(userPerm.can_view);
-  if (action === 'create') return Boolean(userPerm.can_create);
-  if (action === 'edit') return Boolean(userPerm.can_edit);
-  if (action === 'delete') return Boolean(userPerm.can_delete);
-  return false;
+  // Operational table writes currently require private.nexus_is_admin()
+  // in PostgreSQL. Even a stored permission must not advertise a write
+  // which the server will refuse. Never trust frontend UI as a security gate.
+  if (action !== 'view') return false;
+
+  // Every non-admin must have an EXPLICIT saved module grant. A role
+  // indicates the maximum accessible module set; it does not itself grant
+  // access. The server's RLS is the final enforcement boundary.
+  const saved = perms.find((p) => p.module === module);
+  if (!saved?.can_view) return false;
+
+  const scopedReadModules: Partial<Record<string, readonly AppModule[]>> = {
+    leader: ['crm', 'presence'],
+    coordinator: ['coordinators', 'leaders', 'crm', 'presence'],
+    controller: ['coordinators', 'leaders', 'crm', 'presence'],
+  };
+  const scoped = scopedReadModules[normRole];
+  return scoped ? scoped.includes(module) : true;
 }
 
 export function getDefaultRouteForUser(userProfile: Profile | null, perms: UserModulePermission[]): string {
