@@ -8,3 +8,8 @@
 - Priorizar logs, autenticação, isolamento de tenants e dados reais.
 - Verificar alterações com `npm test`, `npm run lint` e `npm run build`.
 - Registrar evidências e próxima tarefa na documentação persistente.
+
+
+<!-- OBRAMAXAUTO:BEGIN -->
+Leia também `OBRAMAXAUTO.md` e as skills `.agents/skills/` relevantes. As restrições do NEXUS e as instruções de maior prioridade prevalecem.
+<!-- OBRAMAXAUTO:END -->
