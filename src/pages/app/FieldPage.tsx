@@ -29,12 +29,11 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
   const [houseStickers, setHouseStickers] = useState<HouseSticker[]>([]);
   const [presenceLogs, setPresenceLogs] = useState<FieldPresence[]>([]);
 
-  // Find leader profile if logged in as leader or matching name/email
-  const currentLeader = leaders.find(
-    l => l.email?.toLowerCase() === profile?.email?.toLowerCase() ||
-         l.name.toLowerCase() === profile?.full_name?.toLowerCase() ||
-         l.id === profile?.id
-  ) || leaders[0];
+  // Never infer a leadership identity from matching names/emails or the first
+  // available team member. RLS limits leader accounts to their assigned row.
+  const currentLeader = profile?.role === 'leader' && leaders.length === 1
+    ? leaders[0]
+    : leaders.find((leader) => leader.id === contactLeader);
 
   // Contact fast form
   const [contactName, setContactName] = useState('');
@@ -95,14 +94,17 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
       setPresenceLogs(presenceRes.data || []);
 
       if (loadedLeaders.length > 0) {
-        const found = loadedLeaders.find(
-          l => l.email?.toLowerCase() === profile?.email?.toLowerCase() ||
-               l.name.toLowerCase() === profile?.full_name?.toLowerCase()
-        ) || loadedLeaders[0];
-        setContactNeighborhood(found.neighborhood || found.territory || '');
-        setCarTerritory(found.territory || 'Central');
-        setHouseTerritory(found.territory || 'Central');
-        setContactLeader(found.id);
+        // Leadership memberships are enforced server-side. A leader can only
+        // see their own assigned row; admins must choose explicitly.
+        if (profile?.role === 'leader' && loadedLeaders.length === 1) {
+          const found = loadedLeaders[0];
+          setContactNeighborhood(found.neighborhood || found.territory || '');
+          setCarTerritory(found.territory || 'Central');
+          setHouseTerritory(found.territory || 'Central');
+          setContactLeader(found.id);
+        } else {
+          setContactLeader('');
+        }
       }
     } catch (err: any) {
       toastError('Erro ao carregar dados do modo de campo: ' + err.message);
@@ -140,7 +142,7 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
     }
 
     setIsSubmittingContact(true);
-    const assignedLeader = leaders.find(l => l.id === contactLeader) || currentLeader;
+    const assignedLeader = leaders.find((leader) => leader.id === contactLeader);
 
     const fieldTags = [
       'campo',
