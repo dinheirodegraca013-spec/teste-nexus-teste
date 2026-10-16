@@ -314,6 +314,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     async function initAuth() {
       if (!isSupabaseConfigured) {
+        clearTimeout(watchdog);
         if (isMounted) setIsLoading(false);
         return;
       }
@@ -329,6 +330,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (err: any) {
         if (isMounted) setInitializationError(err?.message || 'Falha ao inicializar a autenticação.');
       } finally {
+        clearTimeout(watchdog);
         if (isMounted) setIsLoading(false);
       }
     }
@@ -619,3 +621,4 @@ export const useAuth = () => {
   if (!context) throw new Error('useAuth deve ser usado dentro de AuthProvider');
   return context;
 };
+
