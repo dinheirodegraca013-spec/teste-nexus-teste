@@ -130,7 +130,7 @@ export const UsersPage: React.FC = () => {
       }
 
       const loadedPerms = createDefaultPermissions();
-      for (const permission of data || []) {
+      for (const permission of (data || []) as Array<{ module?: string; can_view?: boolean; can_edit?: boolean; can_delete?: boolean }>) {
         const displayKey = Object.keys(permissionModuleKeys).find(
           (key) => permissionModuleKeys[key] === permission.module
         );
