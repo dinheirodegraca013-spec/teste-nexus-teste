@@ -83,22 +83,17 @@ export function checkUserPermission(
 
   const normRole = normalizeRole(userProfile.role);
   if (normRole === 'superadmin' || normRole === 'admin') return true;
+  // Until hierarchy-scoped write policies are implemented and tested, the
+  // frontend must not expose create/edit/delete actions to field roles.
+  // Stored permissions do not override this temporary database restriction.
   if (normRole === 'leader') {
-    if (module === 'field' || module === 'stickers' || module === 'crm') return true;
-    return false;
+    return action === 'view' && (module === 'crm' || module === 'presence');
   }
   if (normRole === 'coordinator') {
-    if (
-      module === 'coordinators' ||
-      module === 'leaders' ||
-      module === 'crm' ||
-      module === 'goals' ||
-      module === 'field' ||
-      module === 'stickers' ||
-      module === 'events' ||
-      module === 'meetings' ||
-      module === 'presence'
-    ) return true;
+    return action === 'view' && (
+      module === 'coordinators' || module === 'leaders' ||
+      module === 'crm' || module === 'presence'
+    );
   }
 
   const userPerm = perms.find((p) => p.module === module);
@@ -118,8 +113,9 @@ export function getDefaultRouteForUser(userProfile: Profile | null, perms: UserM
   const normRole = normalizeRole(userProfile.role);
   if (normRole === 'superadmin' || normRole === 'admin') return '/app/dashboard';
   if (normRole === 'leader') {
-    return hasPerm('field', 'view') ? '/app/campo' : hasPerm('crm', 'view') ? '/app/crm' : hasPerm('stickers', 'view') ? '/app/adesivos' : '/403';
+    return hasPerm('crm', 'view') ? '/app/crm' : hasPerm('presence', 'view') ? '/app/presenca' : '/403';
   }
+
   const candidateModules: Array<{ module: AppModule; route: string }> = [
     { module: 'dashboard', route: '/app/dashboard' },
     { module: 'coordinators', route: '/app/coordenadores' },
