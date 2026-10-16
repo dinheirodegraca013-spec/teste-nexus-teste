@@ -32,6 +32,14 @@
 - O CI foi ampliado para executar `deno check` na Edge Function. O resultado da execução sobre o estado mais recente ainda não foi confirmado.
 - Os deploys Vercel continuam falhando antes de fornecer logs de build, com `Resource provisioning failed`; isso permanece um bloqueio de infraestrutura independente do erro de TypeScript já corrigido.
 
+## Executor externo recorrente
+
+- PR #2 (`feat(automation): add gated hourly NEXUS Codex runner`) foi mesclado na `main` em `39f05a749c47b417c341776c2e64b22374f6b206`.
+- O workflow `.github/workflows/autonomous-nexus.yml` está no branch padrão e agenda ciclos horários, mas permanece **desativado** até a variável de repositório `NEXUS_AUTONOMY_ENABLED=true`.
+- Também é necessário cadastrar o segredo de GitHub Actions `OPENAI_API_KEY`. Não compartilhar a chave na conversa nem gravá-la no repositório.
+- O runner usa a GitHub Action oficial do Codex, trabalha apenas na branch de desenvolvimento, executa validações antes de persistir alterações e não faz merge, deploy de produção nem aplica migrações.
+- A execução horária não é um processo 24/7 ininterrupto garantido. A configuração de orçamento de API ainda é necessária antes de ativar.
+
 ## Validação e implantação mais recentes
 
 - Execução GitHub Actions `NEXUS CI` #28: **APROVADO** para `npm run lint` (TypeScript), `npm run build` e `deno check --node-modules-dir=auto supabase/functions/invite-organization-member/index.ts`.
