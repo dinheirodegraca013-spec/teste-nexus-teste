@@ -1,3 +1,15 @@
+## OBRAMAXAUTO — Ciclo de concorrência e logs (2026-10-16)
+
+- Skills consultadas: `bug-hunter` e `qa-automation`.
+- O workflow autônomo publicou `1005df4` e `c59bd4`: autorização para adesivo NÃO cadastra adesivagem aplicada; CI confirmou sucesso.
+- Corrigida `FieldPage.tsx`: removida escrita de `goal_reached` baseada em estado antigo da UI após criar CRM. Dois operadores poderiam perder incrementos por concorrência; o progresso visual continua derivado das linhas persistidas em CRM. Para métrica materializada futuramente, implementar contador atômico de servidor com aprovação SQL.
+- Também passaram a ser verificados os `error` retornados por todas as cinco consultas de carga de Campo, evitando mascarar indisponibilidade como lista vazia.
+- Adicionado `tests/field-concurrency.test.mjs` para detectar reintrodução da atualização não atômica e perda de erros de consulta.
+- Ainda pendente: bucket privado de fotos requer aprovação específica do SQL em `docs/PRIVATE_STORAGE_DESIGN.md`; revogação segura de Auth, integração E2E de convite, tratamento explícito de módulos com restrições de acesso.
+- Escopo: apenas branch `fix/persist-rbac-permissions`; nenhuma alteração em Supabase ou produção neste ciclo.
+
+---
+
 ## CICLO DE PRIVACIDADE — 16/10/2026 (OBRAMAXAUTO)
 
 - **Skills consultadas:** `rbac-architect`, `supabase-expert` e `qa-automation`, instaladas no repositório.
