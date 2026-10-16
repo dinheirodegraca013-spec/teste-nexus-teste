@@ -179,6 +179,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('[NEXUS AUTH] profile:success', { role: activeProfile.role });
       } else {
         const metadata = authUser.user_metadata || {};
+        const metadataRole = String(metadata.role || '').toLowerCase().replace(/[\\s_-]/g, '');
+        const hasInvitedOrganization = isValidUUID(metadata.organization_id);
+        const isInvitedRole = metadataRole === 'coordinator' || metadataRole === 'leader';
+
+        // A missing profile for an invited account must never trigger creation of a new tenant.
+        // The existing provision_new_user RPC always creates a new organization and an admin profile.
+        if (hasInvitedOrganization || isInvitedRole) {
+          const errMsg = 'Esta conta foi cadastrada por convite, mas o perfil ainda não foi provisionado na organização correta. O acesso foi bloqueado para evitar criar uma organização indevida. Solicite ao administrador que conclua o provisionamento.';
+          setProfile(null);
+          setOrganization(null);
+          setPermissions([]);
+          setProfileError(errMsg);
+          setInitializationError(errMsg);
+          return { profile: null, organization: null, permissions: [] };
+        }
+
         const profileName = metadata.full_name || metadata.name || authUser.email?.split('@')[0] || 'Usuário';
         const orgName = metadata.organization_name || `Campanha de ${profileName.split(' ')[0]}`;
         const orgSlug = orgName.toLowerCase().replace(/[^a-z0-9]/g, '-');
