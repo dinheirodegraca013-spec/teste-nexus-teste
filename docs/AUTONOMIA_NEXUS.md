@@ -125,3 +125,21 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 3. Testar convites E2E, duplicidade e recuperação de falhas parciais com conta autorizada.
 4. Comparar código da função implantada versão 2 com a branch atual antes de nova implantação.
 5. Manter PR #1 aberto e produção inalterada até validação.
+
+## Atualizacao do ciclo — 2026-10-16: destino Supabase e build
+
+- DESTINO AUTORIZADO PELO USUARIO: projeto Supabase `qesiqjcpphkwryjvpzmq` substitui `wrovgjhpyacmmetejiqk`. Nao executar novas alteracoes no banco antigo.
+- BLOQUEADO: o conector administrativo Supabase respondeu `You do not have permission to perform this action` ao consultar o destino. Schema, RLS, Auth, Storage, migracoes, funcoes e dados do novo projeto seguem NAO VERIFICADOS.
+- VERIFICADO: o frontend usa `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`. No Vercel, `VITE_SUPABASE_URL` ainda aponta para o banco antigo; a chave Vite nao foi autenticada como pertencente ao destino. Nao substituir somente URL.
+- APROVADO: deployment production Vercel `dpl_8BskAHSEmn9DX1jSmysKTMaEyDVJ` esta READY, com `vite build` concluido segundo 63 eventos observados. NAO VERIFICADO: login e conexao com Supabase novo. Nao publicar mudancas em Production antes dos testes.
+- APROVADO: corrigido aviso de dependencia duplicada `vite` no `package.json`, commit `b67da35956774016200b5cb60a37e26277b8fb6e`, somente na branch `fix/persist-rbac-permissions`. CI `38874847419` concluiu success.
+- PERSISTENCIA: issue GitHub #3 registra verificacoes e plano de migracao: https://github.com/dinheirodegraca013-spec/teste-nexus-teste/issues/3
+- CONTINUIDADE: automacao ChatGPT `Ciclo autonomo NEXUS` (id `6ad1af88b44081919dfbe4dedf598ecf`) ativa de hora em hora. Prompt atualizado para destino Supabase novo. O runner GitHub Actions segue condicionado a `NEXUS_AUTONOMY_ENABLED=true` e `OPENAI_API_KEY`; nao declarar autonomia CI ativa ate confirmar essas configuracoes e observar uma execucao.
+- ESTADO FINAL DESTE CICLO: EM DESENVOLVIMENTO. PR #1 continua rascunho; sem merge; sem mudanca em banco de producao; sem troca de credenciais Vercel; sem publicacao nova na main.
+
+### Proximas acoes
+
+1. Obter autorizacao administrativa para consulta ao novo Supabase e auditar schema, Auth, RLS e dados antes da migracao.
+2. Revisar confiabilidade dos convites e seguranca por modulo na branch, com testes de autorizacao isolados.
+3. Confirmar as duas variaveis Vite do destino no ambiente Preview, sem divulgar segredos, quando o banco estiver validado.
+4. Rodar testes E2E, revisar PR e registrar a decisao de corte; preservar deployment READY existente ate entao.
