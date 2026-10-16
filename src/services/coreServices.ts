@@ -188,15 +188,45 @@ export const permissionsService = {
       .from('user_module_permissions')
       .select('*')
       .eq('user_id', userId);
-    return { data: (data as UserModulePermission[]) || [], error };
+
+    const mapped = ((data || []) as any[]).map((row) => ({
+      ...row,
+      module: row.module_key,
+      can_view: Boolean(row.can_read),
+      can_create: Boolean(row.can_write),
+      can_edit: Boolean(row.can_write),
+      can_delete: Boolean(row.can_delete),
+    })) as UserModulePermission[];
+
+    return { data: mapped, error };
   },
 
   async upsertPermissions(permissions: Partial<UserModulePermission>[]) {
+    const dbRows = permissions
+      .filter((permission) => Boolean(permission.user_id && permission.module))
+      .map((permission) => ({
+        user_id: permission.user_id,
+        module_key: permission.module,
+        can_read: Boolean(permission.can_view),
+        can_write: Boolean(permission.can_create ?? permission.can_edit),
+        can_delete: Boolean(permission.can_delete),
+      }));
+
     const { data, error } = await supabase
       .from('user_module_permissions')
-      .upsert(permissions)
+      .upsert(dbRows, { onConflict: 'user_id,module_key' })
       .select();
-    return { data: (data as UserModulePermission[]) || [], error };
+
+    const mapped = ((data || []) as any[]).map((row) => ({
+      ...row,
+      module: row.module_key,
+      can_view: Boolean(row.can_read),
+      can_create: Boolean(row.can_write),
+      can_edit: Boolean(row.can_write),
+      can_delete: Boolean(row.can_delete),
+    })) as UserModulePermission[];
+
+    return { data: mapped, error };
   }
 };
 
