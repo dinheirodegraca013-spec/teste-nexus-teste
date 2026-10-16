@@ -63,7 +63,7 @@ Deno.serve(async (req: Request) => {
   }
 
   // Convites comuns não podem conceder privilégio administrativo.
-  const allowedRoles = new Set(["operator", "coordinator", "leader", "viewer", "manager"]);
+  const allowedRoles = new Set(["operator", "coordinator", "controller", "leader", "viewer", "manager"]);
   if (!allowedRoles.has(requestedRole)) {
     return jsonResponse(403, { error: "Esse nível de acesso não pode ser concedido por convite." });
   }
