@@ -98,6 +98,17 @@ BEGIN
     RAISE EXCEPTION 'SECURITY CONTRACT FAILED: hierarchy helper execute grants';
   END IF;
 
+  IF NOT has_function_privilege('authenticated','public.nexus_set_team_scope(uuid,uuid,uuid)','EXECUTE')
+    OR NOT has_function_privilege('authenticated','public.nexus_set_controller_scope(uuid,uuid,boolean)','EXECUTE')
+    OR has_function_privilege('anon','public.nexus_set_team_scope(uuid,uuid,uuid)','EXECUTE')
+    OR has_function_privilege('anon','public.nexus_set_controller_scope(uuid,uuid,boolean)','EXECUTE')
+    OR (SELECT count(*) FROM pg_proc WHERE oid IN (
+      'public.nexus_set_team_scope(uuid,uuid,uuid)'::regprocedure,
+      'public.nexus_set_controller_scope(uuid,uuid,boolean)'::regprocedure
+    ) AND prosecdef) <> 2 THEN
+    RAISE EXCEPTION 'SECURITY CONTRACT FAILED: tenant-admin RPC grants/security-definer';
+  END IF;
+
   RAISE NOTICE 'NEXUS SECURITY CONTRACT OK: hierarchy, grants and RLS';
 END
 $verify$;
