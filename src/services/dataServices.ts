@@ -64,11 +64,13 @@ export const coordinatorsService = {
   },
 
   async delete(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('coordinators')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
 
@@ -112,11 +114,13 @@ export const leadersService = {
   },
 
   async delete(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('leaders')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
 
@@ -220,11 +224,13 @@ export const crmService = {
   },
 
   async delete(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('crm_contacts')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
 
@@ -259,11 +265,13 @@ export const goalsService = {
   },
 
   async delete(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('goals')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
 
@@ -298,11 +306,13 @@ export const eventsService = {
   },
 
   async delete(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('campaign_events')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
 
@@ -337,11 +347,13 @@ export const meetingsService = {
   },
 
   async delete(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('meetings')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
 
@@ -455,11 +467,13 @@ export const materialsService = {
   },
 
   async deleteItem(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('materials_inventory')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
 
@@ -581,11 +595,13 @@ export const intelligenceService = {
   },
 
   async deleteDemand(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('popular_demands')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
 
