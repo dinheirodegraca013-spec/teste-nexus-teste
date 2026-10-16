@@ -53,13 +53,51 @@ BEGIN
 
     IF actual_policy IS NULL
       OR actual_policy NOT LIKE '%nexus_auth_org_id%'
-      OR actual_policy NOT LIKE '%nexus_is_admin%'
+      OR (
+        CASE
+          WHEN sensitive_table='leaders'
+            THEN actual_policy NOT LIKE '%nexus_can_read_leader%'
+          WHEN sensitive_table='coordinators'
+            THEN actual_policy NOT LIKE '%nexus_can_read_coordinator%'
+          WHEN sensitive_table IN ('crm_contacts','field_presences')
+            THEN actual_policy NOT LIKE '%nexus_is_admin%'
+              OR actual_policy NOT LIKE '%nexus_can_read_leader%'
+          ELSE actual_policy NOT LIKE '%nexus_is_admin%'
+        END
+      )
       OR (SELECT count(*) FROM pg_policies WHERE schemaname='public'
           AND tablename=sensitive_table AND cmd='SELECT') <> 1 THEN
       RAISE EXCEPTION 'SECURITY CONTRACT FAILED: policy on %', sensitive_table;
     END IF;
   END LOOP;
 
-  RAISE NOTICE 'NEXUS SECURITY CONTRACT OK: RLS, grants and policies';
+  IF NOT EXISTS(SELECT 1 FROM pg_constraint
+      WHERE conrelid='public.profiles'::regclass
+        AND conname='profiles_role_check'
+        AND pg_get_constraintdef(oid) LIKE '%controller%') THEN
+    RAISE EXCEPTION 'SECURITY CONTRACT FAILED: controller role constraint missing';
+  END IF;
+
+  FOREACH table_name IN ARRAY ARRAY['nexus_team_memberships','nexus_controller_scopes']
+  LOOP
+    IF NOT (SELECT c.relrowsecurity FROM pg_class c
+      JOIN pg_namespace n ON n.oid=c.relnamespace
+      WHERE n.nspname='private' AND c.relname=table_name)
+      OR has_table_privilege('authenticated',format('private.%I',table_name),'SELECT')
+      OR has_table_privilege('authenticated',format('private.%I',table_name),'INSERT')
+      OR has_table_privilege('authenticated',format('private.%I',table_name),'UPDATE')
+      OR has_table_privilege('authenticated',format('private.%I',table_name),'DELETE') THEN
+      RAISE EXCEPTION 'SECURITY CONTRACT FAILED: hierarchy private grants on %',table_name;
+    END IF;
+  END LOOP;
+
+  IF NOT has_function_privilege('authenticated','private.nexus_can_read_leader(uuid,uuid)','EXECUTE')
+    OR NOT has_function_privilege('authenticated','private.nexus_can_read_coordinator(uuid,uuid)','EXECUTE')
+    OR has_function_privilege('anon','private.nexus_can_read_leader(uuid,uuid)','EXECUTE')
+    OR has_function_privilege('anon','private.nexus_can_read_coordinator(uuid,uuid)','EXECUTE') THEN
+    RAISE EXCEPTION 'SECURITY CONTRACT FAILED: hierarchy helper execute grants';
+  END IF;
+
+  RAISE NOTICE 'NEXUS SECURITY CONTRACT OK: hierarchy, grants and RLS';
 END
 $verify$;
