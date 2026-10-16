@@ -1,3 +1,15 @@
+## CICLO OBRAMAXAUTO + SUPERPOWERS — 16/10/2026: vínculo obrigatório no Modo de Campo
+
+- **Problema reproduzido:** `FieldPage` permitia enviar um contato sem liderança associada (`leader_id: undefined`), e mantinha um `contactLeader` antigo quando o RLS passava a retornar zero lideranças. Em nova revisão, o bloqueio sem liderança deixava `isSubmittingContact=true` e o botão carregando indefinidamente.
+- **TDD RED:** testes adicionados em `tests/field-assignment.test.mjs`, CI no commit `48b5031688` falhou como esperado, antes da correção.
+- **GREEN inicial:** `d41c1f142d` corrigiu ausência de liderança e limpeza de seleção; duas verificações GitHub Actions passaram.
+- **Novo RED:** `59dd2afdd8` adicionou teste contra spinner preso; CI falhou como esperado.
+- **Correção:** `34a181f106` moveu o início do estado de submissão para depois da validação de liderança; verificar CI do HEAD.
+- **Riscos:** RLS ainda é autoridade de segurança; frontend não prova vínculo de sessão real sem E2E. Revogação de usuários, Storage privado e CRUD por papel ainda pendentes.
+- **Restrições mantidas:** sem alterações no Supabase, sem merge, sem produção. Branch `fix/persist-rbac-permissions`.
+
+---
+
 ## OBRAMAXAUTO — Ciclo de concorrência e logs (2026-10-16)
 
 - Skills consultadas: `bug-hunter` e `qa-automation`.
