@@ -89,6 +89,7 @@ export const UsersPage: React.FC = () => {
         organization_id: orgId,
         email: inviteEmail.trim(),
         role: inviteRole,
+        name: inviteName.trim(),
       });
 
       if (error) {
@@ -321,7 +322,6 @@ export const UsersPage: React.FC = () => {
               { value: 'operator', label: 'Operador de Campo (Apenas Registro)' },
               { value: 'coordinator', label: 'Coordenador Territorial (Seu Território)' },
               { value: 'manager', label: 'Gerente Operacional (Visualiza e Edita)' },
-              { value: 'admin', label: 'Administrador Geral (Acesso Total)' },
               { value: 'viewer', label: 'Visualizador / Auditor (Somente Leitura)' },
             ]}
           />
