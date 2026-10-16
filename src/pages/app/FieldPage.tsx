@@ -97,18 +97,16 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
       setHouseStickers(housesRes.data || []);
       setPresenceLogs(presenceRes.data || []);
 
-      if (loadedLeaders.length > 0) {
-        // Leadership memberships are enforced server-side. A leader can only
-        // see their own assigned row; admins must choose explicitly.
-        if (profile?.role === 'leader' && loadedLeaders.length === 1) {
-          const found = loadedLeaders[0];
-          setContactNeighborhood(found.neighborhood || found.territory || '');
-          setCarTerritory(found.territory || 'Central');
-          setHouseTerritory(found.territory || 'Central');
-          setContactLeader(found.id);
-        } else {
-          setContactLeader('');
-        }
+      // Never retain a stale team assignment if the leader list changes or
+      // becomes empty. Only a single RLS-scoped leader is auto-selected.
+      if (profile?.role === 'leader' && loadedLeaders.length === 1) {
+        const found = loadedLeaders[0];
+        setContactNeighborhood(found.neighborhood || found.territory || '');
+        setCarTerritory(found.territory || 'Central');
+        setHouseTerritory(found.territory || 'Central');
+        setContactLeader(found.id);
+      } else {
+        setContactLeader('');
       }
     } catch (err: any) {
       toastError('Erro ao carregar dados do modo de campo: ' + err.message);
@@ -147,6 +145,10 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
 
     setIsSubmittingContact(true);
     const assignedLeader = leaders.find((leader) => leader.id === contactLeader);
+    if (!assignedLeader) {
+      toastError('Selecione uma liderança autorizada antes de cadastrar o contato.');
+      return;
+    }
 
     const fieldTags = [
       'campo',
@@ -157,7 +159,7 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
     try {
       const { error: crmErr } = await crmService.create({
         organization_id: orgId,
-        leader_id: assignedLeader?.id,
+        leader_id: assignedLeader.id,
         name: contactName.trim(),
         whatsapp: contactPhone.trim(),
         city: contactNeighborhood.trim() || assignedLeader?.territory || 'Campo',
