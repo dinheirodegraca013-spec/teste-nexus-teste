@@ -1,3 +1,15 @@
+## CICLO DE PRIVACIDADE — 16/10/2026 (OBRAMAXAUTO)
+
+- **Skills consultadas:** `rbac-architect`, `supabase-expert` e `qa-automation`, instaladas no repositório.
+- **Confirmado:** `FileUpload` gerava `data:image/*;base64`; páginas de presença, adesivagem e campo tentavam incluir fotos embutidas em `photo_url`. Adicionada proteção em `src/services/photoEvidenceGuard.ts` e nas seis operações de criação/edição das três tabelas, rejeitando base64, blob, URL remota e caminhos de outro tenant ANTES do Supabase. Testes `tests/photo-evidence.test.mjs` exercitam cenários negativos com mocks; CI anterior à última revisão aprovou esses testes.
+- **Interface:** seis instâncias de `FileUpload` nas telas Campo, Presenças e Adesivagens estão temporariamente desabilitadas e explicam a indisponibilidade até Storage privado seguro. O registro sem foto continua disponível segundo as RLS existentes.
+- **Identidade do líder:** tela Campo não utiliza mais coincidência de nome/e-mail nem o primeiro líder da lista como vínculo automático; líder com exatamente uma linha autorizada pode selecioná-la, demais papéis devem selecionar explicitamente.
+- **Storage:** documento `docs/PRIVATE_STORAGE_DESIGN.md` apresenta proposta de bucket privado, policies e sequência de testes. **SQL não executado**, aguardando aprovação específica conforme `AGENTS.md` do NEXUS. Não existe permissão para o agente ligar bucket ou ampliar RLS sem essa aprovação.
+- **Prioridade seguinte:** confirmar CI do HEAD; revisar se a interface de Campo exige seleção de liderança para as ações correspondentes; preparar migração e testes isolados do Storage antes de reabilitar upload. Permanecem pendentes convites E2E, revogação segura de usuários, escrita granular e frontend homologado.
+- **Restrição:** apenas Supabase DEV `qidstqsbxwkbkwowhpab`; não tocar em main, banco antigo nem produção.
+
+---
+
 ## CONTINUAÇÃO SEGURA — 2026-10-16: convites e revogação de controlador
 
 - **Corrigido no código:** `membersService.invite` agora exige `data.success === true` e `data.member.id`; uma resposta com `error` no payload ou membro ausente não gera mensagem falsa de envio de convite.
