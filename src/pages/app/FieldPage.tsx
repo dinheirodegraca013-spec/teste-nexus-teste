@@ -106,7 +106,11 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
         setHouseTerritory(found.territory || 'Central');
         setContactLeader(found.id);
       } else {
-        setContactLeader('');
+        // Administrators may select a leader explicitly. Preserve it on
+        // refresh only while this account can still see that leader via RLS.
+        setContactLeader((previous) =>
+          loadedLeaders.some((leader) => leader.id === previous) ? previous : ''
+        );
       }
     } catch (err: any) {
       toastError('Erro ao carregar dados do modo de campo: ' + err.message);
@@ -477,6 +481,30 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
           </div>
 
           <form onSubmit={handleSaveContact} className="space-y-3.5">
+            <Select
+              label="Liderança responsável"
+              value={contactLeader}
+              onChange={(e) => setContactLeader(e.target.value)}
+              options={[
+                {
+                  value: '',
+                  label: leaders.length === 0
+                    ? 'Nenhuma liderança autorizada disponível'
+                    : 'Selecione a liderança responsável',
+                },
+                ...leaders.map((leader) => ({
+                  value: leader.id,
+                  label: leader.name + (leader.territory ? ` — ${leader.territory}` : ''),
+                })),
+              ]}
+              disabled={isLoading || leaders.length === 0 || profile?.role === 'leader'}
+              required
+              helperText={
+                profile?.role === 'leader'
+                  ? 'A liderança é definida pelo vínculo da sua conta.'
+                  : 'Selecione somente entre as lideranças autorizadas para sua organização.'
+              }
+            />
             <Input
               label="Nome do Apoiador / Eleitor"
               value={contactName}
