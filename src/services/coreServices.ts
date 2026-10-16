@@ -270,17 +270,16 @@ export const membersService = {
     }
 
     const nameVal = params.name || params.full_name || params.email.split('@')[0];
-    const { data, error } = await supabase
-      .from('profiles')
-      .insert([{
+    const { data, error } = await supabase.functions.invoke('invite-organization-member', {
+      body: {
         organization_id: params.organization_id,
         email: params.email,
         name: nameVal,
         role: params.role,
-      }])
-      .select()
-      .maybeSingle();
-    return { data: normalizeProfile(data), error };
+      },
+    });
+
+    return { data: data?.member ? normalizeProfile(data.member) : null, error };
   },
 
   async remove(id: string) {
