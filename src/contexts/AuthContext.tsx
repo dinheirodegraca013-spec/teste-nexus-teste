@@ -497,12 +497,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             p_campaign_type: 'DEPUTADO_FEDERAL',
             p_profile_name: name.trim(),
           });
-          if (rpcErr) console.error('[NEXUS PROVISION] Erro na RPC provision_new_user no signUp:', rpcErr);
-          else console.log('[NEXUS PROVISION] RPC provision_new_user bem-sucedida no signUp:', { rpcOrgId });
+          if (rpcErr) {
+            console.error('[NEXUS PROVISION] Erro na RPC provision_new_user no signUp:', rpcErr);
+            return { error: new Error('Conta criada, mas não foi possível configurar a organização. Tente entrar novamente ou contate o suporte.'), user: data.user };
+          }
+          console.log('[NEXUS PROVISION] RPC provision_new_user bem-sucedida no signUp:', { rpcOrgId });
         } catch (rpcEx) {
           console.error('[NEXUS PROVISION] Exceção na RPC provision_new_user no signUp:', rpcEx);
+          return { error: new Error('Conta criada, mas houve uma falha ao configurar a organização. Tente entrar novamente ou contate o suporte.'), user: data.user };
         }
-        await loadUserData(data.user);
+        const loaded = await loadUserData(data.user);
+        if (!loaded.profile || !loaded.organization) {
+          return { error: new Error('Conta criada, mas o perfil ou a organização não está disponível. Tente entrar novamente ou contate o suporte.'), user: data.user };
+        }
       }
       return { error: null, requiresConfirmation: false, user: data.user };
     } catch (err: any) {
