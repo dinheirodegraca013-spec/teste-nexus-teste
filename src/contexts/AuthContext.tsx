@@ -179,7 +179,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('[NEXUS AUTH] profile:success', { role: activeProfile.role });
       } else {
         const metadata = authUser.user_metadata || {};
-        const metadataRole = String(metadata.role || '').toLowerCase().replace(/[\\s_-]/g, '');
+        const metadataRole = normalizeRole(metadata.role);
         const hasInvitedOrganization = isValidUUID(metadata.organization_id);
         const isInvitedRole = metadataRole === 'coordinator' || metadataRole === 'leader';
 
