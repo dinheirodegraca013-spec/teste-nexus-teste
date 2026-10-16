@@ -143,12 +143,12 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
       return;
     }
 
-    setIsSubmittingContact(true);
     const assignedLeader = leaders.find((leader) => leader.id === contactLeader);
     if (!assignedLeader) {
       toastError('Selecione uma liderança autorizada antes de cadastrar o contato.');
       return;
     }
+    setIsSubmittingContact(true);
 
     const fieldTags = [
       'campo',
