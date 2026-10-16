@@ -47,6 +47,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install Node dependencies for Deno npm resolution
+        run: npm install --no-audit --no-fund
+
       - name: Set up Deno
         uses: denoland/setup-deno@v2
         with:
