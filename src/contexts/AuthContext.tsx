@@ -171,9 +171,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           7000,
           'Tempo limite excedido ao consultar public.profiles'
         );
-        if (!profileErr) activeProfile = userProfile;
+        if (profileErr) throw profileErr;
+        activeProfile = userProfile;
       } catch (profEx: any) {
         console.error('[NEXUS AUTH] profile:error', profEx?.message || profEx);
+        throw profEx;
       }
 
       if (activeProfile) {
@@ -282,6 +284,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return { profile: activeProfile || null, organization: loadedOrg, permissions: loadedPerms };
     } catch (err: any) {
+      // A failed lookup does not establish that the profile is absent.
+      // Clear cached access and never provision a tenant on this path.
+      setProfile(null);
+      setOrganization(null);
+      setOrganizations([]);
+      setPermissions([]);
       setProfileError(err?.message || 'Erro inesperado ao carregar perfil.');
       setInitializationError(err?.message || 'Erro inesperado ao carregar sessão.');
       return { profile: null, organization: null, permissions: [] };
