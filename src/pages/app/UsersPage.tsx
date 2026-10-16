@@ -13,15 +13,31 @@ import { Select } from '../../components/ui/Select';
 import { EmptyState } from '../../components/ui/EmptyState';
 
 const permissionModuleKeys: Record<string, string> = {
+  painel: 'dashboard',
+  organizacoes: 'organizations',
+  usuarios: 'users',
   crm: 'crm',
   coordenadores: 'coordinators',
   liderancas: 'leaders',
   metas: 'goals',
   campo: 'field',
+  presencas: 'presence',
   eventos: 'events',
+  reunioes: 'meetings',
   materiais: 'materials',
   adesivos: 'stickers',
+  inteligencia: 'intelligence',
+  relatorios: 'reports',
+  configuracoes: 'settings',
 };
+
+const createDefaultPermissions = () =>
+  Object.fromEntries(
+    Object.keys(permissionModuleKeys).map((moduleKey) => [
+      moduleKey,
+      { can_view: false, can_edit: false, can_delete: false },
+    ])
+  ) as Record<string, { can_view: boolean; can_edit: boolean; can_delete: boolean }>;
 
 export const UsersPage: React.FC = () => {
   const { organization } = useAuth();
@@ -41,16 +57,7 @@ export const UsersPage: React.FC = () => {
   const [inviteRole, setInviteRole] = useState<UserRole>('operator');
 
   // Permission editor state
-  const [perms, setPerms] = useState<Record<string, { can_view: boolean; can_edit: boolean; can_delete: boolean }>>({
-    crm: { can_view: true, can_edit: true, can_delete: false },
-    coordenadores: { can_view: true, can_edit: false, can_delete: false },
-    liderancas: { can_view: true, can_edit: true, can_delete: false },
-    metas: { can_view: true, can_edit: false, can_delete: false },
-    campo: { can_view: true, can_edit: true, can_delete: false },
-    eventos: { can_view: true, can_edit: true, can_delete: false },
-    materiais: { can_view: true, can_edit: true, can_delete: false },
-    adesivos: { can_view: true, can_edit: true, can_delete: false },
-  });
+  const [perms, setPerms] = useState(createDefaultPermissions);
 
   const loadData = useCallback(async () => {
     if (!orgId) return;
@@ -122,7 +129,7 @@ export const UsersPage: React.FC = () => {
         return;
       }
 
-      const loadedPerms = { ...perms };
+      const loadedPerms = createDefaultPermissions();
       for (const permission of data || []) {
         const displayKey = Object.keys(permissionModuleKeys).find(
           (key) => permissionModuleKeys[key] === permission.module
