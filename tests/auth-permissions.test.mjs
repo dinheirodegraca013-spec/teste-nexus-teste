@@ -10,7 +10,7 @@ const result = await build({
 // Resolve external packages from this repository while keeping the bundle in memory.
 const source = result.outputFiles[0].text.replace(/from "([^./][^"]*)"/g,
   (_, name) => `from ${JSON.stringify(import.meta.resolve(name))}`);
-const { checkUserPermission, getDefaultRouteForUser, normalizeProfile } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
+const { checkUserPermission, getDefaultRouteForUser, normalizeProfile, normalizeRole } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
 
 test('missing profile has no access', () => {
   assert.equal(checkUserPermission(null, [], 'crm'), false);
@@ -34,7 +34,7 @@ test('blocked database profile is displayed as inactive', () => {
   assert.equal(profile.status, 'inactive');
 });
 
-for (const role of ['superadmin', 'admin', 'manager', 'coordinator', 'leader', 'operator', 'viewer']) {
+for (const role of ['superadmin', 'admin', 'manager', 'coordinator', 'controller', 'leader', 'operator', 'viewer']) {
   test(`blocked ${role} cannot use saved CRM permissions`, () => {
     const permissions = [{ module: 'crm', can_view: true, can_create: true, can_edit: true, can_delete: true }];
     for (const action of ['view', 'create', 'edit', 'delete']) {
@@ -58,4 +58,21 @@ test('unblocked database profile is active and keeps its identity', () => {
   assert.equal(profile.status, 'active');
   assert.equal(profile.id, 'test-profile');
   assert.equal(profile.full_name, 'Test');
+});
+
+test('controlador is a distinct role and denied by default', () => {
+  assert.equal(normalizeRole('Controlador'), 'controller');
+  assert.equal(normalizeRole('controller'), 'controller');
+  const profile = { role: 'controller', is_blocked: false };
+  assert.equal(checkUserPermission(profile, [], 'crm', 'view'), false);
+  assert.equal(checkUserPermission(profile, [], 'leaders', 'view'), false);
+  assert.equal(checkUserPermission(profile, [], 'users', 'delete'), false);
+});
+
+test('controller only receives explicitly configured module actions', () => {
+  const profile = { role: 'controller', is_blocked: false };
+  const permissions = [{ module: 'leaders', can_view: true, can_create: false, can_edit: false, can_delete: false }];
+  assert.equal(checkUserPermission(profile, permissions, 'leaders', 'view'), true);
+  assert.equal(checkUserPermission(profile, permissions, 'leaders', 'edit'), false);
+  assert.equal(checkUserPermission(profile, permissions, 'crm', 'view'), false);
 });
