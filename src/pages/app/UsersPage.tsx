@@ -158,7 +158,7 @@ export const UsersPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      const payload = Object.entries(perms).map(([displayKey, permission]) => ({
+      const payload = Object.entries(perms as Record<string, { can_view: boolean; can_edit: boolean; can_delete: boolean }>).map(([displayKey, permission]) => ({
         user_id: selectedMember.id,
         module: permissionModuleKeys[displayKey],
         can_view: permission.can_view,
