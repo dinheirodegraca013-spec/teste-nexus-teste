@@ -1,3 +1,42 @@
+## OBRAMAXAUTO + SUPERPOWERS — 16/10/2026: CONFIABILIDADE DE EXCLUSÕES, PERFIS E ATUALIZAÇÕES
+
+**PERÍMETRO:** repository `dinheirodegraca013-spec/teste-nexus-teste`, branch `fix/persist-rbac-permissions`; Supabase autorizado `qidstqsbxwkbkwowhpab`. Este ciclo foi realizado **exclusivamente em arquivos GitHub**: nenhum SQL, dado real, chamada de exclusão, deploy de produção ou merge.
+
+### DEL-02 — Oito exclusões adicionais protegidas (TDD RED/GREEN)
+
+- **Causa raiz:** `delete().eq('id',id)` sem `.select('id')` pode retornar `error=null` mesmo se nenhuma linha foi apagada por RLS/ID inexistente. O frontend poderia mostrar confirmação falsa.
+- **RED:** commit `b66d7bf013` expandiu `tests/confirmed-deletions.test.mjs`; oito cenários negativos falharam no CI `38972766424` como esperado.
+- **GREEN:** commit `74902272e2` corrigiu `coordinators`, `leaders`, `crm_contacts`, `goals`, `campaign_events`, `meetings`, `materials_inventory`, `popular_demands`. Todas agora exigem a linha devolvida por `.select('id').maybeSingle()` e usam `confirmDeletedRow`.
+- **Evidência:** GitHub Actions `38972836083` e `38972853875` aprovados, além das três exclusões já corrigidas no ciclo anterior.
+- **Escopo:** os testes usam fronteira mockada de Supabase; não fazem DELETE real.
+
+### AUTH-02 — Proibir exclusão direta de perfis (TDD RED/GREEN)
+
+- **Causa raiz:** `profilesService.delete` tentava apagar `public.profiles` no navegador. Isso **não** desativa o usuário no Supabase Auth nem revoga sessões existentes.
+- **RED:** commit `33a2488746` adicionou teste a `tests/member-operations.test.mjs`; CI `38972916979` falhou corretamente no caso de exclusão insegura.
+- **GREEN:** commit `6c72342fc2`: a chamada direta falha explicitamente com `PROFILE_DELETE_FORBIDDEN` sem tocar em tabelas; CI `38972994021` e `38973000000` aprovados.
+- **PENDENTE:** implementar revogação/bloqueio REAL por endpoint administrativo autenticado, com auditoria, impacto de sessões e teste E2E antes de liberar a interface. Essa implementação precisa de revisão/autorização específica.
+
+### UPDATE-02 — Onze atualizações exigem linha modificada (TDD RED/GREEN)
+
+- **Causa raiz:** `.update(...).select().maybeSingle()` pode retornar `data=null,error=null` se nenhuma linha foi alterada, permitindo sucesso falso.
+- **RED:** `tests/confirmed-updates.test.mjs`, commit `e8ad69a5a5`, com 33 cenários de ausência, sucesso e erro; os 11 cenários de zero linhas falharam em CI `38973147088` como esperado.
+- **GREEN:** commit `8ffbf591ab` criou `confirmUpdatedRow` com `UPDATE_NOT_APPLIED` e aplicou a **11 serviços** (coordenações, lideranças, CRM, metas, eventos, reuniões, presenças, materiais, carros, casas e demandas). CI `38973265254` e `38973272157` aprovados.
+- **Limites:** testes com mocks da API cliente, não equivalem a transações SQL autenticadas ou testes de interface.
+
+### BACKLOG PRIORITÁRIO
+
+1. **CRÍTICO:** RLS/RBAC por módulo nas cinco tabelas operacionais restantes; exige matriz de acesso, testes negativos e autorização específica para SQL (não ampliar grants antes da verificação).
+2. **ALTO:** revogação segura da conta do Supabase Auth com logs, sessões e autorização de tenant. `membersService.remove` e `profilesService.delete` devem permanecer bloqueados até homologação.
+3. **ALTO:** Storage privado de fotos e isolamento de objetos em `docs/PRIVATE_STORAGE_DESIGN.md`, com migração e aprovação específica pendentes.
+4. **ALTO:** E2E autenticado multiusuário/multitenant do login, convite, gestão de equipe, CRUD e fotos com credenciais de teste, sem dados reais.
+5. **MÉDIO:** auditar retornos de `INSERT` e outras operações fora do conjunto acima para impedir confirmação de persistência inexistente; reproduzir primeiro.
+6. **OPERACIONAL:** conferir CI do HEAD documental; manter PR #1 em rascunho, sem merge/deploy produção.
+
+**Não afirmar que o NEXUS inteiro está homologado.** O executor do GitHub continua independente das sessões de ChatGPT, sujeito a credenciais, limites e CI.
+
+---
+
 ## CICLOS OBRAMAXAUTO + SUPERPOWERS — 16/10/2026 — TESTES EXECUTADOS
 
 **Branch exclusiva:** `fix/persist-rbac-permissions`. **Supabase DEV autorizado:** `qidstqsbxwkbkwowhpab`. Sem merge, deploy em produção, execução de SQL, alteração de dados reais ou ampliação RLS nestes ciclos.
