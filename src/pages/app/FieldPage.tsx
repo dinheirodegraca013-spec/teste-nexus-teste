@@ -33,7 +33,7 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
   // available team member. RLS limits leader accounts to their assigned row.
   const currentLeader = profile?.role === 'leader' && leaders.length === 1
     ? leaders[0]
-    : leaders.find((leader) => leader.id === contactLeader);
+    : undefined;
 
   // Contact fast form
   const [contactName, setContactName] = useState('');
