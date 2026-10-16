@@ -319,15 +319,24 @@ export const membersService = {
       },
     });
 
-    return { data: data?.member ? normalizeProfile(data.member) : null, error };
+    if (error) return { data: null, error };
+    // Edge Functions can respond HTTP 200 with a business-level error body.
+    // Treat absent success/member as failure, never as a sent invitation.
+    if (data?.success !== true || !data?.member?.id) {
+      return {
+        data: null,
+        error: { name: 'InvitationError', code: 'INVITATION_NOT_CONFIRMED',
+          message: data?.error || 'O servidor não confirmou a criação do convite.' },
+      };
+    }
+    return { data: normalizeProfile(data.member), error: null };
   },
 
-  async remove(id: string) {
-    const { error } = await supabase
-      .from('profiles')
-      .delete()
-      .eq('id', id);
-    return { error };
+  async remove(_id: string) {
+    // profiles DELETE is blocked by RLS and does not revoke a Supabase Auth
+    // session. A zero-row DELETE can misleadingly return no error.
+    return { error: { name: 'NotImplementedError', code: 'MEMBER_REVOKE_NOT_IMPLEMENTED',
+      message: 'Revogação de acesso indisponível até existir um fluxo administrativo seguro.' } };
   }
 };
 
@@ -358,4 +367,15 @@ export const teamScopeService = {
     }
     return { error: { message: 'O perfil selecionado não permite vínculo de equipe.' } };
   },
-};
+  async revokeController(memberId: string, coordinatorId: string) {
+    if (!isValidUUID(memberId) || !isValidUUID(coordinatorId)) {
+      return { error: { message: 'Identificadores de usuário ou coordenação inválidos.' } };
+    }
+    const { error } = await supabase.rpc('nexus_set_controller_scope', {
+      p_controller_user: memberId,
+      p_coordinator: coordinatorId,
+      p_enabled: false,
+    });
+    return { error };
+  },
+};;
