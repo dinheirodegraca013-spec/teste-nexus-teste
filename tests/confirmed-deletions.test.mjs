@@ -5,7 +5,7 @@ import { build } from 'esbuild';
 // The service under test is real; only the network/database boundary is mocked.
 const bundle = await build({
   stdin: {
-    contents: "export { presenceService, stickersService } from './src/services/dataServices';",
+    contents: "export { presenceService, stickersService, coordinatorsService, leadersService, crmService, goalsService, eventsService, meetingsService, materialsService, intelligenceService } from './src/services/dataServices';",
     resolveDir: process.cwd(),
   },
   bundle: true,
@@ -51,7 +51,7 @@ const bundle = await build({
     },
   }],
 });
-const { presenceService, stickersService } = await import(
+const { presenceService, stickersService, coordinatorsService, leadersService, crmService, goalsService, eventsService, meetingsService, materialsService, intelligenceService } = await import(
   `data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`
 );
 
@@ -60,6 +60,14 @@ const operations = [
   ['presença', 'field_presences', () => presenceService.deleteLog(id)],
   ['adesivagem de carro', 'car_stickers', () => stickersService.deleteCarSticker(id)],
   ['adesivagem de casa', 'house_stickers', () => stickersService.deleteHouseSticker(id)],
+  ['coordenação', 'coordinators', () => coordinatorsService.delete(id)],
+  ['liderança', 'leaders', () => leadersService.delete(id)],
+  ['contato CRM', 'crm_contacts', () => crmService.delete(id)],
+  ['meta', 'goals', () => goalsService.delete(id)],
+  ['evento', 'campaign_events', () => eventsService.delete(id)],
+  ['reunião', 'meetings', () => meetingsService.delete(id)],
+  ['item de materiais', 'materials_inventory', () => materialsService.deleteItem(id)],
+  ['demanda popular', 'popular_demands', () => intelligenceService.deleteDemand(id)],
 ];
 
 function setup(outcome) {
