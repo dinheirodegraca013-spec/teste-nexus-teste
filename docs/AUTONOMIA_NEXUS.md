@@ -81,3 +81,20 @@
 ## Limite de continuidade
 
 Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstico e o desenvolvimento a cada hora. Isso fornece retomadas agendadas, não um processo de execução ininterrupto garantido. Um agente externo 24/7 real ainda exige um executor persistente com credenciais de API armazenadas em um cofre, limites de custo, logs, isolamento e política de aprovação. Não afirmar que existe um daemon contínuo enquanto ele não estiver implantado e comprovado.
+
+
+## Verificação independente — 2026-10-16
+
+- **APROVADO:** GitHub Actions `NEXUS CI` run #32, associado ao commit atual da PR #1 (`574175221977aeebb57fd633873ccfacc367501d`), terminou com sucesso. Os dois jobs concluíram: TypeScript/build de produção e validação Deno da Edge Function.
+- **APROVADO:** os passos registrados no run #32 incluem instalação de dependências, `npm run lint`, `npm run build` e `deno check` da função `invite-organization-member`, todos com sucesso.
+- **NÃO VERIFICADO:** não há execução observada do workflow `NEXUS Autonomous Engineering Cycle` no commit incorporado à `main` (`39f05a749c47b417c341776c2e64b22374f6b206`). O workflow permanece propositalmente condicionado à variável `NEXUS_AUTONOMY_ENABLED=true`; não foi alterada qualquer variável, segredo ou configuração de Actions nesta verificação.
+- **BLOQUEADO:** o status Vercel falha tanto na `main` quanto no head atual da PR #1. Os deployments inspecionados retornam `BUILD_FAILED: Resource provisioning failed` e não possuem eventos de build. Dois deployments distintos, inclusive `dpl_9KojAk4hr3JKtZJbxQJjftpUJbH6` e `dpl_4fkUSTCfyCmpvNsfVNC4bdJv5Hm4`, apresentaram o mesmo padrão. Isso confirma que a falha ocorre antes de logs de compilação úteis; a causa raiz ainda não foi fornecida pela API e não pode ser atribuída ao código com a evidência atual.
+- **NÃO VERIFICADO:** não há logs de runtime para esses previews; além de o deployment não ter ficado pronto, a consulta histórica excede a retenção do plano Hobby. Nenhuma configuração de Vercel, produção ou integração foi modificada como tentativa de correção.
+- **BLOQUEADO:** a PR #1 segue em rascunho e não será mesclada. Ainda faltam revisão de segurança das políticas RLS aplicadas, teste E2E do convite com identidade de teste autorizada e validação de isolamento entre organizações.
+
+## Próximas ações verificáveis
+
+1. No painel da Vercel, verificar eventos de provisionamento/limites da conta e abrir chamado de suporte se a plataforma não expuser detalhe adicional; anexar os IDs de deployment acima.
+2. Quando houver uma nova tentativa de preview, capturar os eventos imediatamente dentro da janela de retenção e correlacionar com o SHA da branch.
+3. Revisar o diff completo da PR #1 e executar testes de autorização/isolamento com identidades de teste; não alterar dados reais.
+4. Manter a PR #1 sem merge até que essas evidências, incluindo preview ou explicação documentada do bloqueio de Vercel, estejam satisfeitas.
