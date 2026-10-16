@@ -1,3 +1,17 @@
+## HIERARQUIA DE EQUIPE IMPLEMENTADA — 16/10/2026 (prioridade sobre histórico)
+
+- **Escopo único:** Supabase DEV `qidstqsbxwkbkwowhpab`; nenhuma alteração nos Supabase históricos ou produção.
+- **Banco:** migração `20261016202949_nexus_private_hierarchy_identity_and_scopes` aplicada: papel `controller`, tabelas privadas `nexus_team_memberships` e `nexus_controller_scopes`, chaves compostas para o mesmo tenant, RLS e sem grants de acesso direto a `authenticated`.
+- **RLS:** migração `20261016203058_nexus_hierarchical_read_policies` aplicada. `leaders`, `coordinators`, `crm_contacts`, `field_presences` permitem leitura apenas do próprio tenant e escopo. Registros sem liderança continuam admin-only. INSERT/UPDATE/DELETE operacionais permanecem admin-only.
+- **Atribuições administrativas:** migração `20261016203814_nexus_admin_managed_team_assignments` aplicada; RPCs `nexus_set_team_scope` e `nexus_set_controller_scope` exigem admin ativo, verificam tenant e cargo do membro, usam integridade FK e gravam `audit_logs`. Acesso anônimo ao EXECUTE negado.
+- **Teste real de política no banco DEV:** `supabase/tests/nexus_hierarchy_two_tenants_rollback.sql` executado COM SUCESSO usando duas organizações, seis identidades fictícias em TRANSAÇÃO REVERTIDA, verifica administrador, líder, coordenador, controlador, leitor sem acesso e tentativas de atribuição cruzada/não-admin. Pós-teste: 0 organizações/usuários de teste, 0 memberships/scopes e 0 logs de teste persistidos.
+- **UI:** `UsersPage` oferece atribuição de coordenação/liderança para membros relevantes, consumindo `teamScopeService` e RPCs validadas no servidor. Controller incluído no tipo `UserRole`, normalização e badges. A lista de convites inclui Controller e Liderança. O backend `invite-organization-member` foi implantado no Supabase DEV versão 2, ACTIVE com JWT obrigatório.
+- **Compatibilidade temporária:** frontend autoriza apenas LEITURA de CRM/Presença para líder e de Coordenadores/Lideranças/CRM/Presença para coordenador; as escritas de campo continuam bloqueadas pelo banco. Controller tem permissão de módulo NEGADA por padrão até administrador configurar `user_module_permissions`, além do escopo no banco.
+- **Restante NÃO HOMOLOGADO:** validar convites reais, E2E de navegador, telas e escrita por papel; implementar remoção/visualização de atribuições administrativas e testes de UX; revisar RLS de outros módulos e provisionar Storage privado. Não fazer merge ou deploy de produção sem aceite.
+- **Próximo ciclo:** confira CI no HEAD desta branch, trate erros primeiro, depois trabalhe num bug verificável de convite/autorização ou Storage de fotos com testes negativos. Não criar permissões amplas para contornar bloqueio.
+
+---
+
 # ESTADO OPERACIONAL ATUAL — LEITURA OBRIGATÓRIA (16/10/2026)
 
 > **PERÍMETRO OBRIGATÓRIO:** o ÚNICO Supabase autorizado para o NEXUS em desenvolvimento é `qidstqsbxwkbkwowhpab`. Os projetos `wrovgjhpyacmmetejiqk`, `qesiqjcpphkwryjvpzmq` e o Gestio `fbvcapoydkodpifkwjwg` são históricos/outros e NÃO PODEM SER ALTERADOS. As referências abaixo a projetos antigos são histórico, não instruções de execução.
