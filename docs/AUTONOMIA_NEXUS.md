@@ -1,3 +1,44 @@
+## CICLOS OBRAMAXAUTO + SUPERPOWERS — 16/10/2026 — TESTES EXECUTADOS
+
+**Branch exclusiva:** `fix/persist-rbac-permissions`. **Supabase DEV autorizado:** `qidstqsbxwkbkwowhpab`. Sem merge, deploy em produção, execução de SQL, alteração de dados reais ou ampliação RLS nestes ciclos.
+
+### FIELD-01 — Escolha explícita de liderança no cadastro de contato
+
+- **Causa-raiz:** validação anterior exigia `contactLeader` mas a interface não oferecia controle para um administrador selecionar a liderança; o `loadData` ainda zerava a seleção do admin a cada atualização.
+- **TDD RED:** `tests/field-assignment.test.mjs` recebeu dois testes; CI do commit `99c5165` falhou em ambos como esperado.
+- **Implementação:** `0a29d73`, adicionando Select com lideranças recebidas do Supabase sob RLS e preservando somente escolhas ainda visíveis.
+- **Depuração:** o CI do primeiro patch falhou por asserção antiga incompatível com o novo comportamento; o commit `6daff24` atualizou o teste para verificar preservação apenas de escolhas válidas.
+- **GREEN:** duas verificações Actions do commit `6daff24` concluíram com sucesso (`38971722730` e `38971727817`).
+- **Limite:** o teste do seletor é de regressão por inspeção do componente; falta teste autenticado de interface/browser.
+
+### DATA-02 — Deleções que não alteram registros não podem reportar sucesso
+
+- **Causa-raiz:** PostgREST pode devolver `error=null` para DELETE afetando zero linhas por RLS/registro ausente; os três serviços comunicavam sucesso sem examinar o resultado.
+- **TDD RED:** nove testes em `tests/confirmed-deletions.test.mjs`, commit `ee33fe8`; CI falhou nos três cenários de exclusão sem linha afetada, mantendo cenários de sucesso e erro intactos.
+- **Implementação:** `f584de3`; métodos de remoção de presenças, carros e casas agora solicitam `.select('id').maybeSingle()` e exigem linha confirmada; retornam `DELETE_NOT_APPLIED` caso contrário.
+- **GREEN:** GitHub Actions `38972010244` e `38972014497` concluíram com sucesso. Testes usaram mocks de Supabase e não removeram registros reais.
+- **Limite:** há outros métodos DELETE no projeto que ainda devem ser auditados sob a mesma regra; não declarar toda a camada de exclusão homologada.
+
+### FIELD-03 — Remover metas fictícias do painel de campo
+
+- **Causa-raiz:** na ausência de liderança/meta, a UI exibia metas arbitrárias 10/50/30/20, interpretáveis como metas reais.
+- **TDD RED:** `tests/field-goal-display.test.mjs`, commit `aa6f85c`; três verificações falharam no CI como esperado.
+- **Implementação:** `2df3703`; as quatro métricas agora exibem `—` e `Sem meta` se o objetivo não estiver definido; metas reais positivas continuam produzindo porcentagens limitadas a 0–100%.
+- **GREEN:** GitHub Actions `38972308889` e `38972314861` concluíram com sucesso.
+- **Limite:** testes novos validam contrato do código-fonte; ainda não houve homologação de browser com contas reais.
+
+### PRIORIDADES AINDA PENDENTES (sem falsa homologação)
+
+1. Bloqueio/revogação segura de membro no Supabase Auth; alterações privilegiadas exigem autorização específica.
+2. Bucket privado e políticas de evidências fotográficas: proposta em `docs/PRIVATE_STORAGE_DESIGN.md`, **SQL NÃO APLICADO**.
+3. RBAC/RLS por módulo e hierarquia na escrita: políticas de acesso ainda incompletas, sem autorizar ampliação.
+4. Testes autenticados E2E de dois tenants, convites, uploads, formulários e perfis; nenhuma credencial de teste foi fornecida neste ciclo.
+5. Conferir o CI do commit documental que registra este ciclo antes de anunciar HEAD completamente validado.
+
+**Procedimento do próximo executor:** ler este estado e o escopo, verificar HEAD/CI, escolher um bug reproduzível de alta prioridade dentro das restrições; implementar em ciclo RED → GREEN; não tocar SQL/produção nem dados reais sem autorização.
+
+---
+
 ## CICLO OBRAMAXAUTO + SUPERPOWERS — 16/10/2026: vínculo obrigatório no Modo de Campo
 
 - **Problema reproduzido:** `FieldPage` permitia enviar um contato sem liderança associada (`leader_id: undefined`), e mantinha um `contactLeader` antigo quando o RLS passava a retornar zero lideranças. Em nova revisão, o bloqueio sem liderança deixava `isSubmittingContact=true` e o botão carregando indefinidamente.
