@@ -1,3 +1,15 @@
+## CONTINUAÇÃO SEGURA — 2026-10-16: convites e revogação de controlador
+
+- **Corrigido no código:** `membersService.invite` agora exige `data.success === true` e `data.member.id`; uma resposta com `error` no payload ou membro ausente não gera mensagem falsa de envio de convite.
+- **Remoção de membros:** `membersService.remove` retorna `MEMBER_REVOKE_NOT_IMPLEMENTED`, sem tentar `DELETE` direto em `profiles`. O botão de remoção foi desabilitado na UI para não alegar revogação de login sem afetar Supabase Auth.
+- **Revogação de controlador:** `teamScopeService.revokeController` chama apenas a RPC administrativa existente `nexus_set_controller_scope` com `p_enabled=false`. A opção aparece no modal de vínculo apenas para Controller. A RPC valida novamente identidade e organização.
+- **Testes:** `tests/member-operations.test.mjs` cobre confirmação de convite, rejeição de resposta incompleta, remoção fail-closed, revogação de controlador e identificador inválido. Confirmar GitHub CI no HEAD antes de chamar todo o ciclo aprovado.
+- **Bloqueio:** proposta de criar operações SQL adicionais para listar/remover vínculos de liderança/coordenação foi bloqueada pelas configurações de segurança da ferramenta e **NÃO aplicada** ao banco. Não afirmar que essas operações estão disponíveis.
+- **Pendências prioritárias:** fluxo de bloqueio de membro sem exclusão, leitura autorizada de vínculos atualmente atribuídos (para não operar às cegas), validação real de convites e autenticação com usuários de teste, controle hierárquico de escrita, Storage privado com RLS, E2E de frontend. Não mesclar para main nem implantar produção até homologação.
+- **Ambiente autorizado:** Somente Supabase DEV `qidstqsbxwkbkwowhpab`; PR #1 em rascunho.
+
+---
+
 ## HIERARQUIA DE EQUIPE IMPLEMENTADA — 16/10/2026 (prioridade sobre histórico)
 
 - **Escopo único:** Supabase DEV `qidstqsbxwkbkwowhpab`; nenhuma alteração nos Supabase históricos ou produção.
