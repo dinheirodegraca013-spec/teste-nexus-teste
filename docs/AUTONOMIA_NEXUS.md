@@ -143,3 +143,13 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 2. Revisar confiabilidade dos convites e seguranca por modulo na branch, com testes de autorizacao isolados.
 3. Confirmar as duas variaveis Vite do destino no ambiente Preview, sem divulgar segredos, quando o banco estiver validado.
 4. Rodar testes E2E, revisar PR e registrar a decisao de corte; preservar deployment READY existente ate entao.
+
+## Ciclo orientado por logs: otimizacao de carregamento — 2026-10-16
+
+- Evidencia inicial Vercel preview dpl_HXXSpdodPaiPfen3HP3vbuaZ5UVk: JS principal 859,16 kB (gzip 225,08 kB), com alerta do Vite de chunk maior que 500 kB; build completado. CI #42 (38875008174) concluiu success, mas continha alerta equivalente de chunk maior que 500 kB (895,17 kB, gzip 235,15 kB). Os valores variam conforme bundler/ambiente.
+- Correção #1: src/App.tsx migrou 19 importacoes estaticas de paginas privadas para React.lazy/Suspense. Commit a0d7e55a2b1b25a5db1e0136cb4cb2f8f3c36f43. Vercel preview dpl_4fkUzwRUFaS9ffpShTNZHMkTdcGe READY, log mostrou JS principal 641,95 kB (gzip 185,30 kB), ainda com alerta. CI #44 (38875593998) success.
+- Correção #2: vite.config.ts configurou manualChunks para isolar o SDK @supabase em supabase-vendor. Commit 0f91e8e5c2efe515832210a6a06cf9e1dbbba3e5. Vercel preview dpl_FC9UEMEbMn1TVKrbWHUzMAmKR1gz READY e log mostrou JS principal 421,12 kB (gzip 127,60 kB) e supabase-vendor 220,44 kB (gzip 57,64 kB); nenhum aviso de chunk acima de 500 kB. CI #46 (38875708349) success.
+- Resultado: APROVADO para build, typecheck e reducao comprovada do principal chunk de 859,16 para 421,12 kB (-50,99%); nao comprova funcionalidade do sistema no browser. Exigem teste adicional de navegacao por modulos dinamicos, login e recursos apos carregamento.
+- Logs runtime: consulta Vercel de 1 hora retornou 400 por limite de retencao Hobby; consulta de 15 minutos nao retornou eventos com niveis error/fatal. Nao tratar ausencia desses registros como ausencia de erros de frontend: NEXUS usa SPA estatica e problemas do browser exigem capturar console e rede em teste E2E.
+- Backend: Supabase DESTINO qesiqjcpphkwryjvpzmq continua sem permissao administrativa. Variaveis VITE no Vercel permanecem associadas ao Supabase antigo ate migracao validada, sem alteracao feita. PR #1 segue draft, sem merge e sem mudanca de producao.
+- Proximos ciclos: conferir console de navegador via teste E2E automatizado, fluxos de auth, perfis, permissoes e orgs; auditar codigo do switchOrganization (atualmente solicita UPDATE de organization_id do proprio perfil, operacao sensivel). A pagina OrganizationsPage exibe criacao de organizacao nao comprovada no backend. Nao alterar schema nem confiar apenas no typecheck.
