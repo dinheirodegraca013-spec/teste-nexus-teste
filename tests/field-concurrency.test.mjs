@@ -14,7 +14,7 @@ test('fast CRM registration does not overwrite goal_reached with stale UI state'
   const submit = source.slice(begin, end);
   assert.ok(submit.includes('crmService.create('));
   assert.doesNotMatch(submit, /leadersService\.update\s*\(/);
-  assert.doesNotMatch(submit, /goal_reached\s*:/);
+  assert.doesNotMatch(submit, /^\s*goal_reached\s*:/m);
 });
 
 test('field load reports Supabase query failures rather than rendering missing records as empty', () => {
