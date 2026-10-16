@@ -109,27 +109,28 @@ Deno.serve(async (req: Request) => {
     return jsonResponse(409, { error: "Não foi possível enviar o convite. Verifique se o e-mail já possui cadastro." });
   }
 
-  const { error: profileError } = await adminClient.from("profiles").insert({
-    id: invitation.user.id,
-    organization_id: organizationId,
-    name: name || email.split("@")[0],
-    email,
-    role: requestedRole,
-    is_blocked: false,
-  });
+  const { data: profile, error: profileError } = await adminClient
+    .from("profiles")
+    .insert({
+      id: invitation.user.id,
+      organization_id: organizationId,
+      name: name || email.split("@")[0],
+      email,
+      role: requestedRole,
+      is_blocked: false,
+    })
+    .select("id, organization_id, name, email, role, created_at")
+    .single();
 
-  if (profileError) {
-    // Compensa somente a conta criada por esta mesma chamada; não afeta usuários preexistentes.
-    const { error: rollbackError } = await adminClient.auth.admin.deleteUser(invitation.user.id);
+  if (profileError || !profile) {
     console.error("Profile creation failed after invitation", {
-      code: profileError.code,
-      rollbackSucceeded: !rollbackError,
+      userId: invitation.user.id,
+      code: profileError?.code,
     });
-    return jsonResponse(500, { error: "Não foi possível concluir o cadastro do convite." });
+    return jsonResponse(500, {
+      error: "O convite foi criado, mas o perfil não pôde ser concluído. A equipe técnica precisa finalizar o provisionamento.",
+    });
   }
 
-  return jsonResponse(200, {
-    success: true,
-    member: { id: invitation.user.id, email, name: name || email.split("@")[0], role: requestedRole },
-  });
+  return jsonResponse(200, { success: true, member: profile });
 });
