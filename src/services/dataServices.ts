@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { validatePhotoReference } from './photoEvidenceGuard';
 import { 
   Coordinator, 
   Leader, 
@@ -342,6 +343,8 @@ export const presenceService = {
   },
 
   async create(presence: Partial<FieldPresence>) {
+    const photoError = validatePhotoReference(presence);
+    if (photoError) return { data: null, error: photoError };
     const { data, error } = await supabase
       .from('field_presences')
       .insert([presence])
@@ -355,6 +358,8 @@ export const presenceService = {
   },
 
   async update(id: string, updates: Partial<FieldPresence>) {
+    const photoError = validatePhotoReference(updates);
+    if (photoError) return { data: null, error: photoError };
     const { data, error } = await supabase
       .from('field_presences')
       .update(updates)
@@ -450,6 +455,8 @@ export const stickersService = {
   },
 
   async createCarSticker(sticker: Partial<CarSticker>) {
+    const photoError = validatePhotoReference(sticker);
+    if (photoError) return { data: null, error: photoError };
     const { data, error } = await supabase
       .from('car_stickers')
       .insert([sticker])
@@ -459,6 +466,8 @@ export const stickersService = {
   },
 
   async updateCarSticker(id: string, updates: Partial<CarSticker>) {
+    const photoError = validatePhotoReference(updates);
+    if (photoError) return { data: null, error: photoError };
     const { data, error } = await supabase
       .from('car_stickers')
       .update(updates)
@@ -486,6 +495,8 @@ export const stickersService = {
   },
 
   async createHouseSticker(sticker: Partial<HouseSticker>) {
+    const photoError = validatePhotoReference(sticker);
+    if (photoError) return { data: null, error: photoError };
     const { data, error } = await supabase
       .from('house_stickers')
       .insert([sticker])
@@ -495,6 +506,8 @@ export const stickersService = {
   },
 
   async updateHouseSticker(id: string, updates: Partial<HouseSticker>) {
+    const photoError = validatePhotoReference(updates);
+    if (photoError) return { data: null, error: photoError };
     const { data, error } = await supabase
       .from('house_stickers')
       .update(updates)
