@@ -33,3 +33,23 @@ test('missing leader is validated before submit loading state starts', () => {
   const loading = submit.indexOf('setIsSubmittingContact(true)');
   assert.ok(guard >= 0 && loading > guard, 'Loading must start only after the missing-leader guard');
 });
+
+test('administrators can choose a visible, scoped leader before saving a contact', () => {
+  const start = source.indexOf('<form onSubmit={handleSaveContact}');
+  const end = source.indexOf('</form>', start);
+  assert.ok(start >= 0 && end > start);
+  const form = source.slice(start, end);
+  assert.match(form, /label="Liderança responsável"/);
+  assert.match(form, /value=\{contactLeader\}/);
+  assert.match(form, /onChange=\{\(e\) => setContactLeader\(e\.target\.value\)\}/);
+  assert.match(form, /leaders\.map\(\(leader\)/);
+});
+
+test('a nonleader selection stays only when the refreshed scoped list still contains it', () => {
+  const start = source.indexOf('const loadData =');
+  const end = source.indexOf('useEffect(', start);
+  assert.ok(start >= 0 && end > start);
+  const loader = source.slice(start, end);
+  assert.match(loader, /setContactLeader\(\(previous\) =>/);
+  assert.match(loader, /loadedLeaders\.some\(\(leader\) => leader\.id === previous\)/);
+});
