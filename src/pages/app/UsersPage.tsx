@@ -3,7 +3,7 @@ import { Users, Plus, Shield, Mail, Edit2, Trash2, CheckCircle2, Lock, Loader2 }
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { OrganizationMember, UserRole } from '../../types';
-import { membersService } from '../../services';
+import { membersService, permissionsService } from '../../services';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui/Table';
@@ -11,6 +11,17 @@ import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { EmptyState } from '../../components/ui/EmptyState';
+
+const permissionModuleKeys: Record<string, string> = {
+  crm: 'crm',
+  coordenadores: 'coordinators',
+  liderancas: 'leaders',
+  metas: 'goals',
+  campo: 'field',
+  eventos: 'events',
+  materiais: 'materials',
+  adesivos: 'stickers',
+};
 
 export const UsersPage: React.FC = () => {
   const { organization } = useAuth();
@@ -101,14 +112,67 @@ export const UsersPage: React.FC = () => {
     }
   };
 
-  const handleOpenPerms = (member: OrganizationMember) => {
+  const handleOpenPerms = async (member: OrganizationMember) => {
     setSelectedMember(member);
-    setIsPermModalOpen(true);
+    setIsSubmitting(true);
+    try {
+      const { data, error } = await permissionsService.getByUserId(member.id);
+      if (error) {
+        toastError('Erro ao carregar permissões: ' + error.message);
+        return;
+      }
+
+      const loadedPerms = { ...perms };
+      for (const permission of data || []) {
+        const displayKey = Object.keys(permissionModuleKeys).find(
+          (key) => permissionModuleKeys[key] === permission.module
+        );
+        if (!displayKey) continue;
+        loadedPerms[displayKey] = {
+          can_view: Boolean(permission.can_view),
+          can_edit: Boolean(permission.can_edit),
+          can_delete: Boolean(permission.can_delete),
+        };
+      }
+      setPerms(loadedPerms);
+      setIsPermModalOpen(true);
+    } catch (err: any) {
+      toastError('Erro inesperado ao carregar permissões: ' + (err?.message || 'falha desconhecida'));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleSavePerms = () => {
-    setIsPermModalOpen(false);
-    success(`Permissões atualizadas para ${selectedMember?.full_name || 'o membro'}`);
+  const handleSavePerms = async () => {
+    if (!selectedMember) {
+      toastError('Selecione um membro antes de salvar as permissões.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const payload = Object.entries(perms).map(([displayKey, permission]) => ({
+        user_id: selectedMember.id,
+        module: permissionModuleKeys[displayKey],
+        can_view: permission.can_view,
+        can_create: permission.can_edit,
+        can_edit: permission.can_edit,
+        can_delete: permission.can_delete,
+      }));
+
+      const { error } = await permissionsService.upsertPermissions(payload);
+      if (error) {
+        toastError('Erro ao salvar permissões: ' + error.message);
+        return;
+      }
+
+      setIsPermModalOpen(false);
+      success(`Permissões salvas para ${selectedMember.full_name || selectedMember.email}`);
+    } catch (err: any) {
+      toastError('Erro inesperado ao salvar permissões: ' + (err?.message || 'falha desconhecida'));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getRoleBadge = (role: UserRole) => {
@@ -322,7 +386,7 @@ export const UsersPage: React.FC = () => {
             <Button type="button" variant="outline" size="sm" onClick={() => setIsPermModalOpen(false)}>
               Cancelar
             </Button>
-            <Button type="button" variant="primary" size="sm" onClick={handleSavePerms}>
+            <Button type="button" variant="primary" size="sm" onClick={handleSavePerms} isLoading={isSubmitting}>
               Salvar Permissões
             </Button>
           </div>
