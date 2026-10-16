@@ -98,3 +98,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 2. Quando houver uma nova tentativa de preview, capturar os eventos imediatamente dentro da janela de retenção e correlacionar com o SHA da branch.
 3. Revisar o diff completo da PR #1 e executar testes de autorização/isolamento com identidades de teste; não alterar dados reais.
 4. Manter a PR #1 sem merge até que essas evidências, incluindo preview ou explicação documentada do bloqueio de Vercel, estejam satisfeitas.
+
+
+## Continuação da verificação — 2026-10-16
+
+- **APROVADO:** GitHub Actions `NEXUS CI` run #34 no commit `966914cc97eee3fd9a9fa781453c66b2876045c7` concluiu com sucesso. Os jobs de typecheck/build de produção e de validação Deno da Edge Function concluíram todas as etapas com sucesso.
+- **REPROVADO:** o preview correspondente ao mesmo commit (`dpl_3BJktWNFuxYYbpawNXgGSqNrRCH3`) voltou a falhar em aproximadamente 0,5 s com `BUILD_FAILED: Resource provisioning failed`, sem eventos de build retornados.
+- **NÃO VERIFICADO:** a API de projeto confirma Vite e Node 24.x, mas não disponibiliza parâmetros suficientes para identificar a origem do provisionamento que falhou.
+- **EVIDÊNCIA NEGATIVA:** a listagem de configurações de integrações de provisionamento do time, na visão de projeto, retornou vazia. Isso reduz a hipótese de uma integração de provisionamento configurada nesse projeto, mas não exclui indisponibilidade, cota ou erro interno da plataforma.
+- **DECISÃO:** nenhuma alteração de configuração ou novo redeploy foi feito por tentativa e erro. PR #1 permanece em rascunho, sem merge.
