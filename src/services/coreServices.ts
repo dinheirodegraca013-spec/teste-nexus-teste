@@ -377,4 +377,5 @@ export const teamScopeService = {
       p_enabled: false,
     });
     return { error };
-  },};
+    },
+};
