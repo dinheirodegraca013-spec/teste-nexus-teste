@@ -60,3 +60,6 @@ jobs:
 
       - name: Typecheck invitation function
         run: deno check --node-modules-dir=auto supabase/functions/invite-organization-member/index.ts
+
+      - name: Typecheck proposed revocation function (not deployed)
+        run: deno check --node-modules-dir=auto docs/proposed-edge-functions/revoke-member/index.ts
