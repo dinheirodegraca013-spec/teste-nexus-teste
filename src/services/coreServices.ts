@@ -77,13 +77,8 @@ export const profilesService = {
     }
 
     if (updates.role !== undefined) dbUpdates.role = updates.role;
-    if (updates.organization_id !== undefined) {
-      if (isValidUUID(updates.organization_id)) {
-        dbUpdates.organization_id = updates.organization_id;
-      } else {
-        console.warn('[NEXUS PROFILE] UPDATE_IGNORED_INVALID_ORG_UUID', { organization_id: updates.organization_id });
-      }
-    }
+    // A user's organization is immutable in client updates. Tenant transfers
+    // require a separate, explicitly authorized server-side workflow.
     if (updates.email !== undefined) dbUpdates.email = updates.email;
 
     const { data, error } = await supabase
