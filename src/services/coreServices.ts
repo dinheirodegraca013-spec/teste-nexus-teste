@@ -212,12 +212,17 @@ export const profilesService = {
     return { data: normalizeProfile(data), error };
   },
 
-  async delete(id: string) {
-    const { error } = await supabase
-      .from('profiles')
-      .delete()
-      .eq('id', id);
-    return { error };
+  async delete(_id: string) {
+    // Deleting a profile does not revoke a Supabase Auth account or its
+    // existing sessions. Fail closed until a reviewed server-side admin
+    // workflow can disable authentication and audit the action atomically.
+    return {
+      error: {
+        name: 'NotImplementedError',
+        code: 'PROFILE_DELETE_FORBIDDEN',
+        message: 'Exclusão direta de perfil indisponível: é preciso revogar o acesso no Supabase Auth por um fluxo administrativo seguro.',
+      },
+    };
   }
 };
 
