@@ -331,3 +331,31 @@ export const membersService = {
   }
 };
 
+
+
+// Private hierarchy assignments are managed exclusively through authenticated,
+// server-validated tenant-admin RPCs. Never expose the private tables directly.
+export const teamScopeService = {
+  async assign(memberId: string, role: 'leader' | 'coordinator' | 'controller', scopeId: string) {
+    if (!isValidUUID(memberId) || !isValidUUID(scopeId)) {
+      return { error: { message: 'Identificadores de usuário ou território inválidos.' } };
+    }
+    if (role === 'controller') {
+      const { error } = await supabase.rpc('nexus_set_controller_scope', {
+        p_controller_user: memberId,
+        p_coordinator: scopeId,
+        p_enabled: true,
+      });
+      return { error };
+    }
+    if (role === 'leader' || role === 'coordinator') {
+      const { error } = await supabase.rpc('nexus_set_team_scope', {
+        p_target_user: memberId,
+        p_coordinator: role === 'coordinator' ? scopeId : null,
+        p_leader: role === 'leader' ? scopeId : null,
+      });
+      return { error };
+    }
+    return { error: { message: 'O perfil selecionado não permite vínculo de equipe.' } };
+  },
+};
