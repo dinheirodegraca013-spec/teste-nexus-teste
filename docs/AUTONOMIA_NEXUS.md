@@ -1,3 +1,23 @@
+# ESTADO OPERACIONAL ATUAL — LEITURA OBRIGATÓRIA (16/10/2026)
+
+> **PERÍMETRO OBRIGATÓRIO:** o ÚNICO Supabase autorizado para o NEXUS em desenvolvimento é `qidstqsbxwkbkwowhpab`. Os projetos `wrovgjhpyacmmetejiqk`, `qesiqjcpphkwryjvpzmq` e o Gestio `fbvcapoydkodpifkwjwg` são históricos/outros e NÃO PODEM SER ALTERADOS. As referências abaixo a projetos antigos são histórico, não instruções de execução.
+>
+> **Branch:** `fix/persist-rbac-permissions`; PR #1 permanece DRAFT, **sem merge e sem deploy de produção**.
+> **Documento técnico de referência:** `docs/NEXUS_FULL_AUDIT_20261016.md`.
+>
+> **BANCO — alterações já aplicadas e verificadas APENAS em `qidstqsbxwkbkwowhpab`:**
+> 1. `20261016201212_nexus_revoke_dangerous_client_table_privileges`: bloqueia `TRUNCATE`, `TRIGGER` e `REFERENCES` do cliente nas tabelas `organizations`, `profiles`, `user_module_permissions`; as verificações `has_table_privilege` passaram.
+> 2. `20261016201613_nexus_allow_safe_self_profile_name_updates`: `UPDATE(name)` apenas ao próprio perfil com RLS; `role`, `organization_id`, `email` e `is_blocked` negados em grants.
+> 3. `20261016201725_nexus_private_self_profile_phone_field`: coluna privada `phone` e `UPDATE(name,phone)` somente ao próprio perfil; grants validados.
+>
+> **FRONTEND — correções na branch:** `OrganizationsPage` não anuncia criação/troca de organização sem endpoint real; `profilesService.update` proíbe campos privilegiados, valida nome/telefone e não retorna sucesso para UPDATE afetando zero linhas; `ProfilePage` suporta limpar telefone, propaga mensagem de erro e valida senha mínima de oito caracteres. Testes `tests/profile-updates.test.mjs` adicionados; exigir CI deste commit antes de marcar aprovado.
+>
+> **SITUAÇÃO RESTANTE — NÃO HOMOLOGADO:** RLS hierárquico ainda concede SELECT a toda organização em vários módulos e bloqueia escrita de lideranças/coordenadores; frontend não contempla Controlador e Profissional de Saúde; schema vivo tem migrações ainda não reproduzidas no GitHub; novo Supabase não possui buckets de fotos nem `invite-organization-member` implantada; testes E2E de dois tenants estão pendentes. Não ampliar concessões RLS sem matriz de acesso e testes negativos.
+>
+> **PRÓXIMO CICLO AUTÔNOMO RECOMENDADO:** ler auditoria, confirmar HEAD e CI; escolher um único bug verificável (preferir teste/diagnóstico de hierarquia e schemas antes de ampliar permissões), implementar com teste, atualizar esta documentação e manter o fluxo restrito à branch. Runner autônomo do GitHub não pode aplicar novas migrações; migrações de desenvolvimento já aplicadas acima foram feitas via ferramenta Supabase sob solicitação do usuário.
+
+---
+
 # NEXUS — Estado de desenvolvimento autônomo
 
 Última atualização: 2026-10-16
@@ -9,7 +29,7 @@
 - Repositório: `dinheirodegraca013-spec/teste-nexus-teste`
 - Branch de trabalho: `fix/persist-rbac-permissions`
 - PR principal: #1 — https://github.com/dinheirodegraca013-spec/teste-nexus-teste/pull/1
-- Supabase: projeto `wrovgjhpyacmmetejiqk`
+- Supabase **ATUAL**: `qidstqsbxwkbkwowhpab`; `wrovgjhpyacmmetejiqk` aparece somente no histórico e está fora de escopo.
 - Vercel: projeto `prj_d1Xv2bMB8u5Iaztw2KhhMjZxgVnd`
 
 ## Trabalho confirmado
