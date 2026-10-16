@@ -378,4 +378,4 @@ export const teamScopeService = {
     });
     return { error };
   },
-};;
+;
