@@ -5,7 +5,7 @@ import { build } from 'esbuild';
 // Unit tests use the real service implementation but no network / Supabase API.
 const bundle = await build({
   stdin: {
-    contents: "export { membersService, teamScopeService } from './src/services/coreServices';",
+    contents: "export { membersService, profilesService, teamScopeService } from './src/services/coreServices';",
     resolveDir: process.cwd(),
   },
   bundle: true, write: false, platform: 'node', format: 'esm',
@@ -37,7 +37,7 @@ const bundle = await build({
     }
   }]
 });
-const { membersService, teamScopeService } = await import(
+const { membersService, profilesService, teamScopeService } = await import(
   `data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`
 );
 const userId = '10000000-0000-4000-8000-000000000012';
@@ -98,4 +98,12 @@ test('invalid scope identifiers never reach Supabase', async () => {
   const result = await teamScopeService.revokeController('invalid', scopeId);
   assert.ok(result.error);
   assert.equal(state.calls.length, 0);
+});
+
+
+test('direct profile deletion must never masquerade as account revocation', async () => {
+  const state = setup();
+  const result = await profilesService.delete(userId);
+  assert.equal(result.error?.code, 'PROFILE_DELETE_FORBIDDEN');
+  assert.deepEqual(state.calls, [], 'Auth membership cannot be revoked by deleting profile rows');
 });
