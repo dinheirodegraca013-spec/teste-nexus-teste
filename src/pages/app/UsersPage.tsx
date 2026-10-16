@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Users, Plus, Shield, Mail, Edit2, Trash2, CheckCircle2, Lock, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
-import { OrganizationMember, UserRole } from '../../types';
-import { membersService, permissionsService } from '../../services';
+import { OrganizationMember, UserRole, Coordinator, Leader } from '../../types';
+import { membersService, permissionsService, teamScopeService, coordinatorsService, leadersService } from '../../services';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui/Table';
@@ -50,6 +50,10 @@ export const UsersPage: React.FC = () => {
 
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isPermModalOpen, setIsPermModalOpen] = useState(false);
+  const [isScopeModalOpen, setIsScopeModalOpen] = useState(false);
+  const [scopeId, setScopeId] = useState('');
+  const [teamCoordinators, setTeamCoordinators] = useState<Coordinator[]>([]);
+  const [teamLeaders, setTeamLeaders] = useState<Leader[]>([]);
   const [selectedMember, setSelectedMember] = useState<OrganizationMember | null>(null);
 
   const [inviteEmail, setInviteEmail] = useState('');
@@ -183,6 +187,57 @@ export const UsersPage: React.FC = () => {
     }
   };
 
+  const handleOpenScope = async (member: OrganizationMember) => {
+    if (!['leader', 'coordinator', 'controller'].includes(member.role)) {
+      toastError('Este perfil não permite vínculo hierárquico.');
+      return;
+    }
+    setSelectedMember(member);
+    setScopeId('');
+    setIsSubmitting(true);
+    try {
+      const [coords, leaders] = await Promise.all([
+        coordinatorsService.getAll(orgId),
+        leadersService.getAll(orgId),
+      ]);
+      if (coords.error) throw coords.error;
+      if (leaders.error) throw leaders.error;
+      setTeamCoordinators(coords.data || []);
+      setTeamLeaders(leaders.data || []);
+      setIsScopeModalOpen(true);
+    } catch (err: any) {
+      toastError('Falha ao carregar equipes: ' + (err?.message || 'Erro inesperado.'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSaveScope = async () => {
+    if (!selectedMember || !scopeId) {
+      toastError('Selecione uma liderança ou coordenação para vincular.');
+      return;
+    }
+    const role = selectedMember.role;
+    if (role !== 'leader' && role !== 'coordinator' && role !== 'controller') {
+      toastError('Cargo não autorizado para vínculo hierárquico.');
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const { error } = await teamScopeService.assign(selectedMember.id, role, scopeId);
+      if (error) {
+        toastError('Não foi possível vincular equipe: ' + error.message);
+        return;
+      }
+      setIsScopeModalOpen(false);
+      success('Vínculo de equipe salvo e registrado na auditoria.');
+    } catch (err: any) {
+      toastError('Falha ao vincular equipe: ' + (err?.message || 'Erro inesperado.'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const getRoleBadge = (role: UserRole) => {
     switch (role) {
       case 'admin': return <Badge variant="success" size="sm">Administrador</Badge>;
@@ -269,6 +324,15 @@ export const UsersPage: React.FC = () => {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1.5">
+                    {['leader', 'coordinator', 'controller'].includes(member.role) && (
+                      <button
+                        onClick={() => handleOpenScope(member)}
+                        className="p-1.5 rounded text-slate-400 hover:text-indigo-700 hover:bg-indigo-50 transition-colors cursor-pointer"
+                        title="Vincular liderança ou coordenação"
+                      >
+                        <Users className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                     <button
                       onClick={() => handleOpenPerms(member)}
                       className="p-1.5 rounded text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
@@ -322,6 +386,8 @@ export const UsersPage: React.FC = () => {
             options={[
               { value: 'operator', label: 'Operador de Campo (Apenas Registro)' },
               { value: 'coordinator', label: 'Coordenador Territorial (Seu Território)' },
+              { value: 'controller', label: 'Controlador (Coordenações atribuídas)' },
+              { value: 'leader', label: 'Liderança (Sua Equipe)' },
               { value: 'manager', label: 'Gerente Operacional (Visualiza e Edita)' },
               { value: 'viewer', label: 'Visualizador / Auditor (Somente Leitura)' },
             ]}
@@ -336,6 +402,41 @@ export const UsersPage: React.FC = () => {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Admin-only backend validates actor, role and tenant again. */}
+      <Modal
+        isOpen={isScopeModalOpen}
+        onClose={() => setIsScopeModalOpen(false)}
+        title={`Vincular equipe: ${selectedMember?.full_name || selectedMember?.email || 'Membro'}`}
+        description="Vincule um membro a seu território autorizado. Ação auditada no Supabase."
+      >
+        <div className="space-y-4 text-left">
+          <Select
+            label={selectedMember?.role === 'leader' ? 'Liderança de destino' : 'Coordenação de destino'}
+            value={scopeId}
+            onChange={(e) => setScopeId(e.target.value)}
+            options={[
+              { value: '', label: 'Selecione...' },
+              ...(selectedMember?.role === 'leader' ? teamLeaders : teamCoordinators)
+                .map((item) => ({ value: item.id, label: item.name })),
+            ]}
+          />
+          <p className="text-xs text-slate-600">
+            {selectedMember?.role === 'controller'
+              ? 'O controlador pode acumular coordenações. Cada atribuição é validada no servidor.'
+              : 'A nova atribuição substitui o vínculo anterior do membro.'}
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={() => setIsScopeModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type="button" variant="primary" size="sm"
+              onClick={handleSaveScope} isLoading={isSubmitting} disabled={!scopeId}>
+              Salvar vínculo
+            </Button>
+          </div>
+        </div>
       </Modal>
 
       {/* Permissions Modal */}
