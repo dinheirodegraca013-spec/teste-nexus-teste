@@ -76,3 +76,26 @@ test('controller only receives explicitly configured module actions', () => {
   assert.equal(checkUserPermission(profile, permissions, 'leaders', 'edit'), false);
   assert.equal(checkUserPermission(profile, permissions, 'crm', 'view'), false);
 });
+
+for (const role of ['leader', 'coordinator']) {
+  test(`${role} can read only modules covered by scoped DB RLS and cannot write`, () => {
+    const profile = { role, is_blocked: false };
+    const all = [{ module: 'crm', can_view: true, can_create: true, can_edit: true, can_delete: true }];
+    for (const action of ['create','edit','delete']) {
+      assert.equal(checkUserPermission(profile, all, 'crm', action), false);
+      assert.equal(checkUserPermission(profile, all, 'presence', action), false);
+    }
+    assert.equal(checkUserPermission(profile, all, 'crm', 'view'), true);
+    assert.equal(checkUserPermission(profile, all, 'presence', 'view'), true);
+    assert.equal(checkUserPermission(profile, all, 'stickers', 'view'), false);
+    assert.equal(checkUserPermission(profile, all, 'field', 'view'), false);
+    assert.equal(checkUserPermission(profile, all, 'goals', 'view'), false);
+  });
+}
+
+test('leader cannot list another coordinator and defaults to CRM', () => {
+  const leader = { role: 'leader', is_blocked: false };
+  assert.equal(checkUserPermission(leader, [], 'coordinators', 'view'), false);
+  assert.equal(checkUserPermission(leader, [], 'leaders', 'view'), false);
+  assert.equal(getDefaultRouteForUser(leader, []), '/app/crm');
+});
