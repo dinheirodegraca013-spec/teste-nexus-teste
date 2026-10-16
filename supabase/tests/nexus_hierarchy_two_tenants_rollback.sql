@@ -86,5 +86,46 @@ BEGIN
   RAISE NOTICE 'PASS: isolated leaders, coordinator, controller, CRM and presence across two tenants';
 END
 $test$;
+-- RPC adversarial checks under actual authenticated database role.
+DO $rpc_test$
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000011',true);
+  PERFORM public.nexus_set_team_scope(
+    '10000000-0000-4000-8000-000000000012',NULL,
+    '10000000-0000-4000-8000-000000000031');
+  PERFORM public.nexus_set_controller_scope(
+    '10000000-0000-4000-8000-000000000014',
+    '10000000-0000-4000-8000-000000000021',true);
+  BEGIN
+    PERFORM public.nexus_set_team_scope(
+      '10000000-0000-4000-8000-000000000016',NULL,
+      '10000000-0000-4000-8000-000000000032');
+    RAISE EXCEPTION 'Cross-tenant team assignment incorrectly permitted';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+  BEGIN
+    PERFORM public.nexus_set_controller_scope(
+      '10000000-0000-4000-8000-000000000014',
+      '10000000-0000-4000-8000-000000000022',true);
+    RAISE EXCEPTION 'Cross-tenant controller scope incorrectly permitted';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+  BEGIN
+    PERFORM public.nexus_set_team_scope(
+      '10000000-0000-4000-8000-000000000014',NULL,
+      '10000000-0000-4000-8000-000000000031');
+    RAISE EXCEPTION 'Controller incorrectly assigned as leader';
+  EXCEPTION WHEN invalid_parameter_value THEN NULL;
+  END;
+  PERFORM set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000014',true);
+  BEGIN
+    PERFORM public.nexus_set_team_scope(
+      '10000000-0000-4000-8000-000000000012',NULL,
+      '10000000-0000-4000-8000-000000000031');
+    RAISE EXCEPTION 'Non-admin wrongly assigned team membership';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+  RAISE NOTICE 'PASS: admin RPC allows own tenant, denies cross-tenant and non-admin calls';
+END $rpc_test$;
 RESET ROLE;
 ROLLBACK;
