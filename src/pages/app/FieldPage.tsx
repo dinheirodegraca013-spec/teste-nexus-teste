@@ -167,15 +167,9 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
         return;
       }
 
-      if (wantsSticker) {
-        await stickersService.createCarSticker({
-          organization_id: orgId,
-          owner_name: contactName.trim(),
-          owner_phone: contactPhone.trim(),
-          territory: contactNeighborhood.trim() || assignedLeader?.territory || 'Campo',
-          status: 'applied',
-        });
-      }
+      // "Autorizou adesivo" is a CRM interest/authorization tag, not evidence
+      // of a car sticker actually applied. Only the dedicated vehicle form
+      // may create an applied sticker record with its own confirmation.
 
       // Update leader progress if assigned
       if (assignedLeader) {
@@ -524,7 +518,7 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
                   onChange={(e) => setWantsSticker(e.target.checked)}
                   className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
                 />
-                <span className="font-semibold text-emerald-700">Autorizou Adesivo / Material</span>
+                <span className="font-semibold text-emerald-700">Autorizou Adesivo / Material (não registra aplicação)</span>
               </label>
             </div>
 
