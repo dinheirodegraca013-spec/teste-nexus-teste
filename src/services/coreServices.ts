@@ -69,24 +69,68 @@ export const profilesService = {
   },
 
   async update(id: string, updates: Partial<Profile> & { name?: string }) {
-    const dbUpdates: Record<string, any> = {};
-    if (updates.name !== undefined) {
-      dbUpdates.name = updates.name;
-    } else if (updates.full_name !== undefined) {
-      dbUpdates.name = updates.full_name;
+    // Browser edits only name/phone. The DB independently enforces column
+    // UPDATE grants and an RLS self/tenant policy (defense in depth).
+    const rejectedFields = Object.keys(updates).filter(
+      (field) => !['name', 'full_name', 'phone'].includes(field)
+    );
+    if (rejectedFields.length > 0) {
+      return {
+        data: null,
+        error: { name: 'PermissionError', code: 'PROTECTED_PROFILE_FIELDS',
+          message: 'Alterações de cargo, e-mail, organização ou bloqueio exigem autorização administrativa.' },
+      };
     }
-
-    if (updates.role !== undefined) dbUpdates.role = updates.role;
-    // A user's organization is immutable in client updates. Tenant transfers
-    // require a separate, explicitly authorized server-side workflow.
-    if (updates.email !== undefined) dbUpdates.email = updates.email;
-
+    if (!isValidUUID(id)) {
+      return {
+        data: null,
+        error: { name: 'ValidationError', code: 'INVALID_USER_UUID',
+          message: 'Identificador do usuário inválido.' },
+      };
+    }
+    const dbUpdates: { name?: string; phone?: string | null } = {};
+    const requestedName = updates.name ?? updates.full_name;
+    if (requestedName !== undefined) {
+      if (typeof requestedName !== 'string' || !requestedName.trim() || requestedName.trim().length > 120) {
+        return {
+          data: null,
+          error: { name: 'ValidationError', code: 'INVALID_PROFILE_NAME',
+            message: 'Informe um nome entre 1 e 120 caracteres.' },
+        };
+      }
+      dbUpdates.name = requestedName.trim();
+    }
+    if (updates.phone !== undefined) {
+      if (typeof updates.phone !== 'string' || updates.phone.trim().length > 32) {
+        return {
+          data: null,
+          error: { name: 'ValidationError', code: 'INVALID_PROFILE_PHONE',
+            message: 'O telefone deve ter no máximo 32 caracteres.' },
+        };
+      }
+      dbUpdates.phone = updates.phone.trim() || null;
+    }
+    if (Object.keys(dbUpdates).length === 0) {
+      return {
+        data: null,
+        error: { name: 'ValidationError', code: 'NO_PROFILE_CHANGES',
+          message: 'Nenhum campo editável foi informado.' },
+      };
+    }
     const { data, error } = await supabase
       .from('profiles')
       .update(dbUpdates)
       .eq('id', id)
       .select()
       .maybeSingle();
+    // maybeSingle can return no row and no error when RLS denies UPDATE.
+    if (!error && !data) {
+      return {
+        data: null,
+        error: { name: 'PermissionError', code: 'PROFILE_UPDATE_NOT_APPLIED',
+          message: 'Atualização não realizada: perfil não autorizado ou indisponível.' },
+      };
+    }
     return { data: normalizeProfile(data), error };
   },
 
