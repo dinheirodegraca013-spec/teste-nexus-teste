@@ -334,6 +334,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     let isMounted = true;
+    let hasNewAuthEvent = false;
     const watchdog = setTimeout(() => {
       if (isMounted) {
         setIsLoading((currentLoading) => currentLoading ? false : false);
@@ -349,7 +350,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       try {
         const { data, error } = await withTimeout(supabase.auth.getSession(), 7000, 'Tempo limite excedido ao recuperar sessão do Supabase');
-        if (error && isMounted) setInitializationError(error.message);
+        // A newer auth event is authoritative over this initial snapshot.
+        if (!isMounted || hasNewAuthEvent) return;
+        if (error) setInitializationError(error.message);
         if (isMounted) {
           const currentSession = data?.session || null;
           setSession(currentSession);
@@ -357,16 +360,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (currentSession?.user) await loadUserDataSafe(currentSession.user);
         }
       } catch (err: any) {
-        if (isMounted) setInitializationError(err?.message || 'Falha ao inicializar a autenticação.');
+        if (isMounted && !hasNewAuthEvent) setInitializationError(err?.message || 'Falha ao inicializar a autenticação.');
       } finally {
         clearTimeout(watchdog);
-        if (isMounted) setIsLoading(false);
+        if (isMounted && !hasNewAuthEvent) setIsLoading(false);
       }
     }
 
     initAuth();
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (!isMounted) return;
+      if (event !== 'INITIAL_SESSION') {
+        hasNewAuthEvent = true;
+        clearTimeout(watchdog);
+      }
       if (isSigningInRef.current) {
         if (newSession?.user) {
           setUser(newSession.user);

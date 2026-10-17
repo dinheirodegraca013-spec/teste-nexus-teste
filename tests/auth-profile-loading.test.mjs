@@ -5,17 +5,17 @@ import { build } from 'esbuild';
 // Exercise AuthProvider's actual loading callback with isolated hooks and services.
 // No Supabase client, browser session, credentials or network are used.
 const result = await build({
-  stdin: { contents: "export { AuthProvider } from './src/contexts/AuthContext'; export { callbacks, states } from 'react';", resolveDir: process.cwd() },
+  stdin: { contents: "export { AuthProvider } from './src/contexts/AuthContext'; export { callbacks, states, effects } from 'react';", resolveDir: process.cwd() },
   bundle: true, write: false,
   platform: 'node', format: 'esm', jsx: 'transform',
   plugins: [{ name: 'isolated-auth', setup(build) {
     build.onResolve({ filter: /^(react(?:\/jsx-runtime)?|\.\.\/lib\/supabase|\.\.\/services)$/ }, args => ({ path: args.path, namespace: 'mock' }));
     build.onLoad({ filter: /.*/, namespace: 'mock' }, args => ({ contents:
       args.path === 'react/jsx-runtime' ? 'export const jsx = (_type, props) => { if (props.value) globalThis.__authContext = props.value; return null; }, jsxs = jsx;' : args.path === 'react' ? `
-        export const callbacks = [], states = [];
+        export const callbacks = [], states = [], effects = [];
         export const createContext = () => ({ Provider: {} });
         export const useContext = () => null;
-        export const useEffect = () => {};
+        export const useEffect = fn => { effects.push(fn); };
         export const useCallback = fn => { callbacks.push(fn); return fn; };
         export const useRef = value => ({ current: value });
         export const useState = value => {
@@ -24,7 +24,7 @@ const result = await build({
         };
         export default { useRef, createElement: (_type, props) => { if (props.value) globalThis.__authContext = props.value; return null; } };
       ` : args.path.endsWith('/supabase') ? `
-        export const supabase = { auth: { signOut: async () => ({ error: null }) }, rpc: (...args) => globalThis.__authProfileTest.rpc(...args) };
+        export const supabase = { auth: { signOut: async () => ({ error: null }), getSession: () => globalThis.__authProfileTest.session(), onAuthStateChange: callback => { globalThis.__authProfileTest.onChange = callback; return { data: { subscription: { unsubscribe() {} } } }; } }, rpc: (...args) => globalThis.__authProfileTest.rpc(...args) };
         export const isSupabaseConfigured = true, supabaseUrl = '';
       ` : `
         export const profilesService = { getById: (...args) => globalThis.__authProfileTest.lookup(...args) };
@@ -38,7 +38,7 @@ const result = await build({
   } }],
 });
 const bundled = result.outputFiles[0].text;
-const { AuthProvider, callbacks, states } = await import(`data:text/javascript;base64,${Buffer.from(bundled).toString('base64')}`);
+const { AuthProvider, callbacks, states, effects } = await import(`data:text/javascript;base64,${Buffer.from(bundled).toString('base64')}`);
 
 for (const kind of ['returned error', 'rejected request', 'timeout']) {
   test(`profile ${kind} clears cached access without provisioning`, async () => {
@@ -151,3 +151,66 @@ for (const stage of ['profile', 'organization']) {
     delete globalThis.__authContext;
   });
 }
+
+for (const event of ['SIGNED_OUT', 'SIGNED_IN']) {
+  for (const outcome of ['session', 'error', 'rejection']) {
+    test(`initial getSession late ${outcome} cannot override ${event}`, async () => {
+      let releaseSession, rejectSession;
+      const pendingSession = new Promise((resolve, reject) => { releaseSession = resolve; rejectSession = reject; });
+      const lookups = [];
+      globalThis.__authProfileTest = {
+        session: () => pendingSession,
+        lookup: async id => {
+          lookups.push(id);
+          return { data: { id, organization_id: 'tenant-b', role: 'viewer' }, error: null };
+        },
+        rpc: () => { throw new Error('Unexpected provisioning'); },
+      };
+      callbacks.length = states.length = effects.length = 0;
+      AuthProvider({ children: null });
+      const cleanup = effects[0]();
+      try {
+        const nextSession = event === 'SIGNED_OUT' ? null : { user: { id: 'user-b' } };
+        await globalThis.__authProfileTest.onChange(event, nextSession);
+        if (outcome === 'rejection') rejectSession(new Error('Stale session rejection'));
+        else releaseSession(outcome === 'error'
+          ? { data: null, error: new Error('Stale session failure') }
+          : { data: { session: { user: { id: 'user-a' } } }, error: null });
+        await new Promise(resolve => setImmediate(resolve));
+        assert.deepEqual(lookups, event === 'SIGNED_OUT' ? [] : ['user-b']);
+        assert.deepEqual(states[0], nextSession?.user || null);
+        assert.deepEqual(states[1], nextSession);
+        assert.equal(states[2]?.id || null, nextSession?.user.id || null);
+        assert.equal(states[3]?.id || null, nextSession ? 'tenant-b' : null);
+        assert.equal(states[8], null);
+      } finally {
+        cleanup();
+        delete globalThis.__authProfileTest;
+        delete globalThis.__authContext;
+      }
+    });
+  }
+}
+
+test('initial session without a newer event still loads access', async () => {
+  globalThis.__authProfileTest = {
+    session: async () => ({ data: { session: { user: { id: 'user-a' } } }, error: null }),
+    lookup: async id => ({ data: { id, organization_id: 'tenant-a', role: 'viewer' }, error: null }),
+  };
+  callbacks.length = states.length = effects.length = 0;
+  AuthProvider({ children: null });
+  const cleanup = effects[0]();
+  try {
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(states[0].id, 'user-a');
+    assert.equal(states[2].id, 'user-a');
+    assert.equal(states[3].id, 'tenant-a');
+    assert.equal(states[5][0].user_id, 'user-a');
+    assert.equal(states[6], false);
+    assert.equal(states[8], null);
+  } finally {
+    cleanup();
+    delete globalThis.__authProfileTest;
+    delete globalThis.__authContext;
+  }
+});
