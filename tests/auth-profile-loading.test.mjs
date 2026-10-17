@@ -214,3 +214,62 @@ test('initial session without a newer event still loads access', async () => {
     delete globalThis.__authContext;
   }
 });
+
+for (const event of ['SIGNED_OUT', 'SIGNED_IN']) {
+  for (const outcome of ['session', 'error', 'rejection']) {
+    test(`refresh getSession late ${outcome} cannot override ${event}`, async () => {
+      let release, reject;
+      const pending = new Promise((resolve, fail) => { release = resolve; reject = fail; });
+      let sessionCalls = 0;
+      const lookups = [];
+      globalThis.__authProfileTest = {
+        session: () => ++sessionCalls === 1
+          ? Promise.resolve({ data: { session: null }, error: null }) : pending,
+        lookup: async id => {
+          lookups.push(id);
+          return { data: { id, organization_id: 'tenant-b', role: 'viewer' }, error: null };
+        },
+      };
+      callbacks.length = states.length = effects.length = 0;
+      AuthProvider({ children: null });
+      const cleanup = effects[0]();
+      try {
+        await new Promise(resolve => setImmediate(resolve));
+        const refreshing = globalThis.__authContext.refreshUserData();
+        const nextSession = event === 'SIGNED_OUT' ? null : { user: { id: 'user-b' } };
+        await globalThis.__authProfileTest.onChange(event, nextSession);
+        if (outcome === 'rejection') reject(new Error('Stale refresh rejection'));
+        else release(outcome === 'error'
+          ? { data: null, error: new Error('Stale refresh failure') }
+          : { data: { session: { user: { id: 'user-a' } } }, error: null });
+        await refreshing;
+        assert.deepEqual(lookups, event === 'SIGNED_OUT' ? [] : ['user-b']);
+        assert.deepEqual(states[0], nextSession?.user || null);
+        assert.deepEqual(states[1], nextSession);
+        assert.equal(states[2]?.id || null, nextSession?.user.id || null);
+        assert.equal(states[3]?.id || null, nextSession ? 'tenant-b' : null);
+        assert.equal(states[8], null);
+      } finally {
+        cleanup();
+        delete globalThis.__authProfileTest;
+        delete globalThis.__authContext;
+      }
+    });
+  }
+}
+
+test('refresh without a newer event loads the recovered session', async () => {
+  globalThis.__authProfileTest = {
+    session: async () => ({ data: { session: { user: { id: 'user-a' } } }, error: null }),
+    lookup: async id => ({ data: { id, organization_id: 'tenant-a', role: 'viewer' }, error: null }),
+  };
+  callbacks.length = states.length = effects.length = 0;
+  AuthProvider({ children: null });
+  await globalThis.__authContext.refreshUserData();
+  assert.equal(states[0].id, 'user-a');
+  assert.equal(states[2].id, 'user-a');
+  assert.equal(states[5][0].user_id, 'user-a');
+  assert.equal(states[6], false);
+  delete globalThis.__authProfileTest;
+  delete globalThis.__authContext;
+});

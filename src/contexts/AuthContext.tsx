@@ -416,24 +416,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [loadUserDataSafe]);
 
   const refreshUserData = async () => {
+    let generation = loadGenerationRef.current;
+    const isCurrent = () => generation === loadGenerationRef.current;
     setIsLoading(true);
     setInitializationError(null);
     setProfileError(null);
     try {
       if (user) {
-        await loadUserDataSafe(user);
+        const loading = loadUserDataSafe(user);
+        generation = loadGenerationRef.current;
+        await loading;
       } else {
         const { data } = await withTimeout(supabase.auth.getSession(), 7000, 'Tempo limite ao recuperar sessão');
+        if (!isCurrent()) return;
         if (data?.session?.user) {
           setUser(data.session.user);
           setSession(data.session);
-          await loadUserDataSafe(data.session.user);
+          const loading = loadUserDataSafe(data.session.user);
+          generation = loadGenerationRef.current;
+          await loading;
         }
       }
     } catch (err: any) {
-      setInitializationError(err?.message || 'Falha ao recarregar dados do usuário.');
+      if (isCurrent()) setInitializationError(err?.message || 'Falha ao recarregar dados do usuário.');
     } finally {
-      setIsLoading(false);
+      if (isCurrent()) setIsLoading(false);
     }
   };
 
