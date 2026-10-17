@@ -128,7 +128,17 @@ export const leadersService = {
       .insert([leader])
       .select()
       .maybeSingle();
-    return { data: data as Leader | null, error };
+    if (error) return { data: null, error };
+    if (!data) {
+      return {
+        data: null,
+        error: {
+          code: 'LEADER_CREATE_NOT_CONFIRMED',
+          message: 'Não foi possível confirmar o cadastro da liderança. Verifique a lista antes de tentar novamente.',
+        },
+      };
+    }
+    return { data: data as Leader, error: null };
   },
 
   async update(id: string, updates: Partial<Leader>) {
