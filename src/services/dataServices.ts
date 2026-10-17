@@ -68,7 +68,17 @@ export const coordinatorsService = {
       .insert([coordinator])
       .select()
       .maybeSingle();
-    return { data: data as Coordinator | null, error };
+    if (error) return { data: null, error };
+    if (!data) {
+      return {
+        data: null,
+        error: {
+          code: 'COORDINATOR_CREATE_NOT_CONFIRMED',
+          message: 'Não foi possível confirmar o cadastro do coordenador. Verifique a lista antes de tentar novamente.',
+        },
+      };
+    }
+    return { data: data as Coordinator, error: null };
   },
 
   async update(id: string, updates: Partial<Coordinator>) {
