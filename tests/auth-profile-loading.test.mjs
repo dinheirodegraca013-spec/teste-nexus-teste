@@ -273,3 +273,36 @@ test('refresh without a newer event loads the recovered session', async () => {
   delete globalThis.__authProfileTest;
   delete globalThis.__authContext;
 });
+
+for (const hasSession of [false, true]) {
+  test(`refresh reports returned session error (session present: ${hasSession})`, async () => {
+    const failure = new Error('Synthetic session recovery failure');
+    let lookups = 0;
+    globalThis.__authProfileTest = {
+      session: async () => ({
+        data: { session: hasSession ? { user: { id: 'user-a' } } : null },
+        error: failure,
+      }),
+      lookup: async () => {
+        lookups++;
+        return { data: { id: 'user-a', organization_id: 'tenant-a', role: 'viewer' }, error: null };
+      },
+    };
+    callbacks.length = states.length = effects.length = 0;
+    AuthProvider({ children: null });
+    try {
+      await globalThis.__authContext.refreshUserData();
+      assert.equal(states[8], failure.message);
+      assert.equal(states[6], false);
+      assert.equal(lookups, 0);
+      assert.equal(states[0], null);
+      assert.equal(states[1], null);
+      assert.equal(states[2], null);
+      assert.equal(states[3], null);
+      assert.deepEqual(states[5], []);
+    } finally {
+      delete globalThis.__authProfileTest;
+      delete globalThis.__authContext;
+    }
+  });
+}

@@ -427,8 +427,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         generation = loadGenerationRef.current;
         await loading;
       } else {
-        const { data } = await withTimeout(supabase.auth.getSession(), 7000, 'Tempo limite ao recuperar sessão');
+        const { data, error } = await withTimeout(supabase.auth.getSession(), 7000, 'Tempo limite ao recuperar sessão');
         if (!isCurrent()) return;
+        if (error) throw error;
         if (data?.session?.user) {
           setUser(data.session.user);
           setSession(data.session);
