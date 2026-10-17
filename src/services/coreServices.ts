@@ -32,6 +32,16 @@ export const organizationsService = {
       .eq('id', id)
       .select()
       .maybeSingle();
+    if (!error && !data) {
+      return {
+        data: null,
+        error: {
+          name: 'PermissionError',
+          code: 'ORGANIZATION_UPDATE_NOT_APPLIED',
+          message: 'Nenhuma organização foi atualizada. Verifique o registro e suas permissões.',
+        },
+      };
+    }
     return { data: data as Organization | null, error };
   }
 };
