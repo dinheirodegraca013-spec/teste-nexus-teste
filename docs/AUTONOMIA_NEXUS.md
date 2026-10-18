@@ -851,3 +851,10 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **BLOQUEADO EXTERNO:** a execução local parou antes de qualquer rede por ausência de autorização explícita e das variáveis de duas contas de teste em organizações diferentes.
 - **SEGURANÇA:** nenhum segredo foi solicitado, impresso, criado ou persistido; não houve alteração no banco.
 - **Próxima ação:** executar o script somente quando o responsável fornecer ambiente/contas TEST controladas e autorização explícita para esse smoke test DEV.
+
+## Ciclo autônomo — 2026-10-18: auditoria estática dos serviços
+
+- **APROVADO:** consultas de listagem dos módulos operacionais recebem `organizationId` e filtram `organization_id` antes de renderização.
+- **APROVADO:** operações por ID permanecem centralizadas nos serviços e dependem das políticas RLS; não foi encontrada chamada client-side direta ao Supabase fora dessa camada.
+- **RESULTADO:** nenhuma falha nova comprovada e nenhuma alteração de código necessária nesta rodada.
+- **Próxima ação:** aguardar ambiente controlado para E2E autenticado; manter SQL/Auth advisories sob aprovação específica.
