@@ -82,3 +82,4 @@
 - 2026-10-18: corrigido defeito comprovado em `profilesService.create`: resposta `data:null,error:null` agora retorna `PROFILE_CREATE_NOT_CONFIRMED`. Teste de regressão criado; suíte 203/203, lint e build aprovados.
 - 2026-10-18: centralizada confirmação de criação nos cadastros operacionais; metas, eventos, reuniões, presenças, materiais, distribuições, adesivos, CRM e demandas agora rejeitam `data:null,error:null`. Suíte 204/204, lint e build aprovados.
 - 2026-10-18: corrigida confirmação de persistência do RBAC; `upsertPermissions()` agora rejeita respostas vazias ou incompletas e retorna códigos explícitos. Suíte 206/206, lint e build aprovados.
+- 2026-10-18: revisão direcionada dos serviços confirmou que todas as operações de criação retornam confirmação persistida; PR no commit `4e84e02` está com Vercel, typecheck/build, Edge Functions e GitGuardian aprovados. E2E autenticado e produção seguem pendentes por escopo.
