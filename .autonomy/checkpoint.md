@@ -77,3 +77,4 @@
 - 2026-10-18: diagnóstico do erro na captura confirmado no domínio principal `teste-nexus-teste.vercel.app`: o bundle de produção ainda aponta para o projeto Supabase antigo `wrovg...`; o Preview da branch usa `qwvbvqlzcyfkuszxrlgv`. Não alterei produção sem homologação E2E.
 - 2026-10-18: Preview mais recente (`f888dda`) respondeu HTTP 200 em `/cadastro`; a divergência permanece exclusiva do domínio principal/Production.
 - 2026-10-18: reconciliação read-only confirmou 13 migrations no DEV, com nomes correspondentes aos 13 arquivos locais; os timestamps remotos são gerados pelo executor e não indicam divergência estrutural.
+- 2026-10-18: consulta read-only da janela padrão de logs DEV não encontrou ocorrências de `error:`, `fatal:` ou `panic` em nenhuma fonte retornada.
