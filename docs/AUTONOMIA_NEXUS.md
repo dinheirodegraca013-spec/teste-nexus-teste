@@ -980,3 +980,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **APLICADO:** migration `nexus_foreign_key_indexes` no DEV novo, cobrindo FKs tenant-scoped e hierárquicas sem alterar dados ou políticas.
 - **VERIFICADO:** advisor deixou de apontar `unindexed_foreign_keys`; os avisos restantes são índices ainda não usados por falta de carga e duas combinações de policies permissivas já existentes.
+
+## Ciclo autônomo — 2026-10-18: isolamento do Dashboard
+
+- **CORRIGIDO:** `DashboardPage` agora descarta respostas de consultas paralelas iniciadas para uma organização anterior e limpa os dados ao perder a organização selecionada.
+- **VERIFICADO:** 217/217 testes, lint, build local e checks da PR (typecheck/build, Edge Functions, Vercel e GitGuardian) aprovados. Commit `a53fdcf` publicado na branch de desenvolvimento.
