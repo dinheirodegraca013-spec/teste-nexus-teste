@@ -121,6 +121,13 @@ test('Vite Supabase client uses the deployment variables documented for Producti
   assert.doesNotMatch(source, /import\.meta\.env\.(SUPABASE_URL|SUPABASE_ANON_KEY|NEXT_PUBLIC_SUPABASE_URL|NEXT_PUBLIC_SUPABASE_ANON_KEY)/);
 });
 
+test('Storage policy migration is pinned to the current DEV project', async () => {
+  const source = await readFile(new URL('../docs/proposed-migrations/FIX_PRIVATE_STORAGE_POLICY_REGEX_QWVB.sql', import.meta.url), 'utf8');
+  assert.match(source, /qwvbvqlzcyfkuszxrlgv/);
+  assert.doesNotMatch(source, /qidstqsbxwkbkwowhpab/);
+  assert.equal((source.match(/CREATE POLICY nexus_private_evidence_/g) || []).length, 3);
+});
+
 test('signUp fails closed when Supabase does not return a user', async () => {
   const source = await readFile(new URL('../src/contexts/AuthContext.tsx', import.meta.url), 'utf8');
   assert.match(source, /if \(!data\?\.user\)/);

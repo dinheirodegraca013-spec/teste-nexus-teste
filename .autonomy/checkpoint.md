@@ -203,3 +203,4 @@
 - 2026-10-18: Supabase DEV qwvbvqlzcyfkuszxrlgv confirmado ACTIVE_HEALTHY em PostgreSQL 17.11; verificação read-only.
 - 2026-10-18: Criada documentação operacional para configurar VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY em Production sem expor chaves; nenhum ambiente alterado.
 - 2026-10-18: Adicionada regressão para o contrato VITE_* do Supabase; testes 272/272, lint e build aprovados.
+- 2026-10-18: Adicionado guard para migration Storage (DEV atual e 3 policies); testes 273/273, lint e build aprovados. Migration não executada.

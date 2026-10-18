@@ -1414,3 +1414,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **MELHORADO:** adicionada regressão que impede trocar o cliente Supabase Vite para nomes de variáveis não suportados.
 - **TESTES:** `npm test` 272/272, `npm run lint` e `npm run build` aprovados.
 - **ESCOPO:** somente teste/contrato; nenhum ambiente remoto alterado.
+## Ciclo autônomo — 2026-10-18: guarda de migration Storage
+
+- **MELHORADO:** adicionada regressão que impede executar acidentalmente a migration de Storage no projeto antigo `qidstqsbxwkbkwowhpab`; exige o DEV atual `qwvbvqlzcyfkuszxrlgv` e exatamente três policies.
+- **TESTES:** `npm test` 273/273, `npm run lint` e `npm run build` aprovados.
+- **ESCOPO:** somente teste/contrato; migration não executada.
