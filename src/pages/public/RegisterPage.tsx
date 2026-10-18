@@ -141,7 +141,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
         if (!isSupabaseConfigured) {
           friendlyMessage = 'O backend Supabase não está configurado. As variáveis VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY precisam ser configuradas na Vercel e o projeto reconstruído.';
         } else {
-          friendlyMessage = 'Não foi possível conectar aos servidores do sistema. Verifique sua conexão com a internet ou se extensões do navegador (como bloqueadores de anúncios) estão impedindo a comunicação com o Supabase.';
+          friendlyMessage = 'Não foi possível conectar ao projeto Supabase configurado neste ambiente. Verifique VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY na Vercel, confirme que apontam para o projeto correto e faça um novo deploy; depois teste sem bloqueadores de anúncios.';
         }
       } else if (error.message?.includes('User already registered') || (error as any)?.code === 'user_already_exists') {
         friendlyMessage = 'Este e-mail já está cadastrado no sistema. Tente fazer login ou recuperar sua senha.';
