@@ -275,6 +275,8 @@ export const permissionsService = {
         can_delete: Boolean(permission.can_delete),
       }));
 
+    const expectedKeys = new Set(dbRows.map((row) => `${row.user_id}:${row.module_key}`));
+
     const { data, error } = await supabase
       .from('user_module_permissions')
       .upsert(dbRows, { onConflict: 'user_id,module_key' })
@@ -288,6 +290,30 @@ export const permissionsService = {
       can_edit: Boolean(row.can_write),
       can_delete: Boolean(row.can_delete),
     })) as UserModulePermission[];
+
+    if (error) return { data: mapped, error };
+    const persistedKeys = new Set(mapped.map((row) => `${row.user_id}:${row.module}`));
+    if (persistedKeys.size === 0 && expectedKeys.size > 0) {
+      return {
+        data: mapped,
+        error: {
+          name: 'PermissionError',
+          code: 'PERMISSIONS_UPDATE_NOT_CONFIRMED',
+          message: 'Nenhuma permissão foi confirmada pelo banco de dados.',
+        },
+      };
+    }
+    const complete = [...expectedKeys].every((key) => persistedKeys.has(key));
+    if (!complete) {
+      return {
+        data: mapped,
+        error: {
+          name: 'PermissionError',
+          code: 'PERMISSIONS_UPDATE_INCOMPLETE',
+          message: 'O banco não confirmou todas as permissões enviadas.',
+        },
+      };
+    }
 
     return { data: mapped, error };
   }
