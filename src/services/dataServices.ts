@@ -62,6 +62,13 @@ function confirmDeletedRow(
   return { error: null };
 }
 
+// A tenant is assigned by the authenticated context and database policy. Never
+// allow a client update to attempt reassignment through a partial payload.
+function withoutOrganizationId<T extends Record<string, any>>(updates: T): Omit<T, 'organization_id'> {
+  const { organization_id: _organizationId, ...safeUpdates } = updates;
+  return safeUpdates;
+}
+
 // Coordinators Service
 export const coordinatorsService = {
   async getAll(organizationId: string) {
@@ -95,7 +102,7 @@ export const coordinatorsService = {
   async update(id: string, updates: Partial<Coordinator>) {
     const { data, error } = await supabase
       .from('coordinators')
-      .update(updates)
+      .update(withoutOrganizationId(updates))
       .eq('id', id)
       .select()
       .maybeSingle();
@@ -154,7 +161,7 @@ export const leadersService = {
   async update(id: string, updates: Partial<Leader>) {
     const { data, error } = await supabase
       .from('leaders')
-      .update(updates)
+      .update(withoutOrganizationId(updates))
       .eq('id', id)
       .select()
       .maybeSingle();
@@ -315,7 +322,7 @@ export const goalsService = {
   async update(id: string, updates: Partial<Goal>) {
     const { data, error } = await supabase
       .from('goals')
-      .update(updates)
+      .update(withoutOrganizationId(updates))
       .eq('id', id)
       .select()
       .maybeSingle();
@@ -361,7 +368,7 @@ export const eventsService = {
   async update(id: string, updates: Partial<CampaignEvent>) {
     const { data, error } = await supabase
       .from('campaign_events')
-      .update(updates)
+      .update(withoutOrganizationId(updates))
       .eq('id', id)
       .select()
       .maybeSingle();
@@ -407,7 +414,7 @@ export const meetingsService = {
   async update(id: string, updates: Partial<Meeting>) {
     const { data, error } = await supabase
       .from('meetings')
-      .update(updates)
+      .update(withoutOrganizationId(updates))
       .eq('id', id)
       .select()
       .maybeSingle();
@@ -465,7 +472,7 @@ export const presenceService = {
     if (photoError) return { data: null, error: photoError };
     const { data, error } = await supabase
       .from('field_presences')
-      .update(updates)
+      .update(withoutOrganizationId(updates))
       .eq('id', id)
       .select()
       .maybeSingle();
@@ -528,7 +535,7 @@ export const materialsService = {
   async updateItem(id: string, updates: Partial<MaterialInventory>) {
     const { data, error } = await supabase
       .from('materials_inventory')
-      .update(updates)
+      .update(withoutOrganizationId(updates))
       .eq('id', id)
       .select()
       .maybeSingle();
@@ -592,7 +599,7 @@ export const stickersService = {
     if (photoError) return { data: null, error: photoError };
     const { data, error } = await supabase
       .from('car_stickers')
-      .update(updates)
+      .update(withoutOrganizationId(updates))
       .eq('id', id)
       .select()
       .maybeSingle();
@@ -639,7 +646,7 @@ export const stickersService = {
     if (photoError) return { data: null, error: photoError };
     const { data, error } = await supabase
       .from('house_stickers')
-      .update(updates)
+      .update(withoutOrganizationId(updates))
       .eq('id', id)
       .select()
       .maybeSingle();
@@ -685,7 +692,7 @@ export const intelligenceService = {
   async updateDemand(id: string, updates: Partial<PopularDemand>) {
     const { data, error } = await supabase
       .from('popular_demands')
-      .update(updates)
+      .update(withoutOrganizationId(updates))
       .eq('id', id)
       .select()
       .maybeSingle();

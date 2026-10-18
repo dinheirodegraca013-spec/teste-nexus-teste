@@ -1047,3 +1047,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CONFIRMADO:** o preview da branch `fix/persist-rbac-permissions` está publicado com `https://qwvbvqlzcyfkuszxrlgv.supabase.co`.
 - **BLOQUEIO OPERACIONAL:** o domínio público `teste-nexus-teste.vercel.app` continua apontando para deployments de `main` (commit `39f05a7`), cujo bundle ainda referencia o projeto Supabase histórico `wrovgjhpyacmmetejiqk`.
 - **AÇÃO PENDENTE:** publicar a branch corrigida no domínio público ou promover o commit aprovado; isso altera produção e permanece fora do escopo deste ciclo.
+
+## Ciclo autônomo — 2026-10-18: proteção contra reatribuição client-side
+
+- **CORRIGIDO:** os serviços operacionais agora removem `organization_id` de todos os payloads de atualização; a organização permanece definida pela sessão e pelas policies RLS.
+- **TESTADO:** contratos de atualização ampliados para 234 testes, incluindo tentativa de troca de tenant; lint e build aprovados.

@@ -56,17 +56,17 @@ const {
 
 const id='10000000-0000-4000-8000-000000000001';
 const operations=[
-  ['coordenação','coordinators',()=>coordinatorsService.update(id,{name:'Exemplo'})],
-  ['liderança','leaders',()=>leadersService.update(id,{name:'Exemplo'})],
-  ['CRM','crm_contacts',()=>crmService.update(id,{name:'Exemplo'})],
-  ['meta','goals',()=>goalsService.update(id,{name:'Exemplo'})],
-  ['evento','campaign_events',()=>eventsService.update(id,{name:'Exemplo'})],
-  ['reunião','meetings',()=>meetingsService.update(id,{name:'Exemplo'})],
-  ['presença','field_presences',()=>presenceService.update(id,{name:'Exemplo'})],
-  ['materiais','materials_inventory',()=>materialsService.updateItem(id,{name:'Exemplo'})],
-  ['adesivagem de carro','car_stickers',()=>stickersService.updateCarSticker(id,{owner_name:'Exemplo'})],
-  ['adesivagem de casa','house_stickers',()=>stickersService.updateHouseSticker(id,{resident_name:'Exemplo'})],
-  ['demanda','popular_demands',()=>intelligenceService.updateDemand(id,{name:'Exemplo'})],
+  ['coordenação','coordinators',(updates={name:'Exemplo'})=>coordinatorsService.update(id,updates)],
+  ['liderança','leaders',(updates={name:'Exemplo'})=>leadersService.update(id,updates)],
+  ['CRM','crm_contacts',(updates={name:'Exemplo'})=>crmService.update(id,updates)],
+  ['meta','goals',(updates={name:'Exemplo'})=>goalsService.update(id,updates)],
+  ['evento','campaign_events',(updates={name:'Exemplo'})=>eventsService.update(id,updates)],
+  ['reunião','meetings',(updates={name:'Exemplo'})=>meetingsService.update(id,updates)],
+  ['presença','field_presences',(updates={name:'Exemplo'})=>presenceService.update(id,updates)],
+  ['materiais','materials_inventory',(updates={name:'Exemplo'})=>materialsService.updateItem(id,updates)],
+  ['adesivagem de carro','car_stickers',(updates={owner_name:'Exemplo'})=>stickersService.updateCarSticker(id,updates)],
+  ['adesivagem de casa','house_stickers',(updates={resident_name:'Exemplo'})=>stickersService.updateHouseSticker(id,updates)],
+  ['demanda','popular_demands',(updates={name:'Exemplo'})=>intelligenceService.updateDemand(id,updates)],
 ];
 function setup(outcome) {
   globalThis.__nexusUpdates={outcome,calls:[]};
@@ -94,5 +94,11 @@ for(const [label,table,operation] of operations) {
     setup({data:null,error:e});
     const result=await operation();
     assert.equal(result.error,e);
+  });
+  test(`${label}: não permite troca client-side de organização`,async()=>{
+    const state=setup({data:{id,name:'Exemplo'},error:null});
+    await operation({name:'Exemplo',organization_id:'20000000-0000-4000-8000-000000000002'});
+    const patch=state.calls.find(x=>Array.isArray(x)&&x[0]==='update')?.[1];
+    assert.equal(Object.prototype.hasOwnProperty.call(patch,'organization_id'),false);
   });
 }
