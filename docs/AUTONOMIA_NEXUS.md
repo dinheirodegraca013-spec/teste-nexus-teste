@@ -1005,3 +1005,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **CORRIGIDO:** o cadastro autenticado de um convite válido não executa mais a RPC de criação de tenant; convites inválidos são rejeitados antes da autenticação.
 - **VERIFICADO:** 221/221 testes, lint e build aprovados localmente. Nenhum dado, schema ou ambiente de produção foi alterado.
+
+## Ciclo autônomo — 2026-10-18: validação completa de convites
+
+- **MELHORADO:** convites com liderança ou coordenação inválida agora falham antes da criação da conta, evitando provisionamento parcial.
+- **VERIFICADO:** 221/221 testes, lint e build aprovados localmente.

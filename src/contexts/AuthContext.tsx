@@ -532,6 +532,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (organizationId && !isValidUUID(organizationId)) {
       return { error: new Error('O convite contém uma organização inválida. Solicite um novo convite ao administrador.') };
     }
+    if (leaderId && !isValidUUID(leaderId)) {
+      return { error: new Error('O convite contém uma liderança inválida. Solicite um novo convite ao administrador.') };
+    }
+    if (coordinatorId && !isValidUUID(coordinatorId)) {
+      return { error: new Error('O convite contém uma coordenação inválida. Solicite um novo convite ao administrador.') };
+    }
 
     try {
       const sanitizedOrgId = organizationId || null;

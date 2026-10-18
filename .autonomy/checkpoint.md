@@ -97,3 +97,4 @@
 - 2026-10-18: protegida a carga paralela do `FieldPage` contra respostas obsoletas entre organizações; erros, loading, líderes e registros antigos não são publicados após troca de tenant. Contrato ampliado para doze telas; suíte 219/219, lint e build aprovados.
 - 2026-10-18: o cadastro agora bloqueia o envio enquanto os dados assíncronos de um convite ainda estão sendo resolvidos, evitando registrar convite como cadastro comum ou no tenant incorreto. Novo contrato; suíte 220/220, lint e build aprovados.
 - 2026-10-18: corrigido o provisionamento de contas convidadas: convite com `organization_id` válido não chama mais `provision_new_user` (que criaria tenant novo), e IDs de organização inválidos são rejeitados. Suíte 221/221, lint e build aprovados.
+- 2026-10-18: ampliada a validação de convites para rejeitar `leader_id` e `coordinator_id` inválidos antes de criar a conta. Suíte 221/221, lint e build aprovados.
