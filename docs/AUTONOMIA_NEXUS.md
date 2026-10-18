@@ -1015,3 +1015,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **CORRIGIDO:** a Edge Function agora desfaz o usuário Auth quando não consegue persistir o perfil, evitando contas órfãs e convites impossíveis de repetir.
 - **VERIFICADO:** 222/222 testes, lint e build aprovados localmente; a validação da Edge Function também passou no CI.
+
+## Ciclo autônomo — 2026-10-18: confirmação do provisionamento
+
+- **CORRIGIDO:** o cliente agora exige que `provision_new_user` retorne um UUID de organização válido antes de continuar; retorno vazio não gera falso sucesso.
+- **VERIFICADO:** 222/222 testes, lint e build aprovados localmente.

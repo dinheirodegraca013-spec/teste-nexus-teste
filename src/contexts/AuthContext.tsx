@@ -225,8 +225,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             'Tempo limite ao provisionar usuário via RPC'
           );
           if (!isCurrent()) return empty;
-          if (rpcErr) {
-            const errMsg = `Falha no provisionamento do usuário (RPC): ${rpcErr.message}`;
+          if (rpcErr || !isValidUUID(rpcOrgId)) {
+            const errMsg = `Falha no provisionamento do usuário (RPC): ${rpcErr?.message || 'a organização não foi confirmada pelo banco.'}`;
             setProfileError(errMsg);
             setInitializationError(errMsg);
             return { profile: null, organization: null, permissions: [] };
@@ -579,7 +579,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               p_campaign_type: 'DEPUTADO_FEDERAL',
               p_profile_name: name.trim(),
             });
-            if (rpcErr) {
+            if (rpcErr || !isValidUUID(rpcOrgId)) {
               console.error('[NEXUS PROVISION] Erro na RPC provision_new_user no signUp:', rpcErr);
               return { error: new Error('Conta criada, mas não foi possível configurar a organização. Tente entrar novamente ou contate o suporte.'), user: data.user };
             }

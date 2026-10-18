@@ -99,3 +99,4 @@
 - 2026-10-18: corrigido o provisionamento de contas convidadas: convite com `organization_id` válido não chama mais `provision_new_user` (que criaria tenant novo), e IDs de organização inválidos são rejeitados. Suíte 221/221, lint e build aprovados.
 - 2026-10-18: ampliada a validação de convites para rejeitar `leader_id` e `coordinator_id` inválidos antes de criar a conta. Suíte 221/221, lint e build aprovados.
 - 2026-10-18: a Edge Function de convite agora remove o usuário Auth criado quando a inserção do perfil falha; se a limpeza também falhar, o incidente fica registrado para intervenção técnica. Suíte 222/222, lint e build aprovados.
+- 2026-10-18: o provisionamento via RPC agora exige retorno de organização UUID válido; respostas vazias ou inválidas não são tratadas como sucesso. Suíte 222/222, lint e build aprovados.
