@@ -1374,3 +1374,7 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **GITHUB:** PR #1 permanece aberta, DRAFT e mergeable; status combinado do head `34b722b` retornou check Vercel `success`.
 - **VERCEL:** deployment `dpl_XVLuW4HLTWKERRzf7xgHbvAW4k5c` está `READY` para o head atual.
+## Ciclo autônomo — 2026-10-18: contrato de configuração Vite
+
+- **CONFIRMADO:** o frontend lê exclusivamente `import.meta.env.VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`; não há fallback incorreto para `SUPABASE_*` ou `NEXT_PUBLIC_*`.
+- **CONCLUSÃO:** o erro do domínio público é de configuração do ambiente Production, não de código do cliente.

@@ -194,3 +194,4 @@
 - 2026-10-18: Versionadas localmente as 3 migrations já aplicadas no DEV e ausentes do repositório; diretório agora tem 16 arquivos, igual à contagem remota. Nenhum SQL executado nesta rodada.
 - 2026-10-18: Pós-push de a053e22 sem workflow GitHub ou deployment Vercel associado; último preview funcional permanece READY.
 - 2026-10-18: PR #1 continua DRAFT/mergeable; check Vercel success e deployment dpl_XVLuW4HLTWKERRzf7xgHbvAW4k5c READY para 34b722b.
+- 2026-10-18: Auditoria estática confirmou que o frontend Vite lê somente as duas variáveis VITE_*; divergência em Production é configuração, sem novo defeito de código.
