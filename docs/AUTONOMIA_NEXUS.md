@@ -844,3 +844,10 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **REVISADO:** advisories do DEV continuam iguais: 2 tabelas privadas com RLS sem policy, 3 funções SECURITY DEFINER executáveis por `authenticated`, proteção de senhas comprometidas desativada, 2 FKs privadas sem índice cobridor e 12 índices não usados.
 - **DECISÃO:** nenhum advisory foi alterado, pois as correções exigem revisão e aprovação específica de SQL/Auth; índices não usados não justificam remoção sem dados de carga.
 - **Próxima ação:** homologação E2E autenticada com identidades sintéticas e dois tenants.
+
+## Ciclo autônomo — 2026-10-18: preparação de E2E autenticado
+
+- **APROVADO:** o script `scripts/e2e/tenant-auth-readonly.mjs` exige explicitamente DEV autorizado, valida o projeto `qidstqsbxwkbkwowhpab`, usa duas contas distintas e executa somente leituras/saída de sessão.
+- **BLOQUEADO EXTERNO:** a execução local parou antes de qualquer rede por ausência de autorização explícita e das variáveis de duas contas de teste em organizações diferentes.
+- **SEGURANÇA:** nenhum segredo foi solicitado, impresso, criado ou persistido; não houve alteração no banco.
+- **Próxima ação:** executar o script somente quando o responsável fornecer ambiente/contas TEST controladas e autorização explícita para esse smoke test DEV.
