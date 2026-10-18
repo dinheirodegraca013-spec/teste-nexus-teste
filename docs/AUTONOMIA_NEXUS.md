@@ -1068,3 +1068,18 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **MELHORADO:** adicionado `tests/operational-write-policy-contract.test.mjs`, garantindo que a proposta mantenha tenant ativo, papel administrativo e as três operações protegidas para todas as 12 tabelas.
 - 2026-10-18: auditoria read-only dos logs DEV refinou o resultado: 6 `ERROR` e 4 `FATAL` em `postgres_logs` são eventos históricos de bootstrap/infraestrutura (`42830`, `42P01` e `57P01`), sem evidência de falha atual da aplicação. Nenhum SQL aplicado.
+## Ciclo autônomo — 2026-10-18: confirmação dos valores de permissões
+
+- **Escopo único:** impedir falso sucesso de `permissionsService.upsertPermissions` quando as chaves retornadas existem, mas os valores de leitura/escrita/exclusão divergem do solicitado. Branch atual `fix/persist-rbac-permissions`; status e diff iniciais limpos.
+- **REPROVADO antes da correção (RED):** `node tests/permissions-persistence-confirmation.test.mjs`: 4 aprovados e 3 falhos. Cada cenário sintético pediu revogação e recebeu uma flag ainda ativa; o serviço devolvia sucesso. Reprodução na fronteira mockada, sem afirmar ocorrência no DEV.
+- **CORRIGIDO:** `src/services/coreServices.ts` compara os três booleanos brutos devolvidos pelo banco com o payload enviado, por usuário/módulo; divergências retornam `PERMISSIONS_UPDATE_MISMATCH`. Mantidos os erros existentes para resposta vazia, parcial e falha do Supabase. A interface já interrompe a confirmação ao receber erro.
+- **APROVADO:** `node tests/permissions-persistence-confirmation.test.mjs` após correção: 7/7; `npm run lint`; `npm run build`; `git diff --check`.
+- **REPROVADO:** `npm test`: 30 arquivos aprovados e 1 falho neste executor Node v24.21.0. `tests/reports-csv-download.test.mjs` importa `buildCsvBlob`, que não é exportado por `src/utils/csv.ts`. Nova execução com `node --import tsx --test tests/*.test.mjs` reproduziu a mesma falha. Os dois arquivos de CSV já estavam assim no checkout e não foram alterados neste ciclo; suíte completa não aprovada.
+- **NÃO VERIFICADO:** persistência real de permissões, RLS e E2E autenticado multitenant; os testes usam mocks e dados sintéticos. Nenhuma conexão a banco, migration, workflow, ambiente, credencial, merge ou deploy.
+- **Documentação:** ESCOPO.md, BACKLOG.md, ESTADO.md, TESTES.md e AUDITORIA.md não existem na raiz; evidências preservadas neste registro. Skills consultadas: bug-hunter e qa-automation.
+- **Próxima ação:** diagnosticar/corrigir o contrato de exportação CSV em um ciclo separado e repetir `npm test`; manter homologação pendente até a suíte completa e os testes autenticados passarem.
+
+## Ciclo autônomo — 2026-10-18: exportação CSV
+
+- **CORRIGIDO:** `buildCsvBlob` foi implementado e `ReportsPage` passou a usar URL de Blob revogável; fórmulas precedidas por espaços agora também são neutralizadas.
+- **VERIFICADO:** suíte integrada 243/243, lint, build e `git diff --check` aprovados.

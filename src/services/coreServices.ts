@@ -328,6 +328,28 @@ export const permissionsService = {
       };
     }
 
+    // A returned key alone does not confirm a grant or revocation: triggers
+    // may preserve different values. Verify the raw database booleans too.
+    const persistedRows = new Map(((data || []) as any[]).map(
+      (row) => [`${row.user_id}:${row.module_key}`, row]
+    ));
+    const valuesMatch = dbRows.every((expected) => {
+      const actual = persistedRows.get(`${expected.user_id}:${expected.module_key}`);
+      return actual?.can_read === expected.can_read &&
+        actual?.can_write === expected.can_write &&
+        actual?.can_delete === expected.can_delete;
+    });
+    if (!valuesMatch) {
+      return {
+        data: mapped,
+        error: {
+          name: 'PermissionError',
+          code: 'PERMISSIONS_UPDATE_MISMATCH',
+          message: 'O banco não confirmou os valores das permissões enviadas. Recarregue as permissões antes de tentar novamente.',
+        },
+      };
+    }
+
     return { data: mapped, error };
   }
 };

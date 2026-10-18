@@ -32,3 +32,31 @@ test('partial permission response must not report all permissions persisted', as
   const result = await permissionsService.upsertPermissions([permission, { ...permission, module: 'goals' }]);
   assert.equal(result.error?.code, 'PERMISSIONS_UPDATE_INCOMPLETE');
 });
+
+for (const field of ['can_read', 'can_write', 'can_delete']) {
+  test(`permission revocation must verify persisted ${field}`, async () => {
+    globalThis.__nexusPermissions = { outcome: { data: [{
+      user_id: permission.user_id, module_key: 'crm',
+      can_read: false, can_write: false, can_delete: false, [field]: true,
+    }], error: null } };
+    const result = await permissionsService.upsertPermissions([{ ...permission, can_view: false }]);
+    assert.equal(result.error?.code, 'PERMISSIONS_UPDATE_MISMATCH');
+  });
+}
+
+test('confirmed permission values preserve success', async () => {
+  globalThis.__nexusPermissions = { outcome: { data: [{
+    user_id: permission.user_id, module_key: 'crm',
+    can_read: true, can_write: false, can_delete: false,
+  }], error: null } };
+  const result = await permissionsService.upsertPermissions([permission]);
+  assert.equal(result.error, null);
+  assert.equal(result.data[0].can_view, true);
+});
+
+test('permission confirmation preserves database errors', async () => {
+  const error = { code: '42501', message: 'Sem permissão' };
+  globalThis.__nexusPermissions = { outcome: { data: null, error } };
+  const result = await permissionsService.upsertPermissions([permission]);
+  assert.equal(result.error, error);
+});
