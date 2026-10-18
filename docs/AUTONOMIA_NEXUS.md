@@ -1103,3 +1103,10 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **APLICADO COM AUTORIZAÇÃO:** o alias `teste-nexus-teste.vercel.app` foi reatribuído ao deployment READY da branch no commit `16eda14`.
 - **VERIFICADO:** HTTP 200; bundle público usa o Supabase DEV `qwvbvqlzcyfkuszxrlgv` e não referencia o projeto antigo `wrovgjhpyacmmetejiqk`.
+
+## Ciclo autônomo — 2026-10-18: erro de conexão corrigido
+
+- **CAUSA:** a configuração de produção não continha as variáveis Vite que o frontend lê (`VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`).
+- **CORREÇÃO:** variáveis recriadas no Vercel apontando para o DEV `qwvbvqlzcyfkuszxrlgv`, sem expor chaves no repositório.
+- **PUBLICAÇÃO:** novo deployment `dpl_A6iKK2Pv7UJZniJtwYQMBZhZQE1N` READY e associado ao domínio público.
+- **VERIFICAÇÃO:** `/cadastro` e bundle retornaram HTTP 200; bundle contém o projeto `qwvbvqlzcyfkuszxrlgv` e não contém o projeto antigo `wrovgjhpyacmmetejiqk`.
