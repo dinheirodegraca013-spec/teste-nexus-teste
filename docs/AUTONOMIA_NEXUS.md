@@ -1237,6 +1237,7 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO:** `RegisterPage` agora bloqueia convites sem organização ou identificador compatível de liderança/coordenação antes de chamar `signUp`, evitando cair no provisionamento de uma organização própria por URL malformada.
 - **TESTES:** contrato de regressão adicionado; `npm test` 263/263, `npm run lint` e `npm run build` aprovados.
 - **ESCOPO:** somente frontend/teste; nenhum Auth, SQL, produção, `main` ou dado real alterado.
+- **PREVIEW/CI:** Vercel `dpl_7W8cqAMy4Uh84iRzwWYqdnWv8xhc` ficou `READY` para `1912b5e`; o status combinado do commit retornou somente o check Vercel, sem execução GitHub Actions disponível nesta consulta.
 - **CI/PREVIEW:** `NEXUS CI` run `39170125281` (#522) concluiu `success`; preview Vercel `dpl_AnkUkQSBDKrPQq8FMPKHQqaeRz8n` ficou `READY` para `53f23cf`.
 
 ## Ciclo autônomo — 2026-10-18: status honesto do Supabase
