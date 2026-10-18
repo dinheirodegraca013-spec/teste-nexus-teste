@@ -1246,6 +1246,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **ESCOPO:** somente frontend/teste; nenhum Auth, SQL, produção, `main` ou dado real alterado.
 - **CI/PREVIEW:** `NEXUS CI` run `39169936965` (#518) concluiu `success`; preview Vercel `dpl_6CzkLzXMFjsJNo3YFrsN8zWDD5aM` ficou `READY` para `1b28d54`.
 
+## Ciclo autônomo — 2026-10-18: status compartilhado de conectividade
+
+- **CORRIGIDO:** `Header` e `LoginPage` deixaram de afirmar que o Supabase está conectado ou que RLS está ativo apenas porque as variáveis existem; a interface agora informa configuração e deixa a conectividade para as chamadas reais de serviço.
+- **TESTES:** contrato de regressão adicionado; `npm test` 266/266, `npm run lint` e `npm run build` aprovados.
+- **ESCOPO:** somente frontend/teste; nenhum Auth, SQL, produção, `main` ou dado real alterado.
+
 ## Ciclo autônomo — 2026-10-18: validação do onboarding
 
 - **CORRIGIDO:** `OnboardingPage` agora bloqueia o salvamento quando o nome da organização está vazio ou contém apenas espaços.

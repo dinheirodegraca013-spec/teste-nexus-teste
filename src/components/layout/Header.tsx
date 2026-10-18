@@ -59,14 +59,14 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu, currentPath })
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* Supabase Real Connection Status */}
+        {/* Supabase configuration status; connectivity is verified by service calls. */}
         <div
           className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-white border border-slate-200 text-slate-700 shadow-2xs select-none"
-          title={isSupabaseConfigured ? `Conectado ao Supabase: ${supabaseUrl}` : 'Supabase: configure VITE_SUPABASE_URL'}
+          title={isSupabaseConfigured ? `Supabase configurado: ${supabaseUrl}` : 'Supabase não configurado: defina VITE_SUPABASE_URL'}
         >
           <Database className="w-3.5 h-3.5 text-slate-500" />
           <span className="hidden xs:inline">
-            {isSupabaseConfigured ? 'Supabase Conectado' : 'Supabase Desconectado'}
+            {isSupabaseConfigured ? 'Supabase Configurado' : 'Supabase Não Configurado'}
           </span>
           <span
             className={`w-1.5 h-1.5 rounded-full ${

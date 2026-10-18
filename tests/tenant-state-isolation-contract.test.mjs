@@ -104,3 +104,12 @@ test('SettingsPage does not claim a connection when Supabase is unconfigured', a
   assert.match(source, /VITE_SUPABASE_URL/);
   assert.doesNotMatch(source, /Supabase RLS Ativo & Conectado/);
 });
+
+test('shared auth status does not claim verified Supabase connectivity', async () => {
+  const header = await readFile(new URL('../src/components/layout/Header.tsx', import.meta.url), 'utf8');
+  const login = await readFile(new URL('../src/pages/public/LoginPage.tsx', import.meta.url), 'utf8');
+  assert.match(header, /Supabase configurado/);
+  assert.match(header, /Supabase Não Configurado/);
+  assert.doesNotMatch(header, /Supabase Conectado|Supabase Desconectado/);
+  assert.doesNotMatch(login, /RLS ativo/);
+});

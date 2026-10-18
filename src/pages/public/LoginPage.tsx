@@ -159,7 +159,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
 
         <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-center gap-2 text-[11px] text-slate-500">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-          <span>Autenticação direta com Supabase Auth (RLS ativo)</span>
+          <span>Autenticação via Supabase Auth</span>
         </div>
       </div>
     </div>
