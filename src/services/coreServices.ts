@@ -218,6 +218,16 @@ export const profilesService = {
       });
     }
 
+    if (!error && !data) {
+      return {
+        data: null,
+        error: {
+          name: 'PermissionError',
+          code: 'PROFILE_CREATE_NOT_CONFIRMED',
+          message: 'Cadastro não confirmado: o perfil não foi persistido.',
+        },
+      };
+    }
     return { data: normalizeProfile(data), error };
   },
 
