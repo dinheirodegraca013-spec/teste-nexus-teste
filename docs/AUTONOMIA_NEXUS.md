@@ -1192,3 +1192,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Limites:** nenhuma conexão externa, alteração de SQL, workflow, ambiente, credencial, merge ou deploy. Nenhum bloqueador para esta correção local.
 - **Próxima ação:** validar a recuperação completa em ambiente de teste autorizado, incluindo link recebido, definição da nova senha e login; homologação geral permanece pendente.
 - **2026-10-18 — PREVIEW FINAL:** Vercel concluiu `READY` para o head `7e49ffd` (`dpl_9fS5bBm7xWqUxvizm5hvYWT5gqSG`). Nenhuma promoção para produção foi executada.
+
+## Ciclo autônomo — 2026-10-18: validação de metas
+
+- **CORRIGIDO:** `GoalsPage` agora rejeita meta inválida/não positiva e progresso negativo ou não numérico antes de salvar, sem converter entradas inválidas em valores padrão.
+- **TESTES:** contrato de regressão adicionado; `npm test` 259/259, `npm run lint` e `npm run build` aprovados.
+- **ESCOPO:** alteração somente de frontend/teste na branch `fix/persist-rbac-permissions`; nenhum SQL, Auth, produção, `main` ou dado real alterado.

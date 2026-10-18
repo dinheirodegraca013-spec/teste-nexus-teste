@@ -10,6 +10,7 @@ import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { nonNegativeQuantity, positiveQuantity } from '../../utils/materialQuantities';
 
 export const GoalsPage: React.FC = () => {
   const { organization } = useAuth();
@@ -139,6 +140,13 @@ export const GoalsPage: React.FC = () => {
       return;
     }
 
+    const targetValue = positiveQuantity(formData.target_value);
+    const currentValue = nonNegativeQuantity(formData.current_value);
+    if (targetValue === null || currentValue === null) {
+      toastError('Informe uma meta maior que zero e um progresso não negativo.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       if (selectedGoal) {
@@ -146,8 +154,8 @@ export const GoalsPage: React.FC = () => {
           title: formData.title.trim(),
           description: formData.description.trim() || undefined,
           category: formData.category,
-          target_value: Number(formData.target_value) || 100,
-          current_value: Number(formData.current_value) || 0,
+          target_value: targetValue,
+          current_value: currentValue,
           unit: formData.unit || 'unidades',
           start_date: formData.start_date || undefined,
           end_date: formData.end_date || undefined,
@@ -168,8 +176,8 @@ export const GoalsPage: React.FC = () => {
           title: formData.title.trim(),
           description: formData.description.trim() || undefined,
           category: formData.category,
-          target_value: Number(formData.target_value) || 100,
-          current_value: Number(formData.current_value) || 0,
+          target_value: targetValue,
+          current_value: currentValue,
           unit: formData.unit || 'unidades',
           start_date: formData.start_date || new Date().toISOString(),
           end_date: formData.end_date || undefined,

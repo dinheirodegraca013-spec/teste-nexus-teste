@@ -64,3 +64,12 @@ test('GoalsPage uses the atomic server increment instead of client read-modify-w
   assert.match(page, /goalsService\.incrementAtomically\(goal\.id, amount\)/);
   assert.match(services, /supabase\.rpc\('nexus_increment_goal'/);
 });
+
+test('GoalsPage rejects invalid target and progress values before saving', async () => {
+  const source = await readFile(new URL('../src/pages/app/GoalsPage.tsx', import.meta.url), 'utf8');
+  assert.match(source, /positiveQuantity/);
+  assert.match(source, /nonNegativeQuantity/);
+  assert.match(source, /targetValue === null/);
+  assert.match(source, /target_value: targetValue/);
+  assert.match(source, /current_value: currentValue/);
+});

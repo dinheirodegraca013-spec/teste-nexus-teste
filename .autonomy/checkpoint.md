@@ -149,3 +149,4 @@
 - 2026-10-18: CI `NEXUS CI` #39167147169 do head `772a93a` concluiu com sucesso; PR #1 permanece DRAFT e sem merge.
 - 2026-10-18: `npm ls --depth=0` consistente; `npm audit` bloqueado por falha de acesso ao endpoint do registry. Nenhuma dependência alterada.
 - 2026-10-18: auditoria de dependências repetida com acesso autorizado ao registry; resultado `0 vulnerabilidades`. Nenhum pacote alterado.
+- 2026-10-18: `GoalsPage` passou a rejeitar meta inválida/não positiva e progresso negativo/não numérico antes de salvar; contrato de regressão adicionado. `npm test` 259/259, lint e build aprovados. Alteração somente na branch de desenvolvimento; produção/main e banco intactos.
