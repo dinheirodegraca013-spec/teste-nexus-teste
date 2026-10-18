@@ -41,3 +41,12 @@ test('LeadersPage rejects negative or invalid campaign goals before saving', asy
   assert.match(source, /goal_target: goalTarget/);
   assert.match(source, /goal_reached: goalReached/);
 });
+
+test('atomic goal increment migration is tenant-scoped and does not expose public execution', async () => {
+  const source = await readFile(new URL('../docs/proposed-migrations/ADD_ATOMIC_GOAL_INCREMENT.sql', import.meta.url), 'utf8');
+  assert.match(source, /UPDATE public\.goals/);
+  assert.match(source, /organization_id = v_org/);
+  assert.match(source, /SECURITY DEFINER/);
+  assert.match(source, /REVOKE ALL ON FUNCTION public\.nexus_increment_goal/);
+  assert.match(source, /GRANT EXECUTE ON FUNCTION public\.nexus_increment_goal/);
+});

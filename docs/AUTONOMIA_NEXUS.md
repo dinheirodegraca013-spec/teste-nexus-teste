@@ -1171,6 +1171,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **TESTES:** contrato de regressão adicionado; suíte `npm test` 254/254, `npm run lint` e `npm run build` aprovados.
 - **CORRIGIDO:** `LeadersPage` agora rejeita metas inválidas/negativas e preserva zero válido nos campos não obrigatórios.
 - **TESTES:** contrato de regressão adicionado; suíte `npm test` 255/255, `npm run lint` e `npm run build` aprovados.
+- **PREPARADO (AGUARDA APROVAÇÃO SQL):** `docs/proposed-migrations/ADD_ATOMIC_GOAL_INCREMENT.sql` cria a RPC `nexus_increment_goal(uuid, integer)`, com incremento atômico, tenant/admin check e ACL sem `PUBLIC`/`anon`. Não foi executada no Supabase.
+- **TESTES:** contrato estrutural adicionado; suíte `npm test` 256/256, `npm run lint` e `npm run build` aprovados.
 
 ## Ciclo autônomo — 2026-10-18: confirmação segura da recuperação de senha
 
