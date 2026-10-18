@@ -156,3 +156,4 @@
 - 2026-10-18: `Drawer` recebeu semântica acessível, foco inicial, trap de Tab/Escape e restauração de foco; dois contratos adicionados. `npm test` 262/262, lint e build aprovados. Banco/Auth/produção intactos.
 - 2026-10-18: CI #502 (`39168995738`) passou e o preview Vercel `dpl_D6V2hBXbYa3yRcFEG4hx6v3MKg4d` ficou READY para `871d66d`; sem merge ou promoção.
 - 2026-10-18: `CrmPage` passou a informar cadastro não confirmado; contrato de regressão ampliado. `npm test` 262/262, lint e build aprovados. Banco/Auth/produção intactos.
+- 2026-10-18: CI #506 (`39169229167`) passou e o preview Vercel `dpl_HzqhjNVoSyvH4iQy2tJcxLpasiqS` ficou READY para `0d0d5eb`; sem merge ou promoção.
