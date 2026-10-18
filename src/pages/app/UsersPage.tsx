@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Users, Plus, Shield, Mail, Edit2, Trash2, CheckCircle2, Lock, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -47,6 +47,7 @@ export const UsersPage: React.FC = () => {
   const [members, setMembers] = useState<OrganizationMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const loadGenerationRef = useRef(0);
 
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isPermModalOpen, setIsPermModalOpen] = useState(false);
@@ -64,7 +65,10 @@ export const UsersPage: React.FC = () => {
   const [perms, setPerms] = useState(createDefaultPermissions);
 
   const loadData = useCallback(async () => {
+    const loadGeneration = ++loadGenerationRef.current;
+    const isCurrentLoad = () => loadGeneration === loadGenerationRef.current;
     if (!orgId) {
+      if (!isCurrentLoad()) return;
       setMembers([]);
       setIsLoading(false);
       return;
@@ -73,11 +77,12 @@ export const UsersPage: React.FC = () => {
     try {
       const { data, error } = await membersService.getAll(orgId);
       if (error) throw error;
+      if (!isCurrentLoad()) return;
       setMembers(data || []);
     } catch (err: any) {
-      toastError('Erro ao carregar equipe: ' + err.message);
+      if (isCurrentLoad()) toastError('Erro ao carregar equipe: ' + err.message);
     } finally {
-      setIsLoading(false);
+      if (isCurrentLoad()) setIsLoading(false);
     }
   }, [orgId, toastError]);
 

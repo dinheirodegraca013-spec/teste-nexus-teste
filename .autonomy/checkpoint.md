@@ -91,3 +91,4 @@
 - 2026-10-18: aplicada a mesma proteção contra respostas obsoletas em `CrmPage` e `GoalsPage`, evitando mistura visual de organizações durante trocas rápidas. Dois testes de contrato adicionados; suíte 209/209, lint e build aprovados.
 - 2026-10-18: aplicada a proteção contra respostas obsoletas também em `CoordinatorsPage` e `LeadersPage`, evitando mistura de hierarquia entre organizações. Contrato ampliado para quatro telas; suíte 211/211, lint e build aprovados.
 - 2026-10-18: protegidas também as cargas de `MaterialsPage`, `MeetingsPage` e `StickersPage` contra respostas de organização anterior. Contrato ampliado para sete telas; suíte 214/214, lint e build aprovados.
+- 2026-10-18: protegidas as cargas de `UsersPage` e `ReportsPage` contra respostas obsoletas entre organizações. Contrato ampliado para nove telas; suíte 216/216, lint e build aprovados.

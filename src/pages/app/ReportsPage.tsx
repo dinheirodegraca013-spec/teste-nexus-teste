@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { FileSpreadsheet, Download, Printer, Users, Target, Tag, MapPin, Loader2, Car, Home, UserCheck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -20,9 +20,13 @@ export const ReportsPage: React.FC = () => {
   const [carStickers, setCarStickers] = useState<CarSticker[]>([]);
   const [houseStickers, setHouseStickers] = useState<HouseSticker[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const loadGenerationRef = useRef(0);
 
   const loadData = useCallback(async () => {
+    const loadGeneration = ++loadGenerationRef.current;
+    const isCurrentLoad = () => loadGeneration === loadGenerationRef.current;
     if (!orgId) {
+      if (!isCurrentLoad()) return;
       setContacts([]);
       setLeaders([]);
       setCoordinators([]);
@@ -60,6 +64,7 @@ export const ReportsPage: React.FC = () => {
       if (eventsRes.error) throw eventsRes.error;
       if (carsRes.error) throw carsRes.error;
       if (housesRes.error) throw housesRes.error;
+      if (!isCurrentLoad()) return;
 
       setContacts(contactsRes.data || []);
       setLeaders(leadersRes.data || []);
@@ -69,9 +74,9 @@ export const ReportsPage: React.FC = () => {
       setCarStickers(carsRes.data || []);
       setHouseStickers(housesRes.data || []);
     } catch (err: any) {
-      toastError('Erro ao carregar dados do relatório: ' + err.message);
+      if (isCurrentLoad()) toastError('Erro ao carregar dados do relatório: ' + err.message);
     } finally {
-      setIsLoading(false);
+      if (isCurrentLoad()) setIsLoading(false);
     }
   }, [orgId, toastError]);
 
