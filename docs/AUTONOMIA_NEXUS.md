@@ -932,6 +932,11 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **APROVADO:** commit `e0e985a` com Vercel, GitGuardian, typecheck/build e Edge Functions concluídos com sucesso.
 - **RESULTADO:** nenhum segredo detectado, nenhuma annotation de falha e nenhum deploy em produção.
 
+## Ciclo autônomo — 2026-10-18: plano de reconciliação estrutural
+
+- **PREPARADO:** `docs/proposed-migrations/MIGRATION_RECONCILIATION_PLAN.md` lista as 7 migrations DEV ausentes, o procedimento seguro e os limites de aprovação.
+- **LIMITE:** nenhum arquivo SQL executável foi criado e nenhuma migration foi aplicada; os itens com DDL/RLS/funções privilegiadas aguardam aprovação específica.
+
 ## Ciclo autônomo — 2026-10-18: instalação determinística
 
 - **MELHORIA:** workflows CI e E2E passaram de `npm install` para `npm ci`, usando o `package-lock.json` existente.

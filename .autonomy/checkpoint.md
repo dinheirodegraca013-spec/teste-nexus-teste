@@ -65,3 +65,4 @@
 - 2026-10-18: auditoria de logs pós-CI encontrou as fontes esperadas, mas o conector rejeitou a consulta agregada e informou campo inexistente na consulta detalhada. Não inferi ausência de erros nem repeti a mesma estratégia; última auditoria válida segue como referência.
 - 2026-10-18: nova consulta usando `event_message` encontrou zero `error`/`fatal`/`panic` em postgres/postgrest. Mensagens históricas de bucket_id/rowsecurity/transação são artefatos de auditorias anteriores, não falhas da aplicação.
 - 2026-10-18: checks do commit e0e985a concluídos com sucesso em Vercel, GitGuardian, typecheck/build e Edge Functions; sem secrets, annotations ou produção alterada.
+- 2026-10-18: preparado `docs/proposed-migrations/MIGRATION_RECONCILIATION_PLAN.md` com as 7 migrations DEV ausentes e procedimento seguro. Nenhum SQL executável criado/aplicado; DDL/RLS/funções aguardam aprovação específica.
