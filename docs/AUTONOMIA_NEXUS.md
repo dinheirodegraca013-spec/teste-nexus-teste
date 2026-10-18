@@ -973,3 +973,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO:** as variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` do Preview da branch `fix/persist-rbac-permissions` foram atualizadas para `qwvbvqlzcyfkuszxrlgv`.
 - **VERIFICADO:** novo deployment Vercel READY no commit `eac6acc`; o bundle publicado contém a URL nova e não contém a URL antiga.
 - **LIMITE:** produção não foi alterada; homologação E2E continua pendente até existirem duas contas Auth sintéticas no novo DEV.
+
+## Ciclo autônomo — 2026-10-18: índices de integridade referencial
+
+- **APLICADO:** migration `nexus_foreign_key_indexes` no DEV novo, cobrindo FKs tenant-scoped e hierárquicas sem alterar dados ou políticas.
+- **VERIFICADO:** advisor deixou de apontar `unindexed_foreign_keys`; os avisos restantes são índices ainda não usados por falta de carga e duas combinações de policies permissivas já existentes.
