@@ -1442,3 +1442,4 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **ESCOPO:** somente leitura externa; nenhum deploy manual, produção, Auth ou banco foi alterado.
 - **BROWSER TESTING — BLOCKED:** o navegador recusou a autorização de egress para abrir o domínio; não houve tentativa de contorno. O HTML/bundle já foi validado por leitura HTTP read-only.
 - **PR:** no head `feeaf62c`, typecheck/build, Edge Functions e GitGuardian estão `success`; Supabase Preview `skipped`. O check Vercel do commit ainda reporta rate limit, embora o deployment mais recente separado esteja READY.
+- **PR #1:** descrição sincronizada com o estado atual (274 testes, correção de `auditService.log`, deployment READY e pendências estruturais); PR continua DRAFT, aberta e sem merge.
