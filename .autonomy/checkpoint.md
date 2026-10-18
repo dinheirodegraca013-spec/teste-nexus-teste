@@ -87,3 +87,4 @@
 - 2026-10-18: documentação operacional reconciliada; o Supabase DEV atual `qwvbvqlzcyfkuszxrlgv` foi destacado como única fonte autorizada e referências a `qidstqsbxwkbkwowhpab` foram marcadas como históricas para evitar execução no projeto antigo.
 - 2026-10-18: comentário do serviço de Storage privado atualizado para refletir o estado real: bucket/policies estão no DEV autorizado; a UI continua opt-in até homologação E2E autenticada. Suíte 206/206, lint e build aprovados.
 - 2026-10-18: removidas dos cabeçalhos das migrations as referências operacionais a projetos Supabase antigos; os arquivos agora deixam claro que o destino é definido pela configuração do deploy. Suíte 206/206, lint e build aprovados.
+- 2026-10-18: corrigida condição de corrida em `PresencePage`: respostas antigas não sobrescrevem dados após troca de organização; erros e loading obsoletos também são ignorados. Teste de regressão adicionado; suíte 207/207, lint e build aprovados.

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { UserCheck, Plus, Clock, Trash2, CheckCircle2, FileDown, Image as ImageIcon, Eye, X, Loader2, Camera } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -24,6 +24,7 @@ export const PresencePage: React.FC = () => {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const loadGenerationRef = useRef(0);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -39,7 +40,10 @@ export const PresencePage: React.FC = () => {
   });
 
   const loadData = useCallback(async () => {
+    const loadGeneration = ++loadGenerationRef.current;
+    const isCurrentLoad = () => loadGeneration === loadGenerationRef.current;
     if (!orgId) {
+      if (!isCurrentLoad()) return;
       setPresenceLogs([]);
       setEvents([]);
       setMeetings([]);
@@ -56,13 +60,14 @@ export const PresencePage: React.FC = () => {
       if (logsRes.error) throw logsRes.error;
       if (eventsRes.error) throw eventsRes.error;
       if (meetingsRes.error) throw meetingsRes.error;
+      if (!isCurrentLoad()) return;
       setPresenceLogs(logsRes.data || []);
       setEvents(eventsRes.data || []);
       setMeetings(meetingsRes.data || []);
     } catch (err: any) {
-      toastError('Erro ao carregar presença: ' + err.message);
+      if (isCurrentLoad()) toastError('Erro ao carregar presença: ' + err.message);
     } finally {
-      setIsLoading(false);
+      if (isCurrentLoad()) setIsLoading(false);
     }
   }, [orgId, toastError]);
 
