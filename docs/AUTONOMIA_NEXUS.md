@@ -1199,6 +1199,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **TESTES:** contrato de regressão adicionado; `npm test` 259/259, `npm run lint` e `npm run build` aprovados.
 - **ESCOPO:** alteração somente de frontend/teste na branch `fix/persist-rbac-permissions`; nenhum SQL, Auth, produção, `main` ou dado real alterado.
 
+## Ciclo autônomo — 2026-10-18: variáveis Supabase no preview
+
+- **CORRIGIDO:** adicionadas no projeto Vercel `nexusteste`, somente no alvo `preview`, `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` apontando para o Supabase DEV `qwvbvqlzcyfkuszxrlgv`.
+- **ESCOPO:** alteração somente de configuração do preview; produção, banco, Auth, `main` e dados reais não foram alterados.
+- **PRÓXIMO PASSO:** o próximo deploy da branch validará o cadastro/login no ambiente preview com as variáveis presentes.
+
 ## Ciclo autônomo — 2026-10-18: revisão de acessibilidade e advisors
 
 - **CONFIRMADO:** `Modal.tsx` já expõe `role="dialog"`, nome acessível, `aria-modal`, foco inicial, captura de Tab/Escape e restauração de foco; os testes de acessibilidade estão verdes dentro da suíte atual.

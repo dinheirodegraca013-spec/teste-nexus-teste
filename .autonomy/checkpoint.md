@@ -166,4 +166,5 @@
 - 2026-10-18: `SettingsPage` passou a exibir status real de configuração Supabase e removeu endpoint fictício; regressão adicionada. `npm test` 265/265, lint e build aprovados; banco/Auth/produção intactos.
 - 2026-10-18: `Header` e `LoginPage` deixaram de afirmar conectividade Supabase/RLS sem verificação; contrato adicionado. `npm test` 266/266, lint e build aprovados. Banco/Auth/produção intactos.
 - 2026-10-18: preview Vercel `dpl_7W8cqAMy4Uh84iRzwWYqdnWv8xhc` READY para `1912b5e`; status combinado retornou somente Vercel, sem workflow GitHub Actions disponível nesta consulta.
+- 2026-10-18: Vercel recebeu `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` do Supabase DEV somente no alvo preview; próximo deploy deve validar o erro de conexão do cadastro.
 - 2026-10-18: CI #522 (`39170125281`) passou e preview Vercel `dpl_AnkUkQSBDKrPQq8FMPKHQqaeRz8n` ficou READY para `53f23cf`; sem merge/promoção.
