@@ -120,3 +120,11 @@ test('signUp fails closed when Supabase does not return a user', async () => {
   assert.match(source, /signUp:unconfirmed/);
   assert.match(source, /O servidor não confirmou a criação da conta/);
 });
+
+test('password reset applies the same minimum as account creation', async () => {
+  const source = await readFile(new URL('../src/pages/public/ResetPasswordPage.tsx', import.meta.url), 'utf8');
+  assert.match(source, /password\.length < 8/);
+  assert.match(source, /Nova Senha \(mínimo 8 caracteres\)/);
+  assert.match(source, /pelo menos 8 caracteres/);
+  assert.doesNotMatch(source, /pelo menos 6 caracteres/);
+});

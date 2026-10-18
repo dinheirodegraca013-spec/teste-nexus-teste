@@ -22,8 +22,8 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate
     e.preventDefault();
     setErrorMsg('');
 
-    if (password.length < 6) {
-      setErrorMsg('A nova senha deve ter pelo menos 6 caracteres.');
+    if (password.length < 8) {
+      setErrorMsg('A nova senha deve ter pelo menos 8 caracteres.');
       return;
     }
     if (password !== confirmPassword) {
@@ -88,7 +88,7 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
-              label="Nova Senha"
+              label="Nova Senha (mínimo 8 caracteres)"
               type="password"
               placeholder="••••••••"
               value={password}
