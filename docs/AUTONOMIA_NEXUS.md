@@ -1233,6 +1233,11 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **TESTES:** contrato de regressão adicionado; `npm test` 269/269, `npm run lint` e `npm run build` aprovados.
 - **ESCOPO:** somente autenticação/frontend/teste; nenhuma alteração em Auth remoto, SQL, produção, `main` ou dados reais.
 - **CI/PREVIEW:** `NEXUS CI` run `39172360883` (#548) concluiu `success`; preview Vercel `dpl_Azhz6TPiUQArTGnJwBtYVJ2gWMhP` ficou `READY` para `5503f97`.
+
+## Ciclo autônomo — 2026-10-18: auditoria de dependências
+
+- **RESULTADO:** `npm audit --omit=dev --audit-level=moderate` encontrou 0 vulnerabilidades nas dependências de produção.
+- **ESCOPO:** somente leitura; nenhum pacote, lockfile, produção ou ambiente externo foi alterado.
 - **CI/PREVIEW:** `NEXUS CI` run `39171750214` (#540) concluiu `success`; preview Vercel `dpl_6k5sM7Lv9gjd3ivim7Q9FUUpCc6v` ficou `READY` para `e4faea7`.
 
 ## Ciclo autônomo — 2026-10-18: revisão de acessibilidade e advisors
