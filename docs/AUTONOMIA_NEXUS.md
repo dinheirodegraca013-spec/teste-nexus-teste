@@ -1219,6 +1219,7 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO:** a mensagem de erro do cadastro agora informa o mesmo mínimo de 8 caracteres já aplicado pela validação e pelo campo do formulário.
 - **TESTES:** contrato de cadastro atualizado; `npm test` 267/267, `npm run lint` e `npm run build` aprovados.
 - **ESCOPO:** somente frontend/teste; nenhum Auth, SQL, produção, `main` ou dado real alterado.
+- **CI/PREVIEW:** `NEXUS CI` run `39172014734` (#544) concluiu `success`; preview Vercel `dpl_BEepfpjoQV8QMhWEgTisQe9N7FFN` ficou `READY` para `f0e1341`.
 
 ## Ciclo autônomo — 2026-10-18: redefinição de senha consistente
 
