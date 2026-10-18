@@ -1234,6 +1234,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **ESCOPO:** somente autenticação/frontend/teste; nenhuma alteração em Auth remoto, SQL, produção, `main` ou dados reais.
 - **CI/PREVIEW:** `NEXUS CI` run `39172360883` (#548) concluiu `success`; preview Vercel `dpl_Azhz6TPiUQArTGnJwBtYVJ2gWMhP` ficou `READY` para `5503f97`.
 
+## Ciclo autônomo — 2026-10-18: orientação de senha no perfil
+
+- **MELHORADO:** o campo de nova senha em `ProfilePage` agora informa o mínimo de 8 caracteres já aplicado pela validação compartilhada.
+- **TESTES:** contrato de regressão adicionado; `npm test` 270/270, `npm run lint` e `npm run build` aprovados.
+- **ESCOPO:** somente frontend/teste; nenhum Auth remoto, SQL, produção, `main` ou dado real alterado.
+
 ## Ciclo autônomo — 2026-10-18: auditoria de dependências
 
 - **RESULTADO:** `npm audit --omit=dev --audit-level=moderate` encontrou 0 vulnerabilidades nas dependências de produção.

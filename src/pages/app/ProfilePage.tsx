@@ -128,7 +128,7 @@ export const ProfilePage: React.FC = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Input
-            label="Nova Senha"
+            label="Nova Senha (mínimo 8 caracteres)"
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}

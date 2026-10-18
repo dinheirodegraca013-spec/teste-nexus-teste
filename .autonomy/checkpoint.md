@@ -174,6 +174,7 @@
 - 2026-10-18: mensagem de senha do cadastro alinhada ao mínimo real de 8 caracteres; `npm test` 267/267, lint e build aprovados; sem alteração remota.
 - 2026-10-18: `ResetPasswordPage` alinhada ao mínimo de 8 caracteres; regressão adicionada. `npm test` 268/268, lint e build aprovados; sem alteração remota.
 - 2026-10-18: `AuthContext.updatePassword` passou a rejeitar senha curta antes do Supabase; regressão adicionada. `npm test` 269/269, lint e build aprovados; sem alteração remota.
+- 2026-10-18: `ProfilePage` passou a informar o mínimo de 8 caracteres no campo de senha; regressão adicionada. `npm test` 270/270, lint e build aprovados; sem alteração remota.
 - 2026-10-18: CI #548 (`39172360883`) passou e preview Vercel `dpl_Azhz6TPiUQArTGnJwBtYVJ2gWMhP` ficou READY para `5503f97`; sem merge/promoção.
 - 2026-10-18: auditoria de dependências de produção (`npm audit --omit=dev --audit-level=moderate`) encontrou 0 vulnerabilidades; nenhum pacote foi alterado.
 - 2026-10-18: advisors read-only do Supabase DEV confirmaram 2 tabelas privadas sem policies, 5 SECURITY DEFINER expostas, leaked-password protection desativada, 12 índices sem uso e 2 pares de policies permissivas; alterações estruturais permanecem pendentes de script/aprovação específica.

@@ -135,3 +135,9 @@ test('shared password update rejects weak passwords before Supabase', async () =
   assert.match(source, /if \(!password \|\| password\.length < 8\)/);
   assert.match(source, /A senha deve possuir pelo menos 8 caracteres/);
 });
+
+test('profile password field communicates the enforced minimum', async () => {
+  const source = await readFile(new URL('../src/pages/app/ProfilePage.tsx', import.meta.url), 'utf8');
+  assert.match(source, /newPassword\.length < 8/);
+  assert.match(source, /Nova Senha \(mínimo 8 caracteres\)/);
+});
