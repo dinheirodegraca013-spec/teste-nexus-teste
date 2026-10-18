@@ -922,6 +922,11 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **BLOQUEIO TÉCNICO:** a consulta agregada de erros e a leitura de campos detalhados retornaram erro do backend/coluna inexistente do conector; não tratei isso como ausência de erros e não repeti a mesma consulta.
 - **REFERÊNCIA:** a última auditoria válida anterior não encontrou `error:`, `fatal:` ou `panic`; é necessária uma janela posterior com esquema de campos confirmado para nova conclusão.
 
+## Ciclo autônomo — 2026-10-18: auditoria de logs corrigida
+
+- **APROVADO:** com o campo correto `event_message`, a busca em `postgres_logs` e `postgrest_logs` retornou zero eventos contendo `error`, `fatal` ou `panic`.
+- **CONTEXTO:** mensagens históricas sobre `bucket_id`, `rowsecurity` e transação já em andamento correspondem a consultas/execuções de auditoria anteriores, não a falhas do frontend em produção; não foram tratadas como instruções.
+
 ## Ciclo autônomo — 2026-10-18: instalação determinística
 
 - **MELHORIA:** workflows CI e E2E passaram de `npm install` para `npm ci`, usando o `package-lock.json` existente.
