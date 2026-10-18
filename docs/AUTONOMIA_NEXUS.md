@@ -1169,3 +1169,4 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **NÃO VERIFICADO:** navegador real, entrega de e-mail e fluxo completo de redefinição. Testes exercitam o handler real do componente com hooks/contextos mockados e e-mail sintético; não equivalem a E2E.
 - **Limites:** nenhuma conexão externa, alteração de SQL, workflow, ambiente, credencial, merge ou deploy. Nenhum bloqueador para esta correção local.
 - **Próxima ação:** validar a recuperação completa em ambiente de teste autorizado, incluindo link recebido, definição da nova senha e login; homologação geral permanece pendente.
+- **2026-10-18 — PREVIEW FINAL:** Vercel concluiu `READY` para o head `7e49ffd` (`dpl_9fS5bBm7xWqUxvizm5hvYWT5gqSG`). Nenhuma promoção para produção foi executada.

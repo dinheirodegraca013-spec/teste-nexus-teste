@@ -137,3 +137,4 @@
 - 2026-10-18: rota pública `/cadastro` do preview atual respondeu HTTP 200 e conteúdo NEXUS; teste somente leitura, sem autenticação ou escrita.
 - 2026-10-18: SQL somente leitura no DEV confirmou 2 usuários Auth, 2 organizações, 2 perfis, bucket privado presente e RPC transacional presente; nenhum dado foi alterado.
 - 2026-10-18: migrations RLS autorizadas aplicadas somente no DEV: policy `organizations_update` e 36 policies admin nas 12 tabelas operacionais; verificação read-only, E2E multitenant, 250 testes, lint e build aprovados. Advisors residuais registrados; produção/main intactas.
+- 2026-10-18: preview Vercel do head `7e49ffd` concluiu `READY`; produção permanece sem promoção.
