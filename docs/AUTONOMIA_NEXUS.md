@@ -1098,3 +1098,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CONFIRMADO:** `teste-nexus-teste.vercel.app` pertence ao projeto Vercel, porém não está associado como alias ao deployment READY da branch `fix/persist-rbac-permissions`.
 - **PREVIEW CORRETO:** `nexusteste-git-fix-per-35d7b5-dinheirodegraca013-specs-projects.vercel.app` aponta para o commit `4dd43c6`.
 - **BLOQUEIO:** reatribuir o domínio público ao deployment corrigido alteraria produção e permanece fora do escopo.
+
+## Ciclo autônomo — 2026-10-18: domínio público corrigido
+
+- **APLICADO COM AUTORIZAÇÃO:** o alias `teste-nexus-teste.vercel.app` foi reatribuído ao deployment READY da branch no commit `16eda14`.
+- **VERIFICADO:** HTTP 200; bundle público usa o Supabase DEV `qwvbvqlzcyfkuszxrlgv` e não referencia o projeto antigo `wrovgjhpyacmmetejiqk`.
