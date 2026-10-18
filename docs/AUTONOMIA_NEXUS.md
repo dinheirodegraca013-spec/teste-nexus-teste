@@ -1238,6 +1238,11 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **RESULTADO:** `npm audit --omit=dev --audit-level=moderate` encontrou 0 vulnerabilidades nas dependências de produção.
 - **ESCOPO:** somente leitura; nenhum pacote, lockfile, produção ou ambiente externo foi alterado.
+
+## Ciclo autônomo — 2026-10-18: advisors Supabase DEV
+
+- **READ-ONLY:** o projeto `qwvbvqlzcyfkuszxrlgv` permanece saudável, mas os advisors continuam apontando 2 tabelas privadas com RLS sem policies, 5 funções `SECURITY DEFINER` executáveis por `authenticated`, proteção contra senhas vazadas desativada, 12 índices sem uso observado e 2 pares de policies permissivas.
+- **LIMITE:** nenhuma alteração estrutural, RLS, função privilegiada, Auth ou índice foi executada nesta rodada; cada correção exige script específico e revisão/aprovação antes da execução.
 - **CI/PREVIEW:** `NEXUS CI` run `39171750214` (#540) concluiu `success`; preview Vercel `dpl_6k5sM7Lv9gjd3ivim7Q9FUUpCc6v` ficou `READY` para `e4faea7`.
 
 ## Ciclo autônomo — 2026-10-18: revisão de acessibilidade e advisors
