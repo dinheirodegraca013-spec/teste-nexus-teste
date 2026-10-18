@@ -164,3 +164,4 @@
 - 2026-10-18: `OnboardingPage` passou a rejeitar nome de organização vazio antes do UPDATE; regressão adicionada. `npm test` 264/264, lint e build aprovados; banco/Auth/produção intactos.
 - 2026-10-18: CI #518 (`39169936965`) passou e preview Vercel `dpl_6CzkLzXMFjsJNo3YFrsN8zWDD5aM` ficou READY para `1b28d54`; sem merge/promoção.
 - 2026-10-18: `SettingsPage` passou a exibir status real de configuração Supabase e removeu endpoint fictício; regressão adicionada. `npm test` 265/265, lint e build aprovados; banco/Auth/produção intactos.
+- 2026-10-18: CI #522 (`39170125281`) passou e preview Vercel `dpl_AnkUkQSBDKrPQq8FMPKHQqaeRz8n` ficou READY para `53f23cf`; sem merge/promoção.
