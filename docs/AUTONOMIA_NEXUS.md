@@ -1036,3 +1036,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **CORRIGIDO:** a tela de cadastro agora exige e informa mínimo de 8 caracteres, igual ao requisito efetivo do AuthContext.
 - **VERIFICADO:** 223/223 testes, lint e build aprovados localmente.
+
+## Ciclo autônomo — 2026-10-18: reconciliação antes da policy
+
+- **VERIFICADO:** o Supabase DEV e `supabase/migrations` possuem os mesmos 13 nomes de migrations; a diferença de timestamps remotos é apenas de aplicação do executor.
+- **PENDENTE:** aplicar `ADD_ORGANIZATIONS_UPDATE_POLICY.sql` somente após autorização específica.
