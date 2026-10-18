@@ -132,3 +132,4 @@
 - 2026-10-18: alinhado o cabeçalho da migration transacional ao estado real: RPC aplicada somente no DEV após aprovação explícita; 247 testes, lint e build aprovados.
 - 2026-10-18: Security Advisor read-only do DEV reportou 2 tabelas privadas RLS sem policies, 4 funções SECURITY DEFINER para authenticated e leaked-password protection desativada; mudanças estruturais/Auth permanecem pendentes de revisão específica.
 - 2026-10-18: PR #1 revisada como DRAFT no head `d78b48d`; publicação de detalhes internos foi bloqueada por controle de risco e não foi contornada.
+- 2026-10-18: Vercel confirmou preview READY para `0ac01d5` (`dpl_7KwtxBWJStDS38ZCcPMRRSM9B2V7`); produção não foi promovida.
