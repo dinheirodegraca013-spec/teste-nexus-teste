@@ -823,3 +823,10 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **NÃO VERIFICADO:** navegador, SDK real, RLS multitenant e convite E2E. Mocks não simulam rerender completo. Sem bloqueio para a correção local; E2E continua pendente de ambiente com identidades sintéticas.
 - **Limites:** somente AuthContext, teste de carregamento e este registro alterados, sem sobrescrever mudanças humanas. Sem SQL, banco, migração, workflow, ambiente, segredo, merge ou deploy.
 - **Próxima ação:** investigar em ciclo separado a finalização de callbacks concorrentes de `onAuthStateChange`: verificar se uma carga antiga encerra `isLoading` enquanto uma identidade mais recente ainda carrega; reproduzir com promessas controladas antes de corrigir. Estado: EM DESENVOLVIMENTO.
+
+## Ciclo autônomo — 2026-10-18: verificação pós-publicação
+
+- **APROVADO:** branch `fix/persist-rbac-permissions` sincronizada no commit `b8d520a95765bba7990f662945a097eb219471bd`.
+- **APROVADO:** checks remotos do PR: typecheck/build, validação de Edge Functions, GitGuardian sem segredos detectados e preview Vercel concluído com sucesso.
+- **NÃO VERIFICADO:** E2E autenticado com dois tenants; advisories de funções privilegiadas, Auth e índices permanecem sem alteração por exigirem revisão/autorização específica.
+- **Próxima ação:** executar somente auditoria direcionada de logs/fluxos autenticados quando houver ambiente de teste controlado; não aplicar SQL estrutural sem aprovação específica.
