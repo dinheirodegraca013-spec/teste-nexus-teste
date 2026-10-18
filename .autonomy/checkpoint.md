@@ -80,3 +80,4 @@
 - 2026-10-18: consulta read-only da janela padrão de logs DEV não encontrou ocorrências de `error:`, `fatal:` ou `panic` em nenhuma fonte retornada.
 - 2026-10-18: advisors DEV revalidados; permanecem 2 tabelas privadas sem policies (deny-by-default), 3 RPCs `SECURITY DEFINER` protegidas por validações, 19 índices sem uso por ausência de carga e 2 pares de policies permissivas intencionais. Nenhuma alteração automática aplicada.
 - 2026-10-18: corrigido defeito comprovado em `profilesService.create`: resposta `data:null,error:null` agora retorna `PROFILE_CREATE_NOT_CONFIRMED`. Teste de regressão criado; suíte 203/203, lint e build aprovados.
+- 2026-10-18: centralizada confirmação de criação nos cadastros operacionais; metas, eventos, reuniões, presenças, materiais, distribuições, adesivos, CRM e demandas agora rejeitam `data:null,error:null`. Suíte 204/204, lint e build aprovados.

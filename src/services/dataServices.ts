@@ -34,6 +34,17 @@ function confirmUpdatedRow<T>(
   return { data, error: null };
 }
 
+function confirmCreatedRow<T>(
+  data: T | null,
+  error: { message: string; code?: string } | null,
+  code: string,
+  message: string,
+): { data: T | null; error: { message: string; code?: string } | null } {
+  if (error) return { data: null, error };
+  if (!data) return { data: null, error: { code, message } };
+  return { data, error: null };
+}
+
 // All update methods must confirm a returned row: RLS can silently affect zero rows.
 function confirmDeletedRow(
   data: { id: string } | null,
@@ -223,7 +234,12 @@ export const crmService = {
       .insert([dbPayload])
       .select()
       .maybeSingle();
-    return { data: data ? mapCrmContactRow(data) : null, error };
+    return confirmCreatedRow(
+      data ? mapCrmContactRow(data) : null,
+      error,
+      'CRM_CONTACT_CREATE_NOT_CONFIRMED',
+      'Não foi possível confirmar o cadastro do contato. Verifique a lista antes de tentar novamente.',
+    );
   },
 
   async update(id: string, updates: Partial<CrmContact> & Record<string, any>) {
@@ -288,7 +304,12 @@ export const goalsService = {
       .insert([goal])
       .select()
       .maybeSingle();
-    return { data: data as Goal | null, error };
+    return confirmCreatedRow(
+      data as Goal | null,
+      error,
+      'GOAL_CREATE_NOT_CONFIRMED',
+      'Não foi possível confirmar o cadastro da meta. Verifique a lista antes de tentar novamente.',
+    );
   },
 
   async update(id: string, updates: Partial<Goal>) {
@@ -329,7 +350,12 @@ export const eventsService = {
       .insert([event])
       .select()
       .maybeSingle();
-    return { data: data as CampaignEvent | null, error };
+    return confirmCreatedRow(
+      data as CampaignEvent | null,
+      error,
+      'CAMPAIGN_EVENT_CREATE_NOT_CONFIRMED',
+      'Não foi possível confirmar o cadastro do evento. Verifique a lista antes de tentar novamente.',
+    );
   },
 
   async update(id: string, updates: Partial<CampaignEvent>) {
@@ -370,7 +396,12 @@ export const meetingsService = {
       .insert([meeting])
       .select()
       .maybeSingle();
-    return { data: data as Meeting | null, error };
+    return confirmCreatedRow(
+      data as Meeting | null,
+      error,
+      'MEETING_CREATE_NOT_CONFIRMED',
+      'Não foi possível confirmar o cadastro da reunião. Verifique a lista antes de tentar novamente.',
+    );
   },
 
   async update(id: string, updates: Partial<Meeting>) {
@@ -417,7 +448,12 @@ export const presenceService = {
       .insert([presence])
       .select()
       .maybeSingle();
-    return { data: data as FieldPresence | null, error };
+    return confirmCreatedRow(
+      data as FieldPresence | null,
+      error,
+      'FIELD_PRESENCE_CREATE_NOT_CONFIRMED',
+      'Não foi possível confirmar o registro de presença. Verifique a lista antes de tentar novamente.',
+    );
   },
 
   async createLog(presence: Partial<FieldPresence>) {
@@ -481,7 +517,12 @@ export const materialsService = {
       .insert([item])
       .select()
       .maybeSingle();
-    return { data: data as MaterialInventory | null, error };
+    return confirmCreatedRow(
+      data as MaterialInventory | null,
+      error,
+      'MATERIAL_CREATE_NOT_CONFIRMED',
+      'Não foi possível confirmar o cadastro do material. Verifique a lista antes de tentar novamente.',
+    );
   },
 
   async updateItem(id: string, updates: Partial<MaterialInventory>) {
@@ -500,7 +541,12 @@ export const materialsService = {
       .insert([dist])
       .select()
       .maybeSingle();
-    return { data: data as MaterialDistribution | null, error };
+    return confirmCreatedRow(
+      data as MaterialDistribution | null,
+      error,
+      'MATERIAL_DISTRIBUTION_CREATE_NOT_CONFIRMED',
+      'Não foi possível confirmar a distribuição do material. Verifique a lista antes de tentar novamente.',
+    );
   },
 
   async deleteItem(id: string) {
@@ -533,7 +579,12 @@ export const stickersService = {
       .insert([sticker])
       .select()
       .maybeSingle();
-    return { data: data as CarSticker | null, error };
+    return confirmCreatedRow(
+      data as CarSticker | null,
+      error,
+      'CAR_STICKER_CREATE_NOT_CONFIRMED',
+      'Não foi possível confirmar o cadastro do adesivo de carro. Verifique a lista antes de tentar novamente.',
+    );
   },
 
   async updateCarSticker(id: string, updates: Partial<CarSticker>) {
@@ -575,7 +626,12 @@ export const stickersService = {
       .insert([sticker])
       .select()
       .maybeSingle();
-    return { data: data as HouseSticker | null, error };
+    return confirmCreatedRow(
+      data as HouseSticker | null,
+      error,
+      'HOUSE_STICKER_CREATE_NOT_CONFIRMED',
+      'Não foi possível confirmar o cadastro do adesivo de casa. Verifique a lista antes de tentar novamente.',
+    );
   },
 
   async updateHouseSticker(id: string, updates: Partial<HouseSticker>) {
@@ -618,7 +674,12 @@ export const intelligenceService = {
       .insert([demand])
       .select()
       .maybeSingle();
-    return { data: data as PopularDemand | null, error };
+    return confirmCreatedRow(
+      data as PopularDemand | null,
+      error,
+      'POPULAR_DEMAND_CREATE_NOT_CONFIRMED',
+      'Não foi possível confirmar o cadastro da demanda. Verifique a lista antes de tentar novamente.',
+    );
   },
 
   async updateDemand(id: string, updates: Partial<PopularDemand>) {
