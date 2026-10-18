@@ -1157,3 +1157,13 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **2026-10-18 — REVISÃO DA PR:** PR #1 permanece aberta como DRAFT, sem merge, no head `d78b48d`. A tentativa de publicar detalhes internos de segurança/E2E como comentário foi recusada pelo controle de risco; nenhum dado foi divulgado externamente.
 - **2026-10-18 — VERCEL:** o preview da branch `fix/persist-rbac-permissions` para o commit `0ac01d5` está `READY` (`dpl_7KwtxBWJStDS38ZCcPMRRSM9B2V7`). Nenhuma promoção para produção foi executada.
 - **2026-10-18 — RUNTIME:** a rota pública `/cadastro` do preview Vercel atual respondeu HTTP 200 com conteúdo NEXUS. Verificação somente leitura; nenhum login, escrita ou dado real foi utilizado.
+
+## Ciclo autônomo — 2026-10-18: confirmação segura da recuperação de senha
+
+- **Escopo único:** corrigir falso sucesso em `src/pages/public/ForgotPasswordPage.tsx`. Branch `fix/persist-rbac-permissions`, status e diff iniciais limpos. Skills consultadas: `bug-hunter` e `qa-automation`; documentos operacionais da raiz citados no OBRAMAXAUTO não existem neste checkout.
+- **REPROVADO antes da correção (RED):** `node --test-reporter=tap tests/password-reset-feedback.test.mjs`: 1 aprovado e 2 falhos. Erro retornado pelo Auth ativava a confirmação de envio; rejeição da promessa escapava e mantinha carregamento ativo. A primeira tentativa do harness falhou por configuração JSX; ajustada antes da reprodução válida.
+- **CORRIGIDO:** o formulário verifica `error`, informa falha genérica sem expor detalhes do provedor, permite nova tentativa e limpa carregamento em `finally`. Solicitação aceita mostra mensagem condicional, sem afirmar entrega ou existência da conta.
+- **APROVADO:** `node tests/password-reset-feedback.test.mjs` (3/3 cenários: erro retornado, rejeição e sucesso com e-mail normalizado); `npm test` (34 arquivos aprovados, zero falhas conforme saída do executor); `npm run lint`; `npm run build`; `git diff --check`.
+- **NÃO VERIFICADO:** navegador real, entrega de e-mail e fluxo completo de redefinição. Testes exercitam o handler real do componente com hooks/contextos mockados e e-mail sintético; não equivalem a E2E.
+- **Limites:** nenhuma conexão externa, alteração de SQL, workflow, ambiente, credencial, merge ou deploy. Nenhum bloqueador para esta correção local.
+- **Próxima ação:** validar a recuperação completa em ambiente de teste autorizado, incluindo link recebido, definição da nova senha e login; homologação geral permanece pendente.
