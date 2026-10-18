@@ -1355,3 +1355,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **VERCEL:** deployment `dpl_ADrUcM7Gis3iJYWRwa48UhLopLco` está `READY` para o commit `5db1aca` na branch `fix/persist-rbac-permissions`.
 - **GITHUB:** o commit documental não gerou workflow associado; a validação equivalente permanece registrada nos commits de código anteriores.
+## Ciclo autônomo — 2026-10-18: auditoria das variáveis Vercel
+
+- **CONFIRMADO:** o deployment Preview READY usa as variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` apontadas ao DEV.
+- **PENDÊNCIA DE PRODUÇÃO:** o alvo Production possui variáveis `SUPABASE_*`/`NEXT_PUBLIC_*`, mas não a dupla `VITE_*` usada pelo build Vite. Isso explica o erro de conexão no domínio público.
+- **ESCOPO:** nenhuma variável de Production foi criada, removida ou alterada; a correção exige autorização explícita para Production, que permanece fora deste ciclo.
