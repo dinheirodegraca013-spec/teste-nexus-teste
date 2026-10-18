@@ -1212,6 +1212,7 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO:** `AuthContext.signUp` agora rejeita respostas sem `data.user`, mesmo quando o Supabase retorna `error: null`, evitando anunciar conta criada sem confirmação do Auth.
 - **TESTES:** contrato de regressão adicionado; `npm test` 267/267, `npm run lint` e `npm run build` aprovados.
 - **ESCOPO:** somente autenticação/frontend/teste; nenhuma policy, função, schema, produção, `main` ou dado real alterado.
+- **CI/PREVIEW:** `NEXUS CI` run `39171464246` (#536) concluiu `success`; preview Vercel `dpl_6ajoaZ8Z35pztNSD46yU74uNYMuo` ficou `READY` para `ca50c6c`.
 
 ## Ciclo autônomo — 2026-10-18: revisão de acessibilidade e advisors
 
