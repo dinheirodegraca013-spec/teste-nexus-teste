@@ -886,3 +886,10 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **DECISÃO:** não reconstruir nem aplicar arquivos SQL automaticamente. Os cinco primeiros contêm DDL/RLS/funções privilegiadas; a reconciliação precisa de revisão e aprovação específica para evitar reexecução ou divergência de schema.
 - **CI:** a consulta de checks do PR retornou HTTP 409 porque o PR mudou; não foi possível declarar estado novo sem recarregar a revisão atual.
 - **Próxima ação:** apresentar um patch de versionamento/reconciliação para aprovação, sem executar SQL no DEV.
+
+## Ciclo autônomo — 2026-10-18: manutenção do CI
+
+- **CORRIGIDO:** atualizados `actions/checkout` e `actions/setup-node` de `@v4` para `@v5` em `ci.yml` e no workflow E2E manual, removendo o aviso de runtime Node 20 depreciado emitido pelo GitHub.
+- **VALIDADO:** `npm test` passou com 198/198; `npm run lint` passou; `npm run build` passou.
+- **REMOTO:** os checks do commit `3f5bf1e` estavam verdes; as anotações eram apenas aviso de depreciação Node 20 e notice de migração do Ubuntu, sem falha funcional.
+- **PENDENTE:** os checks do novo commit ainda precisam concluir; E2E autenticado permanece manual e dependente de duas contas sintéticas DEV.
