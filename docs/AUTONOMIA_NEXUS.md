@@ -1091,3 +1091,4 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **VERIFICADO:** as 13 migrations registradas no DEV estão alinhadas aos nomes do checkout; as tabelas operacionais e `organizations` ainda têm apenas policies `SELECT`.
 - **PENDENTE:** criação de duas contas de teste em organizações distintas e aprovação específica para policies de escrita.
 - **PREVIEW:** Vercel confirmou deployment READY do commit `3dca09f`; produção permanece fora do escopo.
+- **CI:** checks do commit `74d6b23` passaram em Vercel, typecheck/build e Edge Functions; Supabase Preview foi ignorado por ausência de branch Supabase e GitGuardian ficou `neutral` por limite de tamanho.
