@@ -160,3 +160,4 @@
 - 2026-10-18: Performance Advisor DEV confirmou 12 índices sem uso observado e 2 pares de policies permissivas; nenhuma alteração estrutural foi executada sem plano e aprovação.
 - 2026-10-18: stream de logs DEV respondeu com contagens por fonte; filtros por timestamp/nível ainda falham no backend. Sem evidência suficiente para intervenção e sem alterações externas.
 - 2026-10-18: `RegisterPage` passou a falhar fechado para convites incompletos antes do `signUp`; regressão adicionada. `npm test` 263/263, lint e build aprovados; Auth/banco/produção intactos.
+- 2026-10-18: CI #514 (`39169738113`) passou e preview Vercel `dpl_4FKYvgxG12uuyq8E29xb15XyL8cA` ficou READY para `43e96d1`; sem merge/promoção.
