@@ -11,6 +11,7 @@ import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { nonNegativeQuantity, positiveQuantity } from '../../utils/materialQuantities';
 
 export const MaterialsPage: React.FC = () => {
   const { organization } = useAuth();
@@ -92,6 +93,12 @@ export const MaterialsPage: React.FC = () => {
   const handleSaveItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!itemForm.name.trim()) return;
+    const totalQuantity = positiveQuantity(itemForm.total_quantity);
+    const minStockAlert = nonNegativeQuantity(itemForm.min_stock_alert);
+    if (totalQuantity === null || minStockAlert === null) {
+      toastError('Informe quantidades válidas: estoque inicial maior que zero e alerta não negativo.');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -99,10 +106,10 @@ export const MaterialsPage: React.FC = () => {
         organization_id: orgId,
         name: itemForm.name.trim(),
         category: itemForm.category,
-        total_quantity: Number(itemForm.total_quantity) || 0,
+        total_quantity: totalQuantity,
         distributed_quantity: 0,
         unit: itemForm.unit,
-        min_stock_alert: Number(itemForm.min_stock_alert) || 0,
+        min_stock_alert: minStockAlert,
       });
 
       if (error) {
@@ -127,7 +134,11 @@ export const MaterialsPage: React.FC = () => {
       return;
     }
 
-    const qty = Number(distForm.quantity) || 0;
+    const qty = positiveQuantity(distForm.quantity);
+    if (qty === null) {
+      toastError('Informe uma quantidade de distribuição maior que zero.');
+      return;
+    }
     const available = mat.total_quantity - mat.distributed_quantity;
     if (qty > available) {
       toastError(`Quantidade indisponível em estoque (Disponível: ${available} ${mat.unit})`);

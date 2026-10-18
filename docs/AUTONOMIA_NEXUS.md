@@ -1136,6 +1136,13 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **APROVADO:** Storage privado permitiu a listagem do próprio caminho e bloqueou o caminho do outro tenant.
 - **ESCOPO:** smoke test somente leitura; nenhuma linha, arquivo, policy ou schema foi alterado.
 
+## Ciclo autônomo — 2026-10-18: validação de quantidades em materiais
+
+- **FALHA CONFIRMADA:** `MaterialsPage` convertia zero, negativos e valores inválidos em quantidade aceitável (`|| 0`), permitindo tentativa de estoque/distribuição inválida.
+- **CORRIGIDO:** validação comum rejeita distribuição não positiva, estoque inicial não positivo e alerta negativo; dois testes de regressão adicionados.
+- **VERIFICAÇÃO:** suíte 245/245, TypeScript/lint e build aprovados.
+- **RISCO RESIDUAL:** a baixa ainda usa duas escritas independentes. Foi preparada a RPC transacional em `docs/proposed-migrations/ADD_ATOMIC_MATERIAL_DISTRIBUTION.sql`; aplicação e integração dependem de aprovação estrutural específica.
+
 ## Ciclo autônomo — 2026-10-18: advisories do DEV
 
 - **SEGURANÇA:** dois objetos privados com RLS sem policies e três funções `SECURITY DEFINER` acessíveis a `authenticated` foram reportados. As funções validam tenant/admin internamente e são chamadas pelo frontend; revogação exigiria mudança estrutural e revisão de fluxo.
