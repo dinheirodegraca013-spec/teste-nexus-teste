@@ -864,3 +864,10 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **APROVADO:** checks do commit `5c94744b385591ce45320ecf25d81022cf3a9d66` concluídos com sucesso em typecheck/build, Edge Functions, GitGuardian e Vercel.
 - **APROVADO:** nenhuma annotation de falha foi reportada pelos checks.
 - **PENDENTE:** E2E autenticado permanece dependente de duas contas TEST controladas; advisories estruturais continuam sob aprovação específica.
+
+## Ciclo autônomo — 2026-10-18: confirmação de privilégios no DEV
+
+- **CONFIRMADO (somente leitura):** `authenticated` possui `EXECUTE` em `nexus_set_controller_scope`, `nexus_set_team_scope` e `provision_new_user`, todas `SECURITY DEFINER`.
+- **CONFIRMADO (somente leitura):** `authenticated` possui privilégios DML amplos em `public.organizations`, `public.profiles` e `public.user_module_permissions`; RLS não substitui a necessidade de revisar `TRUNCATE`, `TRIGGER` e contratos privilegiados.
+- **DECISÃO:** nenhuma revogação foi aplicada. A correção depende de definir quais chamadas são necessárias ao onboarding e de aprovação específica do script SQL/Auth.
+- **Próxima ação:** apresentar script mínimo de revogação e testes negativos somente após autorização explícita para esta mudança estrutural.
