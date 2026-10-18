@@ -1250,6 +1250,11 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **READ-ONLY:** o projeto `qwvbvqlzcyfkuszxrlgv` permanece saudável, mas os advisors continuam apontando 2 tabelas privadas com RLS sem policies, 5 funções `SECURITY DEFINER` executáveis por `authenticated`, proteção contra senhas vazadas desativada, 12 índices sem uso observado e 2 pares de policies permissivas.
 - **LIMITE:** nenhuma alteração estrutural, RLS, função privilegiada, Auth ou índice foi executada nesta rodada; cada correção exige script específico e revisão/aprovação antes da execução.
+
+## Ciclo autônomo — 2026-10-18: revisão da PR
+
+- **ATUALIZADO:** a PR #1 recebeu evidências atuais de testes, lint, build, CI e previews Vercel; continua DRAFT, aberta e sem merge.
+- **ESCOPO:** somente metadados/documentação da PR; nenhum código de produção, banco ou Auth foi alterado.
 - **CI/PREVIEW:** `NEXUS CI` run `39171750214` (#540) concluiu `success`; preview Vercel `dpl_6k5sM7Lv9gjd3ivim7Q9FUUpCc6v` ficou `READY` para `e4faea7`.
 
 ## Ciclo autônomo — 2026-10-18: revisão de acessibilidade e advisors
