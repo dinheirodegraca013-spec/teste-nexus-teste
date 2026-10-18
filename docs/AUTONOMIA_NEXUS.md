@@ -905,6 +905,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **DECISÃO:** nenhum ajuste automático; os itens estruturais exigem script revisado, teste de impacto e aprovação específica.
 - **CI:** Vercel e GitGuardian do commit `0fdbd56` aprovados; typecheck/build e Edge Functions ainda estavam em execução no momento da consulta.
 
+## Ciclo autônomo — 2026-10-18: auditoria estática de exposição
+
+- **APROVADO:** a busca direcionada não encontrou chave `service_role`, segredo Supabase ou `dangerouslySetInnerHTML` no frontend; a chave administrativa aparece somente na Edge Function via variável de ambiente.
+- **APROVADO:** o uso de `localStorage` permanece restrito à persistência da sessão Supabase; nenhuma persistência de `organization_id` foi encontrada.
+- **PENDENTE:** checks do commit `c368093` ainda estavam em execução na última consulta; nenhuma falha nova comprovada.
+
 ## Ciclo autônomo — 2026-10-18: instalação determinística
 
 - **MELHORIA:** workflows CI e E2E passaram de `npm install` para `npm ci`, usando o `package-lock.json` existente.
