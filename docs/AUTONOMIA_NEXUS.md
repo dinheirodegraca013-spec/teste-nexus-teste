@@ -871,3 +871,10 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CONFIRMADO (somente leitura):** `authenticated` possui privilégios DML amplos em `public.organizations`, `public.profiles` e `public.user_module_permissions`; RLS não substitui a necessidade de revisar `TRUNCATE`, `TRIGGER` e contratos privilegiados.
 - **DECISÃO:** nenhuma revogação foi aplicada. A correção depende de definir quais chamadas são necessárias ao onboarding e de aprovação específica do script SQL/Auth.
 - **Próxima ação:** apresentar script mínimo de revogação e testes negativos somente após autorização explícita para esta mudança estrutural.
+
+## Ciclo autônomo — 2026-10-18: refinamento de privilégios
+
+- **APROVADO (somente leitura):** `has_table_privilege` confirmou que `authenticated` não possui `TRUNCATE`, `TRIGGER` ou `REFERENCES` em `organizations`, `profiles` e `user_module_permissions`.
+- **APROVADO (somente leitura):** `profiles` não concede `UPDATE` a `authenticated`; isso mantém a alteração de perfil sob fluxo controlado.
+- **REVISÃO:** as funções `SECURITY DEFINER` são RPCs usadas pelo frontend e suas implementações validam administrador ativo, tenant, papel e vínculos antes de escrever. O advisory permanece documentado, mas não prova vulnerabilidade isoladamente.
+- **Decisão:** não aplicar revogações automáticas; qualquer mudança de contrato exige teste de onboarding/RBAC e aprovação específica.
