@@ -148,3 +148,4 @@
 - 2026-10-18: migration `ADD_ATOMIC_GOAL_INCREMENT.sql` aplicada somente no DEV após autorização; ACL verificada e `GoalsPage` integrado à RPC. Suíte 258/258, lint e build aprovados.
 - 2026-10-18: CI `NEXUS CI` #39167147169 do head `772a93a` concluiu com sucesso; PR #1 permanece DRAFT e sem merge.
 - 2026-10-18: `npm ls --depth=0` consistente; `npm audit` bloqueado por falha de acesso ao endpoint do registry. Nenhuma dependência alterada.
+- 2026-10-18: auditoria de dependências repetida com acesso autorizado ao registry; resultado `0 vulnerabilidades`. Nenhum pacote alterado.

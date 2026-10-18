@@ -1180,6 +1180,7 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **INTEGRADO:** `GoalsPage` usa a RPC atômica no incremento rápido, removendo o read-modify-write client-side. Suíte `npm test` 258/258, `npm run lint` e `npm run build` aprovados.
 - **CI/PR:** workflow `NEXUS CI` #39167147169 para o head `772a93a` concluiu `success`; PR #1 continua aberta como DRAFT, sem merge.
 - **DEPENDÊNCIAS:** `npm ls --depth=0` está consistente. `npm audit --omit=dev --audit-level=high` não pôde consultar o endpoint do registry nesta rodada; nenhum pacote foi alterado.
+- **DEPENDÊNCIAS REVALIDADAS:** com acesso de rede autorizado, `npm audit --omit=dev --audit-level=high --registry=https://registry.npmjs.org` encontrou **0 vulnerabilidades**. Nenhum pacote foi alterado.
 
 ## Ciclo autônomo — 2026-10-18: confirmação segura da recuperação de senha
 
