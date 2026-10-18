@@ -1441,3 +1441,4 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CONFIGURAÇÃO:** o bundle servido contém o identificador do Supabase DEV `qwvbvqlzcyfkuszxrlgv`; não há evidência do erro anterior de configuração no artefato publicado.
 - **ESCOPO:** somente leitura externa; nenhum deploy manual, produção, Auth ou banco foi alterado.
 - **BROWSER TESTING — BLOCKED:** o navegador recusou a autorização de egress para abrir o domínio; não houve tentativa de contorno. O HTML/bundle já foi validado por leitura HTTP read-only.
+- **PR:** no head `feeaf62c`, typecheck/build, Edge Functions e GitGuardian estão `success`; Supabase Preview `skipped`. O check Vercel do commit ainda reporta rate limit, embora o deployment mais recente separado esteja READY.
