@@ -878,3 +878,11 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **APROVADO (somente leitura):** `profiles` não concede `UPDATE` a `authenticated`; isso mantém a alteração de perfil sob fluxo controlado.
 - **REVISÃO:** as funções `SECURITY DEFINER` são RPCs usadas pelo frontend e suas implementações validam administrador ativo, tenant, papel e vínculos antes de escrever. O advisory permanece documentado, mas não prova vulnerabilidade isoladamente.
 - **Decisão:** não aplicar revogações automáticas; qualquer mudança de contrato exige teste de onboarding/RBAC e aprovação específica.
+
+## Ciclo autônomo — 2026-10-18: reconciliação de migrations DEV
+
+- **CONFIRMADO (somente leitura):** o Supabase DEV registra 14 migrations; o checkout versiona 10 arquivos.
+- **DIVERGÊNCIA IDENTIFICADA:** faltam no checkout `20261016152053_restrict_rls_event_trigger_execution`, `20261016153154_nexus_core_organizations_profiles_permissions`, `20261016175917_provision_new_user`, `20261016182406_nexus_operational_modules_tenant_scoped`, `20261016182434_index_nexus_operational_foreign_keys`, `20261017002453_nexus_module_read_rls` e `20261018012432_nexus_private_storage_reviewed` (esta última está descrita em `docs/proposed-migrations`).
+- **DECISÃO:** não reconstruir nem aplicar arquivos SQL automaticamente. Os cinco primeiros contêm DDL/RLS/funções privilegiadas; a reconciliação precisa de revisão e aprovação específica para evitar reexecução ou divergência de schema.
+- **CI:** a consulta de checks do PR retornou HTTP 409 porque o PR mudou; não foi possível declarar estado novo sem recarregar a revisão atual.
+- **Próxima ação:** apresentar um patch de versionamento/reconciliação para aprovação, sem executar SQL no DEV.
