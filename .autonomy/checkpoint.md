@@ -211,3 +211,4 @@
 - 2026-10-18 23:30 BRT: Code Review confirmou Vercel, typecheck/build, Edge Functions e GitGuardian `success` no head `7cf2614c`; Supabase Preview `skipped` por ausência de branch associada; PR #1 DRAFT.
 - 2026-10-18 23:42 BRT: corrigido `auditService.log` para reportar erros PostgREST retornados; regressão adicionada. `npm test` 274/274, lint e build aprovados.
 - 2026-10-18 23:45 BRT: CI do head `837385ba` aprovou build/typecheck, Edge Functions e GitGuardian; Vercel está temporariamente rate-limited por 24h, sem evidência de falha do código.
+- 2026-10-18 23:50 BRT: rechecagem read-only encontrou deployment Vercel `dpl_HaKgduYgTLiiwP8qHXPiDoFvXypp` READY, domínio HTTP 200 e bundle contendo o Supabase DEV correto; não houve deploy manual.

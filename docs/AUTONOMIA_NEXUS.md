@@ -1434,3 +1434,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **TESTE:** adicionada regressão `tests/audit-log-error.test.mjs`; suíte completa `274/274`, lint e build aprovados.
 - **ESCOPO:** somente frontend/teste; nenhum dado, schema, Auth, produção ou permissão remota alterado.
 - **CI/PR:** head `837385ba` passou typecheck/build, Edge Functions e GitGuardian; Supabase Preview `skipped`. Vercel retornou apenas rate limit de deployment (`retry in 24 hours`), sem falha de código.
+
+## Ciclo autônomo — 2026-10-18: revalidação do deployment
+
+- **VERCEL:** o deployment mais recente `dpl_HaKgduYgTLiiwP8qHXPiDoFvXypp` está `READY`; o domínio público responde HTTP 200.
+- **CONFIGURAÇÃO:** o bundle servido contém o identificador do Supabase DEV `qwvbvqlzcyfkuszxrlgv`; não há evidência do erro anterior de configuração no artefato publicado.
+- **ESCOPO:** somente leitura externa; nenhum deploy manual, produção, Auth ou banco foi alterado.
