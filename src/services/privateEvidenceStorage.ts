@@ -82,8 +82,9 @@ async function requireActiveTenantAdmin(orgId: string): Promise<StorageFailure |
 }
 
 /**
- * Prepared, NOT yet enabled in UI: the bucket and policies are pending
- * explicit approval and deployment in dev. Never falls back to a public URL.
+ * The private bucket and tenant-scoped policies are deployed in the
+ * authorized DEV project. The product UI remains opt-in until authenticated
+ * E2E coverage is complete; this service never falls back to a public URL.
  */
 export async function uploadPrivateEvidence(
   orgId: string, kind: EvidenceKind, file: Blob
