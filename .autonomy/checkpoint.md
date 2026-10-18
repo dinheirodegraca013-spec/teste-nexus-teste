@@ -130,3 +130,4 @@
 - 2026-10-18: Vercel confirmou preview READY para o commit `2bdcc16` da branch; o domínio público não foi reatribuído nesta rodada.
 - 2026-10-18: E2E somente leitura repetido após a RPC: duas sessões continuam isoladas por RLS em organizações, perfis, CRM e Storage privado. Nenhum dado foi alterado.
 - 2026-10-18: alinhado o cabeçalho da migration transacional ao estado real: RPC aplicada somente no DEV após aprovação explícita; 247 testes, lint e build aprovados.
+- 2026-10-18: Security Advisor read-only do DEV reportou 2 tabelas privadas RLS sem policies, 4 funções SECURITY DEFINER para authenticated e leaked-password protection desativada; mudanças estruturais/Auth permanecem pendentes de revisão específica.
