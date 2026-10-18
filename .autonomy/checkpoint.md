@@ -208,3 +208,4 @@
 - 2026-10-18 23:25 BRT: advisors permanecem com 2 tabelas privadas sem policies, 5 funções SECURITY DEFINER executáveis por authenticated e leaked-password protection desativada; nenhuma alteração estrutural executada.
 - 2026-10-18 23:25 BRT: consulta de logs enumerou streams das últimas 24h; consulta detalhada falhou no backend e não gerou evidência acionável.
 - 2026-10-18 23:27 BRT: `npm test` 273/273, `npm run lint` e `npm run build` aprovados.
+- 2026-10-18 23:30 BRT: Code Review confirmou Vercel, typecheck/build, Edge Functions e GitGuardian `success` no head `7cf2614c`; Supabase Preview `skipped` por ausência de branch associada; PR #1 DRAFT.

@@ -1426,3 +1426,4 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **VERCEL:** deployment mais recente está `READY`; Production lista as duas variáveis `VITE_SUPABASE_*` necessárias ao build Vite.
 - **LOGS:** consulta read-only das últimas 24h enumerou os streams; consulta detalhada falhou no backend e não gerou evidência de erro aplicável.
 - **PENDÊNCIAS:** advisors continuam apontando 2 tabelas privadas sem policies, 5 funções `SECURITY DEFINER` executáveis por usuários autenticados e proteção contra senhas vazadas desativada. Nenhuma alteração estrutural foi executada.
+- **CI/PR:** head `7cf2614c` passou Vercel, typecheck/build, Edge Functions e GitGuardian; Supabase Preview ficou `skipped` por ausência de branch Supabase associada. PR #1 continua DRAFT, sem merge.
