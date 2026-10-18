@@ -1231,6 +1231,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **READ-ONLY DEV:** o stream de logs respondeu e enumerou `pgbouncer_logs` (10.464), `edge_logs` (158), `postgrest_logs` (154), `postgres_logs` (89), `auth_logs` (80), `storage_logs` (22), `auth_audit_logs` (17) e `realtime_logs` (13) registros disponíveis na janela retornada.
 - **LIMITAÇÃO:** consultas que filtram por timestamp/nível continuam retornando erro transitório do backend de logs; a contagem por fonte não permite classificar falhas ou atribuir impacto.
 - **DECISÃO:** nenhuma alteração de código, banco, Auth ou produção baseada apenas nessas contagens.
+
+## Ciclo autônomo — 2026-10-18: convites incompletos
+
+- **CORRIGIDO:** `RegisterPage` agora bloqueia convites sem organização ou identificador compatível de liderança/coordenação antes de chamar `signUp`, evitando cair no provisionamento de uma organização própria por URL malformada.
+- **TESTES:** contrato de regressão adicionado; `npm test` 263/263, `npm run lint` e `npm run build` aprovados.
+- **ESCOPO:** somente frontend/teste; nenhum Auth, SQL, produção, `main` ou dado real alterado.
 - **CI/PREVIEW:** `NEXUS CI` run `39169229167` (#506) concluiu `success`; preview Vercel `dpl_HzqhjNVoSyvH4iQy2tJcxLpasiqS` ficou `READY` para `0d0d5eb`.
 
 ## Ciclo autônomo — 2026-10-18: confirmação de cadastros

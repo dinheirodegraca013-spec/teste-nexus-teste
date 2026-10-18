@@ -159,3 +159,4 @@
 - 2026-10-18: CI #506 (`39169229167`) passou e o preview Vercel `dpl_HzqhjNVoSyvH4iQy2tJcxLpasiqS` ficou READY para `0d0d5eb`; sem merge ou promoção.
 - 2026-10-18: Performance Advisor DEV confirmou 12 índices sem uso observado e 2 pares de policies permissivas; nenhuma alteração estrutural foi executada sem plano e aprovação.
 - 2026-10-18: stream de logs DEV respondeu com contagens por fonte; filtros por timestamp/nível ainda falham no backend. Sem evidência suficiente para intervenção e sem alterações externas.
+- 2026-10-18: `RegisterPage` passou a falhar fechado para convites incompletos antes do `signUp`; regressão adicionada. `npm test` 263/263, lint e build aprovados; Auth/banco/produção intactos.

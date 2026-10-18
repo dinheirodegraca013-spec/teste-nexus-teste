@@ -128,6 +128,10 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
       setErrorMessage('Você deve aceitar os termos de uso e política de privacidade.');
       return;
     }
+    if (isInvite && (!inviteOrgId || (inviteType === 'lider' && !inviteLeaderId) || (inviteType === 'coordenador' && !inviteCoordId))) {
+      setErrorMessage('Este convite está incompleto ou expirado. Solicite um novo convite ao administrador.');
+      return;
+    }
 
     setIsLoading(true);
     const assignedRole = inviteType === 'coordenador' ? 'coordinator' : (isInvite ? 'leader' : 'admin');

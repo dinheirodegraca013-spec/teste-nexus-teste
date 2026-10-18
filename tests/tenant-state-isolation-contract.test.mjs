@@ -82,3 +82,11 @@ test('leader and coordinator forms never silently accept an unconfirmed create',
   assert.match(coordinators, /Não foi possível confirmar o cadastro do coordenador/);
   assert.match(crm, /Não foi possível confirmar o cadastro do contato/);
 });
+
+test('RegisterPage fails closed for incomplete invitations', async () => {
+  const source = await readFile(new URL('../src/pages/public/RegisterPage.tsx', import.meta.url), 'utf8');
+  assert.match(source, /isInvite && \(!inviteOrgId/);
+  assert.match(source, /inviteType === 'lider' && !inviteLeaderId/);
+  assert.match(source, /inviteType === 'coordenador' && !inviteCoordId/);
+  assert.match(source, /convite está incompleto ou expirado/);
+});
