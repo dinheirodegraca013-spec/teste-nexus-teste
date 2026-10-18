@@ -154,3 +154,4 @@
 - 2026-10-18: revisão read-only confirmou acessibilidade atual de `Modal.tsx` e os advisors residuais (2 tabelas privadas sem policy, 5 SECURITY DEFINER para authenticated, leaked-password protection desativada). Consulta agregada de logs falhou com erro transitório do backend; sem alteração estrutural ou de Auth.
 - 2026-10-18: GitHub Actions `NEXUS CI` run `39168452621` (#498) confirmou sucesso para o commit documental `a44950d`; PR continua sem merge e produção intacta.
 - 2026-10-18: `Drawer` recebeu semântica acessível, foco inicial, trap de Tab/Escape e restauração de foco; dois contratos adicionados. `npm test` 262/262, lint e build aprovados. Banco/Auth/produção intactos.
+- 2026-10-18: CI #502 (`39168995738`) passou e o preview Vercel `dpl_D6V2hBXbYa3yRcFEG4hx6v3MKg4d` ficou READY para `871d66d`; sem merge ou promoção.

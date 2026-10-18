@@ -1212,6 +1212,7 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO:** `Drawer` agora possui semântica de diálogo, título/descrição associados, botão de fechamento nomeado, foco inicial, contenção de Tab/Escape e restauração do foco ao fechar.
 - **TESTES:** adicionados dois contratos de acessibilidade; `npm test` 262/262, `npm run lint` e `npm run build` aprovados.
 - **ESCOPO:** somente frontend/testes; nenhum SQL, Auth, produção, `main` ou dado real alterado.
+- **CI/PREVIEW:** GitHub Actions `NEXUS CI` run `39168995738` (#502) concluiu `success`; preview Vercel `dpl_D6V2hBXbYa3yRcFEG4hx6v3MKg4d` ficou `READY` para o commit `871d66d`.
 
 ## Ciclo autônomo — 2026-10-18: confirmação de cadastros
 
