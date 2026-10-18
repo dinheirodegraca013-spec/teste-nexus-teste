@@ -1199,6 +1199,13 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **TESTES:** contrato de regressão adicionado; `npm test` 259/259, `npm run lint` e `npm run build` aprovados.
 - **ESCOPO:** alteração somente de frontend/teste na branch `fix/persist-rbac-permissions`; nenhum SQL, Auth, produção, `main` ou dado real alterado.
 
+## Ciclo autônomo — 2026-10-18: revisão de acessibilidade e advisors
+
+- **CONFIRMADO:** `Modal.tsx` já expõe `role="dialog"`, nome acessível, `aria-modal`, foco inicial, captura de Tab/Escape e restauração de foco; os testes de acessibilidade estão verdes dentro da suíte atual.
+- **REVISÃO READ-ONLY DEV:** Security Advisor reportou 2 tabelas privadas sem policies, 5 funções `SECURITY DEFINER` executáveis por `authenticated` (incluindo as duas RPCs transacionais) e proteção contra senhas vazadas desativada. As funções têm uso legítimo no frontend e não serão revogadas sem script, revisão de impacto e aprovação específica.
+- **LOGS:** consulta agregada das últimas 24 horas retornou erro transitório do backend de logs; nenhuma conclusão sobre incidentes foi feita e nenhum SQL mutável foi executado.
+- **ESCOPO:** sem alteração de código, banco, Auth, produção ou `main` nesta revisão.
+
 ## Ciclo autônomo — 2026-10-18: confirmação de cadastros
 
 - **CORRIGIDO:** `LeadersPage` e `CoordinatorsPage` agora exibem erro explícito quando a criação não retorna registro confirmado, evitando silêncio após uma tentativa inconclusiva.
