@@ -204,3 +204,7 @@
 - 2026-10-18: Criada documentação operacional para configurar VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY em Production sem expor chaves; nenhum ambiente alterado.
 - 2026-10-18: Adicionada regressão para o contrato VITE_* do Supabase; testes 272/272, lint e build aprovados.
 - 2026-10-18: Adicionado guard para migration Storage (DEV atual e 3 policies); testes 273/273, lint e build aprovados. Migration não executada.
+- 2026-10-18 23:25 BRT: revalidação read-only confirmou Supabase DEV `qwvbvqlzcyfkuszxrlgv` ACTIVE_HEALTHY, 16 migrations e Vercel com deployment READY; Production lista as duas variáveis VITE necessárias.
+- 2026-10-18 23:25 BRT: advisors permanecem com 2 tabelas privadas sem policies, 5 funções SECURITY DEFINER executáveis por authenticated e leaked-password protection desativada; nenhuma alteração estrutural executada.
+- 2026-10-18 23:25 BRT: consulta de logs enumerou streams das últimas 24h; consulta detalhada falhou no backend e não gerou evidência acionável.
+- 2026-10-18 23:27 BRT: `npm test` 273/273, `npm run lint` e `npm run build` aprovados.

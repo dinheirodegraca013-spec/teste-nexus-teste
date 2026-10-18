@@ -1419,3 +1419,10 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **MELHORADO:** adicionada regressão que impede executar acidentalmente a migration de Storage no projeto antigo `qidstqsbxwkbkwowhpab`; exige o DEV atual `qwvbvqlzcyfkuszxrlgv` e exatamente três policies.
 - **TESTES:** `npm test` 273/273, `npm run lint` e `npm run build` aprovados.
 - **ESCOPO:** somente teste/contrato; migration não executada.
+
+## Ciclo autônomo — 2026-10-18: revalidação externa
+
+- **SUPABASE DEV:** `qwvbvqlzcyfkuszxrlgv` permanece `ACTIVE_HEALTHY`, com 16 migrations.
+- **VERCEL:** deployment mais recente está `READY`; Production lista as duas variáveis `VITE_SUPABASE_*` necessárias ao build Vite.
+- **LOGS:** consulta read-only das últimas 24h enumerou os streams; consulta detalhada falhou no backend e não gerou evidência de erro aplicável.
+- **PENDÊNCIAS:** advisors continuam apontando 2 tabelas privadas sem policies, 5 funções `SECURITY DEFINER` executáveis por usuários autenticados e proteção contra senhas vazadas desativada. Nenhuma alteração estrutural foi executada.
