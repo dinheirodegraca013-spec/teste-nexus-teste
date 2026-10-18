@@ -86,3 +86,4 @@
 - 2026-10-18: mensagem de erro do cadastro aprimorada para distinguir falha de conexão de configuração Supabase incorreta, orientando a verificar as variáveis da Vercel e o projeto-alvo. Suíte 206/206, lint e build aprovados.
 - 2026-10-18: documentação operacional reconciliada; o Supabase DEV atual `qwvbvqlzcyfkuszxrlgv` foi destacado como única fonte autorizada e referências a `qidstqsbxwkbkwowhpab` foram marcadas como históricas para evitar execução no projeto antigo.
 - 2026-10-18: comentário do serviço de Storage privado atualizado para refletir o estado real: bucket/policies estão no DEV autorizado; a UI continua opt-in até homologação E2E autenticada. Suíte 206/206, lint e build aprovados.
+- 2026-10-18: removidas dos cabeçalhos das migrations as referências operacionais a projetos Supabase antigos; os arquivos agora deixam claro que o destino é definido pela configuração do deploy. Suíte 206/206, lint e build aprovados.

@@ -1,4 +1,4 @@
--- NEXUS DEV qidstqsbxwkbkwowhpab; identity-to-team relations only.
+-- Historical execution note: target project is selected by the deployment configuration.
 -- No browser client may assign itself a leader/coordinator/controller scope.
 -- Scope assignment is reserved for a future reviewed admin/server workflow.
 DO $preflight$

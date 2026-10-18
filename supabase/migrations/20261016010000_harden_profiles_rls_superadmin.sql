@@ -1,5 +1,5 @@
 -- Harden profile self-provisioning and tenant-admin role escalation.
--- Applied to Supabase project wrovgjhpyacmmetejiqk on 2026-10-16.
+-- Historical execution note: do not infer a target project from this file.
 
 CREATE OR REPLACE FUNCTION private.nexus_is_superadmin()
 RETURNS boolean

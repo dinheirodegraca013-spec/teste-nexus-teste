@@ -1,4 +1,4 @@
--- Supabase DEV qidstqsbxwkbkwowhpab, applied 2026-10-16.
+-- Historical execution note: target project is selected by the deployment configuration.
 -- Temporary fail-closed RLS: frontend roles do not yet have a trustworthy
 -- database mapping to leaders/coordinators/controllers. Until such a mapping
 -- is implemented and tested, grant sensitive SELECT only to active admins

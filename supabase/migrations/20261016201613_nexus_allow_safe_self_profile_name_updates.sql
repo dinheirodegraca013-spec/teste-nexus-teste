@@ -1,4 +1,4 @@
--- Supabase DEV qidstqsbxwkbkwowhpab
+-- Historical execution note: target project is selected by the deployment configuration.
 -- Applied remotely via Supabase MCP as migration 20261016201613.
 -- Browser users may update their own display name, not role, tenant, email
 -- or blocked status. Both column GRANTS and RLS must enforce the restriction.

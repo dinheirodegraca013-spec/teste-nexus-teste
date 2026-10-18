@@ -1,4 +1,4 @@
--- Supabase DEV project qidstqsbxwkbkwowhpab
+-- Historical execution note: target project is selected by the deployment configuration.
 -- Applied remotely via Supabase MCP on 2026-10-16, registered as 20261016201212.
 -- SECURITY: TRUNCATE bypasses RLS; browser users never need TRUNCATE,
 -- TRIGGER or REFERENCES on the tenant identity and permissions tables.

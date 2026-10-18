@@ -1,4 +1,4 @@
--- Supabase DEV qidstqsbxwkbkwowhpab, applied on 2026-10-16.
+-- Historical execution note: target project is selected by the deployment configuration.
 -- The profile UI allowed editing a phone number but the DB lacked the column.
 -- Keep phone tenant-private (profiles RLS). No public address book.
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS phone text;

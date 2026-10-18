@@ -1,5 +1,5 @@
 -- Restrict module reads to administrators and explicitly permitted scoped users.
--- Approved for Supabase DEV project qidstqsbxwkbkwowhpab on 2026-10-16.
+-- Historical approval note: target project is selected by the deployment configuration.
 BEGIN;
 DO $migration$
 DECLARE rec record;
