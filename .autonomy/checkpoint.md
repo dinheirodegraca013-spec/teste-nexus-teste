@@ -104,3 +104,4 @@
 - 2026-10-18: auditoria read-only confirmou que `organizations` ainda não possui policy `UPDATE`; script seguro foi preparado em `docs/proposed-migrations/ADD_ORGANIZATIONS_UPDATE_POLICY.sql` e aguarda aprovação específica, sem execução.
 - 2026-10-18: alinhada a validação de senha do cadastro com o AuthContext: mínimo de 8 caracteres tanto na tela quanto no envio. Suíte 223/223, lint e build aprovados.
 - 2026-10-18: reconciliação read-only confirmou os mesmos 13 nomes de migrations no DEV `qwvbvqlzcyfkuszxrlgv` e no diretório local; nenhuma divergência impede a policy proposta.
+- 2026-10-18: auditoria do bundle confirmou a causa do erro no domínio público: `teste-nexus-teste.vercel.app` está em deployment de `main` (`39f05a7`) e referencia o Supabase histórico `wrovgjhpyacmmetejiqk`; o preview da branch já referencia `qwvbvqlzcyfkuszxrlgv`. Promover/publicar em produção permanece pendente por escopo.
