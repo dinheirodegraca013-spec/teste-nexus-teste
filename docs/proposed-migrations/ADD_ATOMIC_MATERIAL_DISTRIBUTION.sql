@@ -1,5 +1,5 @@
--- REVIEW ONLY. DO NOT APPLY WITHOUT SPECIFIC APPROVAL.
--- Supabase DEV: qwvbvqlzcyfkuszxrlgv
+-- Applied in Supabase DEV qwvbvqlzcyfkuszxrlgv after explicit approval.
+-- Keep this file as the reviewed migration source; production remains unchanged.
 -- Makes material distribution and stock decrement one locked transaction.
 
 BEGIN;

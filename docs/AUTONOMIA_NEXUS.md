@@ -1152,3 +1152,4 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **SEGURANÇA:** dois objetos privados com RLS sem policies e três funções `SECURITY DEFINER` acessíveis a `authenticated` foram reportados. As funções validam tenant/admin internamente e são chamadas pelo frontend; revogação exigiria mudança estrutural e revisão de fluxo.
 - **PERFORMANCE:** 12 índices ainda sem uso e duas combinações de policies permissivas sobrepostas foram reportados. Nenhum índice ou policy foi removido sem evidência de carga e aprovação específica.
+- **2026-10-18 — DOCUMENTAÇÃO ALINHADA:** `ADD_ATOMIC_MATERIAL_DISTRIBUTION.sql` agora identifica que a RPC foi aplicada somente no DEV `qwvbvqlzcyfkuszxrlgv` após aprovação explícita; produção permanece inalterada. Verificações: 247 testes, lint e build aprovados.

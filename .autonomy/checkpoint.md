@@ -129,3 +129,4 @@
 - 2026-10-18: verificação read-only confirmou `nexus_distribute_material(uuid,text,text,integer)` como `SECURITY DEFINER` com execução concedida somente a `authenticated`/`service_role` (sem PUBLIC/anon). Suíte 247/247, lint e build aprovados após integração.
 - 2026-10-18: Vercel confirmou preview READY para o commit `2bdcc16` da branch; o domínio público não foi reatribuído nesta rodada.
 - 2026-10-18: E2E somente leitura repetido após a RPC: duas sessões continuam isoladas por RLS em organizações, perfis, CRM e Storage privado. Nenhum dado foi alterado.
+- 2026-10-18: alinhado o cabeçalho da migration transacional ao estado real: RPC aplicada somente no DEV após aprovação explícita; 247 testes, lint e build aprovados.
