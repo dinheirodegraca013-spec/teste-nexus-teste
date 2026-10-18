@@ -898,3 +898,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **CORRIGIDO:** fixado `runs-on` em `ubuntu-24.04` nos workflows CI e E2E manual para evitar a migração automática anunciada para Ubuntu 26.
 - **VALIDADO:** checks remotos anteriores permaneceram funcionais; o aviso era operacional, sem falha de código.
+
+## Ciclo autônomo — 2026-10-18: revalidação DEV pós-CI
+
+- **CONFIRMADO:** advisories de segurança e performance permanecem iguais: 2 tabelas privadas sem policy, 3 RPCs `SECURITY DEFINER` expostas, proteção contra senha vazada desativada, 2 FKs privadas sem índice e 12 índices não usados.
+- **DECISÃO:** nenhum ajuste automático; os itens estruturais exigem script revisado, teste de impacto e aprovação específica.
+- **CI:** Vercel e GitGuardian do commit `0fdbd56` aprovados; typecheck/build e Edge Functions ainda estavam em execução no momento da consulta.
