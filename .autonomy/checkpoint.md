@@ -133,3 +133,4 @@
 - 2026-10-18: Security Advisor read-only do DEV reportou 2 tabelas privadas RLS sem policies, 4 funções SECURITY DEFINER para authenticated e leaked-password protection desativada; mudanças estruturais/Auth permanecem pendentes de revisão específica.
 - 2026-10-18: PR #1 revisada como DRAFT no head `d78b48d`; publicação de detalhes internos foi bloqueada por controle de risco e não foi contornada.
 - 2026-10-18: Vercel confirmou preview READY para `0ac01d5` (`dpl_7KwtxBWJStDS38ZCcPMRRSM9B2V7`); produção não foi promovida.
+- 2026-10-18: Vercel revalidou o head atual `d0b8d2c` da branch como `READY` (`dpl_7JFu9igKuPAfuev4QBzE7B3EUeUY`); nenhuma promoção foi executada.
