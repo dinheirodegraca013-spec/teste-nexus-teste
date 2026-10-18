@@ -192,3 +192,4 @@
 - 2026-10-18: Vercel deployment dpl_ADrUcM7Gis3iJYWRwa48UhLopLco READY para 5db1aca; commit documental sem workflow GitHub associado.
 - 2026-10-18: Auditoria Vercel confirmou `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` somente em Preview; Production usa nomes diferentes e pode gerar o erro de conexão. Nenhuma alteração em Production foi feita.
 - 2026-10-18: Versionadas localmente as 3 migrations já aplicadas no DEV e ausentes do repositório; diretório agora tem 16 arquivos, igual à contagem remota. Nenhum SQL executado nesta rodada.
+- 2026-10-18: Pós-push de a053e22 sem workflow GitHub ou deployment Vercel associado; último preview funcional permanece READY.
