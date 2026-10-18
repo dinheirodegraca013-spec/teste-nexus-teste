@@ -1433,3 +1433,4 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO:** `auditService.log` agora registra também erros retornados pelo PostgREST (`error` não lançado), que antes eram ignorados silenciosamente.
 - **TESTE:** adicionada regressão `tests/audit-log-error.test.mjs`; suíte completa `274/274`, lint e build aprovados.
 - **ESCOPO:** somente frontend/teste; nenhum dado, schema, Auth, produção ou permissão remota alterado.
+- **CI/PR:** head `837385ba` passou typecheck/build, Edge Functions e GitGuardian; Supabase Preview `skipped`. Vercel retornou apenas rate limit de deployment (`retry in 24 hours`), sem falha de código.
