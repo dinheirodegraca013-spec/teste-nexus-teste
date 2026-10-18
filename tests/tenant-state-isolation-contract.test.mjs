@@ -97,3 +97,10 @@ test('OnboardingPage rejects an empty organization name before saving', async ()
   assert.match(source, /Informe o nome da organização/);
   assert.match(source, /setIsSubmitting\(true\)/);
 });
+
+test('SettingsPage does not claim a connection when Supabase is unconfigured', async () => {
+  const source = await readFile(new URL('../src/pages/app/SettingsPage.tsx', import.meta.url), 'utf8');
+  assert.match(source, /isSupabaseConfigured \? 'Supabase configurado' : 'Supabase não configurado'/);
+  assert.match(source, /VITE_SUPABASE_URL/);
+  assert.doesNotMatch(source, /Supabase RLS Ativo & Conectado/);
+});

@@ -1237,6 +1237,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO:** `RegisterPage` agora bloqueia convites sem organização ou identificador compatível de liderança/coordenação antes de chamar `signUp`, evitando cair no provisionamento de uma organização própria por URL malformada.
 - **TESTES:** contrato de regressão adicionado; `npm test` 263/263, `npm run lint` e `npm run build` aprovados.
 - **ESCOPO:** somente frontend/teste; nenhum Auth, SQL, produção, `main` ou dado real alterado.
+
+## Ciclo autônomo — 2026-10-18: status honesto do Supabase
+
+- **CORRIGIDO:** `SettingsPage` deixou de afirmar conexão/RLS ativos quando as variáveis Supabase estão ausentes; agora mostra estado configurado ou não configurado e não exibe endpoint fictício.
+- **TESTES:** contrato de regressão adicionado; `npm test` 265/265, `npm run lint` e `npm run build` aprovados.
+- **ESCOPO:** somente frontend/teste; nenhum Auth, SQL, produção, `main` ou dado real alterado.
 - **CI/PREVIEW:** `NEXUS CI` run `39169936965` (#518) concluiu `success`; preview Vercel `dpl_6CzkLzXMFjsJNo3YFrsN8zWDD5aM` ficou `READY` para `1b28d54`.
 
 ## Ciclo autônomo — 2026-10-18: validação do onboarding

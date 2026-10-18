@@ -105,20 +105,20 @@ const SettingsPageContent: React.FC = () => {
           Conexão com o Banco de Dados (Supabase)
         </h3>
 
-        <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 border border-slate-200">
-          <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600">
-            <CheckCircle2 className="w-5 h-5" />
+        <div className={`flex items-start gap-3 p-4 rounded-xl border ${isSupabaseConfigured ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
+          <div className={`p-2 rounded-lg ${isSupabaseConfigured ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-700'}`}>
+            {isSupabaseConfigured ? <CheckCircle2 className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
           </div>
           <div className="space-y-1">
             <div className="font-semibold text-xs text-slate-900">
-              Supabase RLS Ativo & Conectado
+              {isSupabaseConfigured ? 'Supabase configurado' : 'Supabase não configurado'}
             </div>
             <p className="text-xs text-slate-600">
-              Todas as entidades (Apoiadores, Coordenadores, Lideranças, Metas, Presença e Adesivagens) estão vinculadas à organização: <strong className="text-slate-900 font-mono">{organization?.id}</strong>.
+              {isSupabaseConfigured
+                ? <>O frontend está apontando para o ambiente configurado. O isolamento RLS é aplicado e validado pelo banco para a organização: <strong className="text-slate-900 font-mono">{organization?.id}</strong>.</>
+                : 'Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no ambiente de deploy e gere um novo build para habilitar o acesso aos dados.'}
             </p>
-            <div className="text-[11px] font-mono text-slate-400 pt-1">
-              Endpoint: {supabaseUrl || 'https://supabase.co'}
-            </div>
+            {supabaseUrl && <div className="text-[11px] font-mono text-slate-400 pt-1">Endpoint: {supabaseUrl}</div>}
           </div>
         </div>
       </div>
