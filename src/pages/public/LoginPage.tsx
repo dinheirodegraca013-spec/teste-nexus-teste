@@ -112,7 +112,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
 
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-semibold text-slate-700">Senha</label>
+              <label htmlFor="login-password" className="text-xs font-semibold text-slate-700">Senha</label>
               <button
                 type="button"
                 onClick={() => onNavigate('/recuperar-senha')}
@@ -122,6 +122,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
               </button>
             </div>
             <Input
+              id="login-password"
               type="password"
               placeholder="••••••••"
               value={password}

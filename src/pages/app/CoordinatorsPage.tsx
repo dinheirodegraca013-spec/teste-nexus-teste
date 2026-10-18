@@ -50,13 +50,20 @@ export const CoordinatorsPage: React.FC = () => {
   });
 
   const loadData = useCallback(async () => {
-    if (!orgId) return;
+    if (!orgId) {
+      setCoordinators([]);
+      setAllLeaders([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const [coordsRes, leadersRes] = await Promise.all([
         coordinatorsService.getAll(orgId),
         leadersService.getAll(orgId),
       ]);
+      if (coordsRes.error) throw coordsRes.error;
+      if (leadersRes.error) throw leadersRes.error;
       setCoordinators(coordsRes.data || []);
       setAllLeaders(leadersRes.data || []);
     } catch (err: any) {

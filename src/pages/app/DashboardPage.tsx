@@ -132,6 +132,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         withTimeout(presenceService.getLogs(orgId), 6000, 'field_presences'),
       ]);
 
+      const failedQuery = [
+        contactsRes, leadersRes, coordsRes, goalsRes,
+        eventsRes, carsRes, housesRes, presenceRes,
+      ].find((result) => result.status === 'rejected' || Boolean(result.value?.error));
+      if (failedQuery) {
+        setLoadError('Não foi possível carregar todos os dados do painel. Tente novamente.');
+      }
+
       setContacts(processQueryResult(contactsRes, 'crm_contacts'));
       setLeaders(processQueryResult(leadersRes, 'leaders'));
       setCoordinators(processQueryResult(coordsRes, 'coordinators'));

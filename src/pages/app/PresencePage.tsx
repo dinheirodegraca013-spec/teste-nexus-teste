@@ -39,7 +39,13 @@ export const PresencePage: React.FC = () => {
   });
 
   const loadData = useCallback(async () => {
-    if (!orgId) return;
+    if (!orgId) {
+      setPresenceLogs([]);
+      setEvents([]);
+      setMeetings([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const [logsRes, eventsRes, meetingsRes] = await Promise.all([
@@ -47,6 +53,9 @@ export const PresencePage: React.FC = () => {
         eventsService.getAll(orgId),
         meetingsService.getAll(orgId),
       ]);
+      if (logsRes.error) throw logsRes.error;
+      if (eventsRes.error) throw eventsRes.error;
+      if (meetingsRes.error) throw meetingsRes.error;
       setPresenceLogs(logsRes.data || []);
       setEvents(eventsRes.data || []);
       setMeetings(meetingsRes.data || []);

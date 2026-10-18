@@ -64,7 +64,11 @@ export const UsersPage: React.FC = () => {
   const [perms, setPerms] = useState(createDefaultPermissions);
 
   const loadData = useCallback(async () => {
-    if (!orgId) return;
+    if (!orgId) {
+      setMembers([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const { data, error } = await membersService.getAll(orgId);

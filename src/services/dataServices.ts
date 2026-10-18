@@ -34,6 +34,25 @@ function confirmUpdatedRow<T>(
   return { data, error: null };
 }
 
+// INSERT responses must also contain the persisted row. This prevents the UI
+// from reporting success when an RLS policy or an unavailable record hides it.
+function confirmCreatedRow<T>(
+  data: T | null,
+  error: { message: string; code?: string } | null,
+): { data: T | null; error: { message: string; code?: string } | null } {
+  if (error) return { data: null, error };
+  if (!data) {
+    return {
+      data: null,
+      error: {
+        code: 'CREATE_NOT_CONFIRMED',
+        message: 'A criação não foi confirmada. O registro pode não ter sido salvo ou você pode não ter permissão.',
+      },
+    };
+  }
+  return { data, error: null };
+}
+
 // All update methods must confirm a returned row: RLS can silently affect zero rows.
 function confirmDeletedRow(
   data: { id: string } | null,
@@ -68,7 +87,7 @@ export const coordinatorsService = {
       .insert([coordinator])
       .select()
       .maybeSingle();
-    return { data: data as Coordinator | null, error };
+    return confirmCreatedRow(data as Coordinator | null, error);
   },
 
   async update(id: string, updates: Partial<Coordinator>) {
@@ -118,7 +137,7 @@ export const leadersService = {
       .insert([leader])
       .select()
       .maybeSingle();
-    return { data: data as Leader | null, error };
+    return confirmCreatedRow(data as Leader | null, error);
   },
 
   async update(id: string, updates: Partial<Leader>) {
@@ -204,7 +223,7 @@ export const crmService = {
       .insert([dbPayload])
       .select()
       .maybeSingle();
-    return { data: data ? mapCrmContactRow(data) : null, error };
+    return confirmCreatedRow(data ? mapCrmContactRow(data) : null, error);
   },
 
   async update(id: string, updates: Partial<CrmContact> & Record<string, any>) {
@@ -269,7 +288,7 @@ export const goalsService = {
       .insert([goal])
       .select()
       .maybeSingle();
-    return { data: data as Goal | null, error };
+    return confirmCreatedRow(data as Goal | null, error);
   },
 
   async update(id: string, updates: Partial<Goal>) {
@@ -310,7 +329,7 @@ export const eventsService = {
       .insert([event])
       .select()
       .maybeSingle();
-    return { data: data as CampaignEvent | null, error };
+    return confirmCreatedRow(data as CampaignEvent | null, error);
   },
 
   async update(id: string, updates: Partial<CampaignEvent>) {
@@ -351,7 +370,7 @@ export const meetingsService = {
       .insert([meeting])
       .select()
       .maybeSingle();
-    return { data: data as Meeting | null, error };
+    return confirmCreatedRow(data as Meeting | null, error);
   },
 
   async update(id: string, updates: Partial<Meeting>) {
@@ -398,7 +417,7 @@ export const presenceService = {
       .insert([presence])
       .select()
       .maybeSingle();
-    return { data: data as FieldPresence | null, error };
+    return confirmCreatedRow(data as FieldPresence | null, error);
   },
 
   async createLog(presence: Partial<FieldPresence>) {
@@ -462,7 +481,7 @@ export const materialsService = {
       .insert([item])
       .select()
       .maybeSingle();
-    return { data: data as MaterialInventory | null, error };
+    return confirmCreatedRow(data as MaterialInventory | null, error);
   },
 
   async updateItem(id: string, updates: Partial<MaterialInventory>) {
@@ -481,7 +500,7 @@ export const materialsService = {
       .insert([dist])
       .select()
       .maybeSingle();
-    return { data: data as MaterialDistribution | null, error };
+    return confirmCreatedRow(data as MaterialDistribution | null, error);
   },
 
   async deleteItem(id: string) {
@@ -514,7 +533,7 @@ export const stickersService = {
       .insert([sticker])
       .select()
       .maybeSingle();
-    return { data: data as CarSticker | null, error };
+    return confirmCreatedRow(data as CarSticker | null, error);
   },
 
   async updateCarSticker(id: string, updates: Partial<CarSticker>) {
@@ -556,7 +575,7 @@ export const stickersService = {
       .insert([sticker])
       .select()
       .maybeSingle();
-    return { data: data as HouseSticker | null, error };
+    return confirmCreatedRow(data as HouseSticker | null, error);
   },
 
   async updateHouseSticker(id: string, updates: Partial<HouseSticker>) {
@@ -599,7 +618,7 @@ export const intelligenceService = {
       .insert([demand])
       .select()
       .maybeSingle();
-    return { data: data as PopularDemand | null, error };
+    return confirmCreatedRow(data as PopularDemand | null, error);
   },
 
   async updateDemand(id: string, updates: Partial<PopularDemand>) {

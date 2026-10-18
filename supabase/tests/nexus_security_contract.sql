@@ -5,6 +5,7 @@ DO $verify$
 DECLARE
   table_name text;
   sensitive_table text;
+  module_table text;
   actual_policy text;
 BEGIN
   IF EXISTS (
@@ -68,6 +69,27 @@ BEGIN
       OR (SELECT count(*) FROM pg_policies WHERE schemaname='public'
           AND tablename=sensitive_table AND cmd='SELECT') <> 1 THEN
       RAISE EXCEPTION 'SECURITY CONTRACT FAILED: policy on %', sensitive_table;
+    END IF;
+  END LOOP;
+
+  FOREACH module_table IN ARRAY ARRAY[
+    'goals','campaign_events','meetings','materials_inventory',
+    'material_distributions','leaders','coordinators','crm_contacts','field_presences'
+  ]
+  LOOP
+    SELECT qual INTO actual_policy
+    FROM pg_policies
+    WHERE schemaname='public' AND tablename=module_table
+      AND cmd='SELECT' AND policyname=module_table || '_read';
+
+    IF actual_policy IS NULL
+      OR actual_policy NOT LIKE '%nexus_auth_org_id%'
+      OR actual_policy NOT LIKE '%nexus_is_admin%'
+      OR actual_policy NOT LIKE '%user_module_permissions%'
+      OR actual_policy NOT LIKE '%can_read%'
+      OR (SELECT count(*) FROM pg_policies WHERE schemaname='public'
+          AND tablename=module_table AND cmd='SELECT') <> 1 THEN
+      RAISE EXCEPTION 'SECURITY CONTRACT FAILED: module permission policy on %', module_table;
     END IF;
   END LOOP;
 

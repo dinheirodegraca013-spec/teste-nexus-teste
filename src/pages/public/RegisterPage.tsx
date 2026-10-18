@@ -56,9 +56,10 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
         if (conviteType === 'coordenador') {
           setIsInvite(true);
           setInviteType('coordenador');
-          if (paramNome) setName(decodeURIComponent(paramNome));
-          if (paramEmail) setEmail(decodeURIComponent(paramEmail));
-          if (paramTerritorio) setInviteTerritory(decodeURIComponent(paramTerritorio));
+          // URLSearchParams already decodes query values exactly once.
+          if (paramNome) setName(paramNome);
+          if (paramEmail) setEmail(paramEmail);
+          if (paramTerritorio) setInviteTerritory(paramTerritorio);
           if (paramOrgId) setInviteOrgId(paramOrgId);
           if (paramCoordId) setInviteCoordId(paramCoordId);
 
@@ -72,8 +73,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
         } else if (conviteType === 'lider' || paramLeaderId || paramCoordId) {
           setIsInvite(true);
           setInviteType('lider');
-          if (paramNome) setName(decodeURIComponent(paramNome));
-          if (paramEmail) setEmail(decodeURIComponent(paramEmail));
+          if (paramNome) setName(paramNome);
+          if (paramEmail) setEmail(paramEmail);
           if (paramOrgId) setInviteOrgId(paramOrgId);
           if (paramLeaderId) setInviteLeaderId(paramLeaderId);
           if (paramCoordId) setInviteCoordId(paramCoordId);

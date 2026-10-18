@@ -37,10 +37,15 @@ export const MeetingsPage: React.FC = () => {
   });
 
   const loadData = useCallback(async () => {
-    if (!orgId) return;
+    if (!orgId) {
+      setMeetings([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
-      const { data } = await meetingsService.getAll(orgId);
+      const { data, error } = await meetingsService.getAll(orgId);
+      if (error) throw error;
       setMeetings(data || []);
     } catch (err: any) {
       toastError('Erro ao carregar reuniões: ' + err.message);

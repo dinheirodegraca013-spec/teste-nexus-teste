@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import { Calendar, Plus, MapPin, Clock, Users, Edit2, Trash2, CheckCircle2, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -20,6 +20,12 @@ export const EventsPage: React.FC = () => {
 
   const [events, setEvents] = useState<CampaignEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const loadVersion = useRef(0);
+  const activeOrg = useRef(orgId);
+  const eventsOrg = useRef('');
+  const modalOrg = useRef('');
+  const orgVersion = useRef(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -41,24 +47,54 @@ export const EventsPage: React.FC = () => {
     status: 'scheduled' as CampaignEvent['status'],
   });
 
+  useLayoutEffect(() => {
+    if (activeOrg.current !== orgId) {
+      loadVersion.current++;
+      orgVersion.current++;
+      setIsSubmitting(false);
+    }
+    activeOrg.current = orgId;
+  }, [orgId]);
+
   const loadData = useCallback(async () => {
-    if (!orgId) return;
+    if (activeOrg.current !== orgId) return;
+    const version = ++loadVersion.current;
+    if (!orgId) {
+      setEvents([]);
+      setLoadError(true);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
+    setLoadError(false);
     try {
-      const { data } = await eventsService.getAll(orgId);
+      const { data, error } = await eventsService.getAll(orgId);
+      if (version !== loadVersion.current) return;
+      if (error) throw error;
+      eventsOrg.current = orgId;
       setEvents(data || []);
     } catch (err: any) {
+      if (version !== loadVersion.current) return;
+      setLoadError(true);
       toastError('Erro ao carregar eventos: ' + err.message);
     } finally {
-      setIsLoading(false);
+      if (version === loadVersion.current) setIsLoading(false);
     }
   }, [orgId, toastError]);
 
   useEffect(() => {
     loadData();
+    return () => { loadVersion.current++; };
   }, [loadData]);
 
+  useEffect(() => {
+    setIsModalOpen(false);
+    setSelectedEvent(null);
+  }, [orgId]);
+
   const handleOpenModal = (event?: CampaignEvent) => {
+    if (!orgId) return;
+    modalOrg.current = orgId;
     if (event) {
       setSelectedEvent(event);
       setFormData({
@@ -93,11 +129,16 @@ export const EventsPage: React.FC = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!orgId || modalOrg.current !== orgId) {
+      toastError('A organização mudou. Abra o formulário novamente.');
+      return;
+    }
     if (!formData.title.trim() || !formData.location.trim()) {
       toastError('Preencha Título e Local do evento.');
       return;
     }
 
+    const saveOrgVersion = orgVersion.current;
     setIsSubmitting(true);
     try {
       if (selectedEvent) {
@@ -114,6 +155,7 @@ export const EventsPage: React.FC = () => {
           status: formData.status,
         });
 
+        if (orgVersion.current !== saveOrgVersion) return;
         if (error) {
           toastError('Erro ao atualizar evento: ' + error.message);
         } else {
@@ -136,6 +178,7 @@ export const EventsPage: React.FC = () => {
           status: formData.status,
         });
 
+        if (orgVersion.current !== saveOrgVersion) return;
         if (error) {
           toastError('Erro ao registrar evento: ' + error.message);
         } else {
@@ -145,9 +188,9 @@ export const EventsPage: React.FC = () => {
         }
       }
     } catch (err: any) {
-      toastError('Erro inesperado: ' + err.message);
+      if (orgVersion.current === saveOrgVersion) toastError('Erro inesperado: ' + err.message);
     } finally {
-      setIsSubmitting(false);
+      if (orgVersion.current === saveOrgVersion) setIsSubmitting(false);
     }
   };
 
@@ -163,7 +206,8 @@ export const EventsPage: React.FC = () => {
     }
   };
 
-  const filteredEvents = events.filter(e => {
+  const visibleEvents = eventsOrg.current === orgId ? events : [];
+  const filteredEvents = visibleEvents.filter(e => {
     const matchesSearch = 
       e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       e.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -213,7 +257,7 @@ export const EventsPage: React.FC = () => {
             onChange={(e) => setTypeFilter(e.target.value)}
             className="bg-white border border-slate-200 rounded-lg py-1.5 px-3 text-slate-800 text-xs focus:outline-none"
           >
-            <option value="all">Todos os tipos ({events.length})</option>
+            <option value="all">Todos os tipos ({visibleEvents.length})</option>
             <option value="Comício">Comício</option>
             <option value="Carreata">Carreata</option>
             <option value="Caminhada">Caminhada</option>
@@ -224,10 +268,15 @@ export const EventsPage: React.FC = () => {
       </div>
 
       {/* Content */}
-      {isLoading ? (
+      {isLoading || (!loadError && !!orgId && eventsOrg.current !== orgId) ? (
         <div className="py-16 flex flex-col items-center justify-center text-slate-400 gap-3">
           <Loader2 className="w-7 h-7 animate-spin text-slate-600" />
           <span className="text-xs font-medium">Carregando eventos do Supabase...</span>
+        </div>
+      ) : loadError ? (
+        <div role="alert" className="py-8 text-sm text-red-700">
+          Não foi possível carregar os eventos.
+          {orgId && <Button variant="outline" size="sm" onClick={loadData}>Tentar novamente</Button>}
         </div>
       ) : filteredEvents.length === 0 ? (
         <EmptyState
@@ -305,7 +354,7 @@ export const EventsPage: React.FC = () => {
 
       {/* Modal */}
       <Modal
-        isOpen={isModalOpen}
+        isOpen={isModalOpen && !!orgId && modalOrg.current === orgId}
         onClose={() => setIsModalOpen(false)}
         title={selectedEvent ? 'Editar Evento' : 'Novo Evento de Campanha'}
         description="Salve no Supabase os dados e a estimativa de público."

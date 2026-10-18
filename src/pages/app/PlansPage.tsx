@@ -1,16 +1,11 @@
-import React, { useState } from 'react';
-import { Zap, Check, ShieldCheck, ArrowRight, Loader2 } from 'lucide-react';
+import React from 'react';
+import { Zap, Check, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useToast } from '../../contexts/ToastContext';
-import { organizationsService } from '../../services';
-import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 
 export const PlansPage: React.FC = () => {
   const { organization } = useAuth();
-  const { success, error: toastError } = useToast();
   const currentPlan = organization?.plan || 'starter';
-  const [isUpdating, setIsUpdating] = useState(false);
 
   const plans = [
     {
@@ -79,30 +74,6 @@ export const PlansPage: React.FC = () => {
       limit: 'Ilimitado',
     },
   ];
-
-  const handleSelectPlan = async (planId: string) => {
-    if (organization?.id) {
-      setIsUpdating(true);
-      try {
-        const { error } = await organizationsService.update(organization.id, {
-          plan: planId as any,
-        });
-
-        if (error) {
-          toastError('Erro ao atualizar plano: ' + error.message);
-        } else {
-          success(`Plano atualizado para ${planId.toUpperCase()} no Supabase!`);
-          setTimeout(() => {
-            window.location.reload();
-          }, 400);
-        }
-      } catch (err: any) {
-        toastError('Erro inesperado: ' + err.message);
-      } finally {
-        setIsUpdating(false);
-      }
-    }
-  };
 
   return (
     <div className="space-y-6 text-left">
@@ -177,16 +148,9 @@ export const PlansPage: React.FC = () => {
                     <span>Plano Ativo</span>
                   </div>
                 ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleSelectPlan(p.id)}
-                    disabled={isUpdating}
-                    className="w-full text-xs"
-                    rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
-                  >
-                    Mudar para {p.name}
-                  </Button>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center text-[11px] text-slate-600">
+                    Alterações de plano exigem atendimento comercial.
+                  </div>
                 )}
               </div>
             </div>

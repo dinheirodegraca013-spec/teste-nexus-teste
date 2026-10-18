@@ -5,6 +5,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { Contact, Leader, Coordinator, Goal, CampaignEvent, CarSticker, HouseSticker } from '../../types';
 import { crmService, leadersService, coordinatorsService, goalsService, eventsService, stickersService } from '../../services';
 import { Button } from '../../components/ui/Button';
+import { buildCsv } from '../../utils/csv';
 
 export const ReportsPage: React.FC = () => {
   const { organization } = useAuth();
@@ -21,7 +22,17 @@ export const ReportsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const loadData = useCallback(async () => {
-    if (!orgId) return;
+    if (!orgId) {
+      setContacts([]);
+      setLeaders([]);
+      setCoordinators([]);
+      setGoals([]);
+      setEvents([]);
+      setCarStickers([]);
+      setHouseStickers([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const [
@@ -41,6 +52,14 @@ export const ReportsPage: React.FC = () => {
         stickersService.getCarStickers(orgId),
         stickersService.getHouseStickers(orgId),
       ]);
+
+      if (contactsRes.error) throw contactsRes.error;
+      if (leadersRes.error) throw leadersRes.error;
+      if (coordsRes.error) throw coordsRes.error;
+      if (goalsRes.error) throw goalsRes.error;
+      if (eventsRes.error) throw eventsRes.error;
+      if (carsRes.error) throw carsRes.error;
+      if (housesRes.error) throw housesRes.error;
 
       setContacts(contactsRes.data || []);
       setLeaders(leadersRes.data || []);
@@ -67,13 +86,13 @@ export const ReportsPage: React.FC = () => {
   const handleExportCSV = () => {
     const headers = ['Nome', 'Telefone', 'Territorio', 'Lider', 'Status'];
     const rows = contacts.map(c => [
-      `"${c.full_name}"`,
-      `"${c.phone}"`,
-      `"${c.territory || ''}"`,
-      `"${c.leader_name || ''}"`,
-      `"${c.status}"`,
+      c.full_name,
+      c.phone,
+      c.territory || '',
+      c.leader_name || '',
+      c.status,
     ]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const csvContent = 'data:text/csv;charset=utf-8,' + buildCsv(headers, rows);
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);

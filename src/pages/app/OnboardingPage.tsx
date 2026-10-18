@@ -26,24 +26,28 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
   const handleFinish = async () => {
     setIsSubmitting(true);
     try {
-      if (organization?.id) {
-        await organizationsService.update(organization.id, {
-          name: orgName,
-          settings: {
-            ...organization.settings,
-            territory_type: territoryType,
-          },
-        });
+      if (!organization?.id) throw new Error('Organização não identificada.');
+      if (firstCoordinator.trim() && !firstTerritory.trim()) {
+        throw new Error('Informe o território de atuação do coordenador.');
+      }
+      const { error: organizationError } = await organizationsService.update(organization.id, {
+        name: orgName,
+        settings: {
+          ...organization.settings,
+          territory_type: territoryType,
+        },
+      });
+      if (organizationError) throw organizationError;
 
-        if (firstCoordinator.trim()) {
-          await coordinatorsService.create({
-            organization_id: organization.id,
-            name: firstCoordinator.trim(),
-            phone: firstPhone.trim() || undefined,
-            territory: firstTerritory.trim() || 'Região Central',
-            status: 'active',
-          });
-        }
+      if (firstCoordinator.trim()) {
+        const { error: coordinatorError } = await coordinatorsService.create({
+          organization_id: organization.id,
+          name: firstCoordinator.trim(),
+          phone: firstPhone.trim() || undefined,
+          territory: firstTerritory.trim(),
+          status: 'active',
+        });
+        if (coordinatorError) throw coordinatorError;
       }
 
       success('Configuração inicial concluída com sucesso!');
@@ -136,6 +140,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
               value={firstTerritory}
               onChange={(e) => setFirstTerritory(e.target.value)}
               placeholder="Ex.: Zona Central / Bairro Gonzaga"
+              helperText="Obrigatório ao cadastrar um coordenador."
               leftIcon={<MapPin className="w-4 h-4" />}
             />
 

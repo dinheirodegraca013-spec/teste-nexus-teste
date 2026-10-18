@@ -36,7 +36,13 @@ export const IntelligencePage: React.FC = () => {
   });
 
   const loadData = useCallback(async () => {
-    if (!orgId) return;
+    if (!orgId) {
+      setDemands([]);
+      setContacts([]);
+      setLeaders([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const [demandsRes, contactsRes, leadersRes] = await Promise.all([
@@ -44,6 +50,9 @@ export const IntelligencePage: React.FC = () => {
         crmService.getAll(orgId),
         leadersService.getAll(orgId),
       ]);
+      if (demandsRes.error) throw demandsRes.error;
+      if (contactsRes.error) throw contactsRes.error;
+      if (leadersRes.error) throw leadersRes.error;
       setDemands(demandsRes.data || []);
       setContacts(contactsRes.data || []);
       setLeaders(leadersRes.data || []);

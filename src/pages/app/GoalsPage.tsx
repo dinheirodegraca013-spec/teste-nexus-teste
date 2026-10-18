@@ -38,13 +38,20 @@ export const GoalsPage: React.FC = () => {
   });
 
   const loadData = useCallback(async () => {
-    if (!orgId) return;
+    if (!orgId) {
+      setGoals([]);
+      setCoordinators([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const [goalsRes, coordsRes] = await Promise.all([
         goalsService.getAll(orgId),
         coordinatorsService.getAll(orgId),
       ]);
+      if (goalsRes.error) throw goalsRes.error;
+      if (coordsRes.error) throw coordsRes.error;
       setGoals(goalsRes.data || []);
       setCoordinators(coordsRes.data || []);
     } catch (err: any) {

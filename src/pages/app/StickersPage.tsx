@@ -54,13 +54,20 @@ export const StickersPage: React.FC = () => {
   const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
 
   const loadData = useCallback(async () => {
-    if (!orgId) return;
+    if (!orgId) {
+      setCarStickers([]);
+      setHouseStickers([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const [carsRes, housesRes] = await Promise.all([
         stickersService.getCarStickers(orgId),
         stickersService.getHouseStickers(orgId),
       ]);
+      if (carsRes.error) throw carsRes.error;
+      if (housesRes.error) throw housesRes.error;
       setCarStickers(carsRes.data || []);
       setHouseStickers(housesRes.data || []);
     } catch (err: any) {

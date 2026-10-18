@@ -45,13 +45,20 @@ export const CrmPage: React.FC = () => {
   });
 
   const loadData = useCallback(async () => {
-    if (!orgId) return;
+    if (!orgId) {
+      setContacts([]);
+      setLeaders([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const [contactsRes, leadersRes] = await Promise.all([
         crmService.getAll(orgId),
         leadersService.getAll(orgId),
       ]);
+      if (contactsRes.error) throw contactsRes.error;
+      if (leadersRes.error) throw leadersRes.error;
       setContacts(contactsRes.data || []);
       setLeaders(leadersRes.data || []);
     } catch (err: any) {

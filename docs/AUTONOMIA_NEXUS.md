@@ -248,6 +248,13 @@
 
 Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstico e o desenvolvimento a cada hora. Isso fornece retomadas agendadas, não um processo de execução ininterrupto garantido. Um agente externo 24/7 real ainda exige um executor persistente com credenciais de API armazenadas em um cofre, limites de custo, logs, isolamento e política de aprovação. Não afirmar que existe um daemon contínuo enquanto ele não estiver implantado e comprovado.
 
+## Auditoria local — isolamento de carregamento de sessão
+
+- **Causa-raiz confirmada:** `loadUserDataSafe` mantinha uma única promessa em andamento. Durante troca rápida de sessão, uma segunda identidade podia receber o resultado de perfil, organização e permissões da primeira.
+- **RED/GREEN:** `tests/auth-profile-loading.test.mjs` reproduziu a concorrência com duas identidades sintéticas. A versão anterior falhou ao não iniciar a segunda consulta; após a correção, cada identidade é deduplicada em uma `Map` por `authUser.id`.
+- **Verificado localmente:** `npm test` (158 testes), `npm run lint`, `npm run build` e `git diff --check` concluíram sem falhas. Não houve chamada autenticada ao Supabase, deploy, merge ou alteração de dados.
+- **Auditoria Supabase DEV:** o projeto `qidstqsbxwkbkwowhpab` está saudável, mas o advisor aponta três funções `SECURITY DEFINER` executáveis por `authenticated` (`provision_new_user`, `nexus_set_team_scope`, `nexus_set_controller_scope`), duas tabelas privadas sem policy e proteção contra senhas vazadas desativada. Revisar e apresentar SQL antes de qualquer alteração estrutural.
+
 
 ## Verificação independente — 2026-10-16
 
@@ -357,3 +364,391 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **NÃO VERIFICADO:** navegador/SDK reais, RLS multitenant e convite E2E. Os testes não simulam todas as intercalações com `signIn`, `signUp`, `refreshUserData` ou múltiplos eventos simultâneos; nenhuma homologação integral de autenticação é declarada.
 - **Limites:** somente código, teste e este documento alterados no checkout/branch atual. Sem SQL, banco, migração, workflow, ambiente, segredo, merge ou deploy. Nenhuma alteração humana sobrescrita; nenhum bloqueio impediu esta tarefa local.
 - **Próxima ação:** reproduzir separadamente uma resposta tardia de `refreshUserData` após `SIGNED_OUT`, usando sessão sintética e promessa controlada; corrigir somente se o problema for confirmado. E2E permanece pendente de ambiente com identidades de teste. Estado: EM DESENVOLVIMENTO.
+## Ciclo autônomo — 2026-10-16: contenção de leitura por módulo
+
+- **APROVADO PELO USUÁRIO:** aplicação no Supabase DEV autorizado `qidstqsbxwkbkwowhpab` da migração `20261016210000_nexus_module_read_rls`.
+- **APLICADO:** as políticas SELECT de `goals`, `campaign_events`, `meetings`, `materials_inventory`, `material_distributions`, `leaders`, `coordinators`, `crm_contacts` e `field_presences` agora exigem administrador ou a permissão explícita de módulo compatível com o escopo hierárquico.
+- **APROVADO:** `supabase/tests/nexus_security_contract.sql` retornou sem falhas após a migração; inspeção em `pg_policies` confirmou 9 de 9 políticas contendo a verificação de `user_module_permissions`.
+- **NÃO VERIFICADO:** teste autenticado de negação com duas organizações e papéis não administrativos. O ambiente não possui permissões de módulo provisionadas; não inferir cobertura real apenas da inspeção de policy.
+- **PENDENTE:** os avisos de Security Advisor permanecem: tabelas privadas sem policy pública, três funções SECURITY DEFINER executáveis por `authenticated` e proteção de senhas vazadas desativada. Nenhuma dessas configurações foi alterada neste ciclo.
+- **APROVADO:** validação transacional de RLS com fixtures descartadas por `ROLLBACK`: gestor sem `goals` recebeu 0 linhas; após a concessão explícita de `can_read`, recebeu 1 linha do seu tenant e nenhuma linha do segundo tenant. Nenhuma conta ou dado de teste permaneceu no banco.
+
+## Ciclo autônomo — 2026-10-16: operações de organização
+
+- **CORRIGIDO:** `organizationsService.update` agora falha fechado quando RLS não altera nenhuma linha, evitando confirmação falsa em páginas administrativas.
+- **CORRIGIDO:** onboarding só exibe sucesso após confirmação da atualização da organização e, quando informado, da criação do coordenador.
+- **CORRIGIDO:** a página de planos não altera mais a assinatura diretamente no navegador; alteração comercial exige fluxo próprio ainda não implementado.
+- **APROVADO:** 163 testes, `npm run lint` e `npm run build` concluíram com sucesso. Próxima tarefa independente: revisar fluxos de configuração da organização e erros de integração sem sessão E2E.
+
+## Ciclo autônomo — 2026-10-16: confirmação de criações
+
+- **CORRIGIDO:** os serviços de criação operacionais passam a exigir a linha persistida antes de retornarem sucesso; respostas RLS vazias agora retornam `CREATE_NOT_CONFIRMED`.
+- **COBERTURA:** coordenação, liderança, CRM, metas, eventos, reuniões, presença, materiais, distribuição, adesivagem e demandas possuem teste de resposta vazia e de sucesso confirmado.
+- **APROVADO:** 24 testes específicos; suíte completa com 187 testes; `npm run lint`, `npm run build` e verificação de whitespace concluíram sem falhas.
+- **PENDENTE EXTERNO:** commit, push, atualização do PR e preview dependem da identidade Git local do responsável; nenhuma identidade foi inferida.
+
+## Integração remota — 2026-10-16
+
+- **INTEGRADO:** commit remoto `e9153f8` de proteção contra respostas tardias de autenticação, sem reintroduzir a listagem ou a troca de organizações no navegador.
+- **APROVADO:** conflitos resolvidos com 191 testes, `npm run lint`, `npm run build` e verificação de whitespace aprovados.
+- **VERIFICADO:** o preview remoto da branch está `READY` no commit `e9153f8`; as alterações locais ainda aguardam identidade Git para commit e push.
+- **VERIFICADO:** requisição autenticada pelo conector ao preview retornou HTTP 200 e o documento HTML do NEXUS. Isso não substitui validação de login, RBAC ou operações autenticadas.
+
+## Ciclo autônomo — 2026-10-16: confirmação de permissões
+
+- **CORRIGIDO:** `permissionsService.upsertPermissions` agora recusa lote vazio e exige retorno completo de todas as permissões solicitadas; RLS que oculte uma ou todas as linhas não gera confirmação de sucesso.
+- **APROVADO:** testes de retorno vazio, parcial, completo e lote vazio; suíte total com 195 testes, lint, build e verificação de whitespace aprovados.
+- **COMPLEMENTO:** lote parcialmente inválido agora é recusado antes da chamada ao banco, sem descartar entradas silenciosamente. Teste reproduziu a falha anterior; suíte com 196 testes, lint e build aprovados.
+- **COMPLEMENTO:** confirmação compara usuário, módulo e ações efetivamente retornadas, não somente a quantidade de linhas. Teste reproduziu retorno divergente; 197 testes, lint e build aprovados.
+
+## Revisão dos advisors — 2026-10-17
+
+- **SEGURANÇA:** permanecem os avisos já registrados sobre duas tabelas privadas sem policies, três funções `SECURITY DEFINER` acessíveis por usuários autenticados e proteção contra senhas vazadas desativada. Não houve alteração no banco ou no Auth.
+- **DESEMPENHO:** o advisor aponta duas FKs privadas sem índice de cobertura e 12 índices sem uso observado. Não remover índices com base apenas nesse indicador; verificar carga e planos antes de propor alteração estrutural.
+- Referências: https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys e https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index.
+- Próxima ação: avaliar custo das duas FKs sob carga real e apresentar qualquer SQL estrutural para aprovação específica; manter commit e E2E pendentes da identidade Git e sessão de teste.
+
+## Ciclo autônomo — 2026-10-17: inicialização da autenticação
+
+- **CORRIGIDO:** uma resposta tardia de `getSession` não restaura a sessão depois de `SIGNED_OUT` nem sobrescreve um evento de autenticação mais recente.
+- **EVIDÊNCIA:** teste isolado reproduziu a restauração indevida antes da correção e passou depois; não substitui validação em navegador com sessão real.
+- **APROVADO:** 198 testes, `npm run lint`, `npm run build` e verificação de whitespace sem falhas.
+- **PRÓXIMA AÇÃO:** validar o fluxo autenticado em navegador e publicar as alterações após obter identidade Git; revisar riscos de RLS sem executar SQL não aprovado.
+
+## Ciclo autônomo — 2026-10-17: atualização tardia de sessão
+
+- **CORRIGIDO:** `refreshUserData` não restaura sessão antiga após `SIGNED_OUT` quando a recuperação de sessão responde tardiamente.
+- **EVIDÊNCIA:** teste isolado reproduziu o usuário antigo restaurado antes da correção e passou após o controle de geração; sem uso de rede, contas ou dados reais.
+- **APROVADO:** 199 testes, `npm run lint` e `npm run build`. A validação autenticada no navegador permanece pendente.
+- **PRÓXIMA AÇÃO:** auditar as demais intercalações de login e atualização; commit e PR continuam pendentes da identidade Git autorizada.
+
+## Ciclo autônomo — 2026-10-17: saída concorrente com login
+
+- **CORRIGIDO:** `SIGNED_OUT` durante o login invalida o carregamento do perfil; uma resposta de login anterior à saída não é aplicada ao estado da interface.
+- **EVIDÊNCIA:** dois testes isolados falharam antes das correções e passaram depois; um terceiro confirmou o login sem saída concorrente. Os testes simulam o SDK e não comprovam invalidação de tokens ou comportamento em navegador real.
+- **APROVADO:** 202 testes, `npm run lint` e `npm run build`; sem execução de SQL ou alteração em serviços externos.
+- **PRÓXIMA AÇÃO:** validar sessões reais e logout entre abas em ambiente DEV; publicar a branch somente após identidade Git informada.
+
+## Ciclo autônomo — 2026-10-17: evento inicial tardio
+
+- **CORRIGIDO:** um evento `INITIAL_SESSION` recebido após outro evento de autenticação não sobrescreve o estado mais recente da interface.
+- **EVIDÊNCIA:** a sequência sintética `SIGNED_OUT` seguida de `INITIAL_SESSION` restaurava o usuário antes da alteração e não restaura depois. A reprodução usa SDK simulado; a ordem efetiva entre abas não foi comprovada.
+- **APROVADO:** 203 testes, `npm run lint` e `npm run build`; nenhum serviço externo foi alterado.
+- **PRÓXIMA AÇÃO:** validar eventos reais e revogação de sessão em navegador DEV; publicar após obtenção de identidade Git.
+
+## Ciclo autônomo — 2026-10-17: território no onboarding
+
+- **CORRIGIDO:** o cadastro inicial não substitui mais território ausente por um valor fictício. Quando há coordenador, o território informado é exigido antes da atualização da organização; o coordenador continua opcional.
+- **EVIDÊNCIA:** teste do componente com serviços simulados registrou criação indevida antes da correção; após a correção, confirmou bloqueio, cadastro informado e fluxo sem coordenador. Não houve gravação real.
+- **APROVADO:** 206 testes, `npm run lint` e `npm run build`; não foi alterado banco ou serviço externo.
+- **PRÓXIMA AÇÃO:** validar experiência e sessão no navegador DEV e publicar as alterações quando houver identidade Git autorizada.
+
+## Ciclo autônomo — 2026-10-17: acessibilidade do login
+
+- **CORRIGIDO:** o rótulo visível de senha está associado ao campo de entrada na tela de login.
+- **EVIDÊNCIA:** no navegador local, a árvore de acessibilidade mostrava o campo sem nome; após a correção passou a identificá-lo como `Senha`. Teste automatizado de renderização falhou antes e passou depois.
+- **APROVADO:** 207 testes, `npm run lint` e `npm run build`; servidor local de teste encerrado. Não houve login nem uso de credenciais.
+- **PRÓXIMA AÇÃO:** validar login autenticado e sessões em ambiente DEV; publicação continua pendente de identidade Git.
+
+## Revisão de CI e branch — 2026-10-17
+
+- **VERIFICADO:** PR #1 permanece aberto e em rascunho; a branch remota avançou dois commits além de `e9153f8`, chegando a `e01b94e`, incluindo mudanças nos mesmos arquivos de autenticação e testes.
+- **FALHA REMOTA:** CI `38995287973` reprovou o teste `zero-row organization update must not report success`; typecheck e validação das Edge Functions passaram, mas o build do job não rodou. Status Vercel do commit remoto: sucesso.
+- **EVIDÊNCIA LOCAL:** os três testes remotos de confirmação de organização passaram contra a correção já preparada localmente; isso não altera nem comprova aprovação do CI remoto.
+- **PRÓXIMA AÇÃO:** conciliar cuidadosamente os commits remotos e as alterações locais, preservando testes de ambos; obter identidade Git antes do commit, publicar a branch e verificar o novo CI. Não fazer force-push nem merge.
+
+## Conciliação de branch — 2026-10-17
+
+- **INTEGRADO:** branch local avançada por fast-forward até `e01b94e`; alterações locais reaplicadas e conflitos de documentação, autenticação e testes conciliados sem reescrever commits.
+- **PRESERVADO:** testes remotos de inicialização, correções e testes locais; o stash de segurança anterior à conciliação permanece disponível.
+- **APROVADO:** 217 testes, `npm run lint` e `npm run build`. O teste remoto antes reprovado também passou localmente; CI do PR ainda não foi atualizado.
+- **PRÓXIMA AÇÃO:** obter nome e e-mail de autoria Git, criar commit e enviar a branch, sem incluir este documento local nem fazer merge ou deploy de produção.
+
+## Observabilidade DEV — 2026-10-17 02:30–03:30 UTC
+
+- **VERIFICADO:** consulta agregada e somente leitura no projeto DEV autorizado retornou 483 eventos, todos identificados como `pgbouncer_logs`; não foram expostos conteúdos dos registros.
+- **LIMITAÇÃO:** a consulta de gravidade falhou porque `severity` não é campo disponível; a tentativa de descrição do esquema retornou erro do backend. As contagens não comprovam ausência de erros nem a cobertura dos serviços sem registros no intervalo.
+- **COMPLEMENTO:** documentação oficial indica que a mensagem está em `event_message`. A busca agregada por palavras `error`, `fatal`, `panic`, `warning` ou `warn` encontrou zero ocorrências entre os 483 eventos do pooler, sem expor mensagens. Essa busca textual não equivale a uma classificação completa de erros.
+- **PRÓXIMA AÇÃO:** manter validação autenticada em navegador pendente e não alterar configuração dos serviços. Referência: https://supabase.com/docs/guides/observability/advanced-log-filtering.
+
+## Teste hierárquico multi-tenant — 2026-10-17
+
+- **FALHA REPRODUZIDA:** o teste transacional de duas organizações falhou para o líder A após a política de leitura passar a exigir permissão de módulo; os dados sintéticos antigos não incluíam as concessões necessárias.
+- **CORRIGIDO:** incluídas apenas concessões de leitura nas fixtures dos perfis testados, mantendo o visualizador sem concessões. Nenhuma política, função ou estrutura do banco foi alterada.
+- **VERIFICADO:** o script passou no DEV autorizado com `ROLLBACK`, cobrindo leituras hierárquicas, dois tenants e chamadas RPC positivas e negativas previstas no script. Consulta posterior encontrou zero organizações, usuários e permissões das fixtures identificadas.
+- **VERIFICAÇÕES:** `npm test` passou com 217 testes; `npm run lint` e `npm run build` passaram. Testes emitiram aviso de variáveis Supabase ausentes neste ambiente; isso não valida autenticação no navegador.
+- **PRÓXIMA AÇÃO:** reforçar o teste para verificar explicitamente os identificadores das linhas visíveis, além das contagens; obter identidade Git para publicar o PR sem incluir esta documentação local.
+
+## Reforço do teste multi-tenant — 2026-10-17
+
+- **VERIFICADO:** o teste de leitura agora combina contagem total com identificadores esperados de organização e de líder para administrador, líderes, coordenador e controlador; CRM e presença também conferem vínculo e organização. O teste não cobre toda a matriz de operações e perfis.
+- **EVIDÊNCIA:** no DEV autorizado, uma alteração temporária no identificador esperado do líder para o administrador foi rejeitada; o script original passou. Os dois cenários foram transacionais, sem alteração de políticas ou funções, e após o rollback havia zero organizações, usuários e permissões identificados das fixtures.
+- **VERIFICAÇÕES:** `npm test` passou com 217 testes; `npm run lint` e `npm run build` passaram. O aviso local de variáveis Supabase ausentes continua aplicável.
+- **PRÓXIMA AÇÃO:** ampliar a cobertura dinâmica para negação por ausência de permissão e escopo intratenant, sem alterar políticas; obtenção de identidade Git segue necessária para publicar o PR.
+
+## Escopo entre equipes da mesma organização — 2026-10-17
+
+- **VERIFICADO:** foi adicionada uma segunda equipe sintética na organização A. No DEV, o administrador visualizou os dois líderes e contatos da sua organização; líder, coordenador e controlador testados continuaram vendo apenas o líder do seu escopo, e o líder viu apenas seu contato. O teste também mantém a organização B.
+- **EVIDÊNCIA:** script transacional aprovado e `ROLLBACK`; contagens posteriores das organizações, coordenadores e líderes identificados nas fixtures foram zero. Nenhuma política ou função foi modificada.
+- **VERIFICAÇÕES:** `npm test` passou com 217 testes; `npm run lint` e `npm run build` passaram. Variáveis Supabase ausentes no ambiente local geraram aviso durante os testes.
+- **PRÓXIMA AÇÃO:** cobrir dinamicamente os demais papéis e negação explícita por módulo; publicar PR depende da identidade Git e homologação autenticada continua pendente.
+
+## Negação de leitura por módulo — 2026-10-17
+
+- **VERIFICADO:** no DEV, um líder sintético com vínculo hierárquico e sem concessões não visualizou líderes, CRM ou presenças; outro líder com leitura de líderes e CRM explicitamente negado visualizou seu líder, mas não contatos.
+- **EVIDÊNCIA:** o script passou com `ROLLBACK`. Duas mutações temporárias nas próprias fixtures, concedendo respectivamente líderes ao primeiro usuário e CRM ao segundo, provocaram as falhas esperadas; o script original voltou a passar. Não houve alteração de políticas ou funções. A consulta posterior encontrou zero usuários, vínculos e concessões dos dois novos perfis sintéticos.
+- **VERIFICAÇÕES:** `npm test` passou com 217 testes; `npm run lint` e `npm run build` passaram. Há aviso local de variáveis Supabase ausentes; isso não valida autenticação no navegador.
+- **PRÓXIMA AÇÃO:** ampliar a matriz dinâmica para perfis bloqueados, outros papéis e ações de escrita; publicação do PR ainda depende da identidade Git.
+
+## Perfis bloqueados no banco — 2026-10-17
+
+- **VERIFICADO:** administrador e líder sintéticos bloqueados não visualizaram líderes nem CRM no DEV; o líder possuía vínculo e concessões explícitas de leitura. Esse resultado cobre somente os perfis e tabelas exercitados.
+- **EVIDÊNCIA:** ao alterar temporariamente cada fixture para desbloqueada, o teste acusou a leitura esperada; o cenário original passou com `ROLLBACK`. Consulta posterior confirmou zero usuários, perfis, vínculos e concessões identificados dos dois perfis. Nenhuma política ou função foi alterada.
+- **VERIFICAÇÕES:** `npm test` passou com 217 testes; `npm run lint` e `npm run build` passaram. Persiste aviso local de variáveis Supabase ausentes.
+- **PRÓXIMA AÇÃO:** avançar na matriz de escrita, outros papéis e testes autenticados em navegador; identidade Git ainda necessária para atualizar o PR.
+
+## Escrita autenticada e isolamento — 2026-10-17
+
+- **VERIFICADO NO DEV:** o administrador sintético inseriu e atualizou líder da própria organização; inserção cruzada foi rejeitada e atualização cruzada afetou zero linhas. Líder sem privilégio de escrita e administrador bloqueado não conseguiram inserir ou atualizar líder.
+- **PERFIS:** o líder atualizou seu nome, não atualizou outro perfil e não conseguiu promover seu próprio papel. As operações foram restritas a fixtures e revertidas na transação; não foram executadas exclusões nem mudanças em políticas ou funções.
+- **EVIDÊNCIA:** o teste passou; uma mutação temporária que substituiu o líder por administrador provocou a falha esperada para a asserção de atualização. Após `ROLLBACK`, organizações, líderes e perfis das fixtures consultadas tinham contagem zero. A cobertura não representa todas as tabelas, papéis ou operações.
+- **VERIFICAÇÕES:** `npm test` passou com 217 testes; `npm run lint` e `npm run build` passaram. Permanece aviso local de variáveis Supabase ausentes.
+- **PRÓXIMA AÇÃO:** avaliar escrita cruzada nas demais entidades e testes autenticados em navegador; a atualização do PR depende da identidade Git.
+
+## Integração dos relatórios horários — 2026-10-17
+
+- **CONECTADO:** a automação existente passou a consultar a conversa `NEXUS — Continuação automática` (`6ad27ddf-e454-83e8-83ae-6df0cb5699fc`) em suas execuções, tratando os relatórios como dados a verificar. A frequência, prazo e preferência de notificação anteriores foram preservados.
+- **TRIAGEM:** o relatório aponta falha de carregamento em `GoalsPage.tsx`: inspeção do código mostra que as respostas de metas e coordenadores incluem `error`, mas a página usa apenas `data`; a ausência de organização também retorna antes de desligar o carregamento. Ainda falta reprodução automatizada antes da correção.
+- **AUDITORIA DE INTEGRIDADE:** consulta somente leitura no DEV confirmou chaves estrangeiras compostas por organização para `crm_contacts.leader_id`, `field_presences.leader_id` e `leaders.coordinator_id`. A existência das constraints não substitui um teste de inserção e atualização adversarial.
+- **PRÓXIMA AÇÃO:** reproduzir a falha de metas com testes e corrigir somente após comprovação; validar as referências cruzadas com fixtures transacionais. Não tratar estados antigos de CI ou preview do outro relatório como estado atual.
+
+## Risco de integridade do estoque — 2026-10-17
+
+- **CONFIRMADO POR INSPEÇÃO:** tanto o arquivo local quanto `MaterialsPage.tsx` da branch remota registram a distribuição e atualizam o saldo em chamadas separadas. A resposta de `updateItem` contém `error`, mas é ignorada antes da mensagem de sucesso; uma falha após a criação pode deixar saldo e histórico inconsistentes. Valores calculados no cliente também podem perder atualizações concorrentes.
+- **LIMITAÇÃO:** não foi feita distribuição real nem teste concorrente. A inspeção não demonstra ocorrência em dados existentes, nem comprova o estado da produção. Uma correção completa requer operação atômica no servidor, testes de concorrência e aprovação específica para o SQL/função; não foi aplicado SQL.
+- **ESTADO DO PR:** outro relatório indica avanço remoto para `0ca32966`; o arquivo remoto de materiais foi consultado diretamente, mas o estado atual completo de CI e do commit não foi verificado nesta rodada. Preservar as alterações locais e conciliar a branch antes de publicar.
+- **PRÓXIMA AÇÃO:** especificar e testar uma operação transacional segura, apresentar o SQL para aprovação e revisar a interface para tratar falhas parciais sem permitir tentativas cegas duplicadas.
+
+## Triagem de convite — 2026-10-17
+
+- **CONFIRMADO LOCALMENTE:** `RegisterPage.tsx` aplica `decodeURIComponent` a valores já decodificados por `URLSearchParams`. Em Node, uma URL sintética com nome contendo `%` resultou em `URIError` na segunda decodificação.
+- **LIMITAÇÃO:** não foi executado fluxo real de convite nem examinados dados pessoais. O relatório externo indica bloqueio de segurança ao tentar gravar a correção; não foi tentado contorná-lo.
+- **PRÓXIMA AÇÃO:** verificar o motivo do bloqueio e obter autorização necessária antes de corrigir, com testes de regressão para `%`, caracteres Unicode e valores percentuais literais; conciliar a branch remota antes da publicação.
+
+## Retomada e triagem de relatórios — 2026-10-17
+
+- **BRANCH:** comparação somente leitura pelo GitHub mostrou a branch remota quatro commits à frente do HEAD local `e01b94e`; há alterações locais em arquivos também alterados remotamente. Preservar as alterações existentes e reconciliar antes de publicar; identidade Git local não está configurada.
+- **AUTENTICAÇÃO:** o código local e o remoto chamam `provision_new_user` no cadastro com sessão imediata, sem condicionar a chamada ao papel ou vínculo de convite. A execução efetiva e o resultado da função no banco não foram testados nesta rodada; não concluir que houve criação indevida em dados reais. O outro relatório informa bloqueio de segurança ao tentar alterar esse fluxo; não foi repetida a operação bloqueada.
+- **CSV:** o código local e o remoto incluem valores entre aspas sem escapar aspas internas nem neutralizar fórmulas. Uma reprodução sintética em Node gerou `"=1+1","Ana "A"","Rua #2"`; `encodeURI` deixou `#2` como fragmento da URL. Não foi aberto arquivo em planilha nem foram utilizados dados reais. O relatório externo informa bloqueio ao tentar gravar a correção; não foi repetida a operação bloqueada.
+- **CI:** a consulta à execução `39057130731` retornou lista vazia de jobs; isso não comprova aprovação. A situação atual completa do CI e a aplicação da correção de convite continuam não verificadas.
+- **VERIFICAÇÕES LOCAIS:** `npm test` passou com 217 testes; `npm run lint` e `npm run build` passaram. Os testes alertaram que as variáveis Supabase não estão configuradas neste ambiente; não houve teste autenticado.
+- **PRÓXIMA AÇÃO:** esclarecer os bloqueios de segurança antes de repetir alterações, reconciliar a branch com preservação das mudanças locais e validar com testes sintéticos; não aplicar SQL estrutural, RLS ou funções privilegiadas sem apresentação e aprovação específica.
+
+## Agenda de eventos — 2026-10-17
+
+- **CORREÇÃO LOCAL:** o carregamento de eventos agora reconhece o erro retornado pelo serviço, mostra falha persistente com tentativa novamente e interrompe o carregamento se não houver organização. Alterações ainda não publicadas.
+- **EVIDÊNCIA:** teste sintético da função real de carregamento falhou antes da correção por ausência de aviso e passou depois. `npm test`: 218 aprovados; `npm run lint` e `npm run build`: aprovados. Os testes alertam sobre variáveis Supabase ausentes localmente.
+- **LIMITES:** teste não exercita o navegador nem troca de organização durante consulta em andamento. CI remoto e homologação autenticada não verificados nesta rodada.
+- **PRÓXIMA AÇÃO:** testar a interface e mudanças concorrentes de sessão/organização; reconciliar branch remota e preservar alterações locais antes de publicar.
+
+## Concorrência na agenda — 2026-10-17
+
+- **REPRODUZIDO E CORRIGIDO LOCALMENTE:** uma resposta antiga sobrescrevia o resultado de atualização mais recente; o teste sintético falhou antes e passou depois. A versão da consulta também é invalidada na limpeza do efeito.
+- **VERIFICAÇÕES:** `npm test`: 219 aprovados; `npm run lint` e `npm run build`: aprovados. Persistem avisos de configuração Supabase ausente nos testes.
+- **LIMITES:** mudança de organização e desmontagem não foram reproduzidas em navegador; a correção não foi publicada e não substitui validação multi-tenant no servidor. Conciliar a branch remota preservando os arquivos existentes antes de publicar.
+
+## Renderização da agenda entre organizações — 2026-10-17
+
+- **REPRODUÇÃO SINTÉTICA:** com dados de outra organização já no estado, a renderização da agenda expunha o título antigo antes do efeito de carregamento. O teste de renderização isolada falhou antes da alteração e passou depois.
+- **CORREÇÃO LOCAL:** a lista e sua contagem são exibidas somente se associadas à organização atual. `npm test`: 220 aprovados; lint e build aprovados. Há aviso de variáveis Supabase locais ausentes.
+- **LIMITES:** sem teste de navegador real; revisão de modal aberto e ações pendentes durante troca de organização continua necessária. A correção não comprova isolamento no banco e ainda não foi publicada.
+
+## Formulário de evento entre organizações — 2026-10-17
+
+- **REPRODUÇÃO E CORREÇÃO LOCAL:** um modal de evento previamente aberto permanecia aberto na renderização de outra organização. Um teste sintético falhou antes e passou depois; a exibição e o envio agora verificam a organização de abertura, e o efeito limpa a seleção na mudança de organização.
+- **VERIFICAÇÕES:** `npm test`: 221 aprovados; `npm run lint` e `npm run build`: aprovados. As variáveis Supabase seguem ausentes no ambiente de testes.
+- **LIMITES:** não foi testado em navegador nem o resultado de uma gravação já iniciada antes da troca de sessão; proteção da interface não substitui RLS. Mudanças continuam locais, sem CI ou publicação.
+
+## Testes adicionais da agenda — 2026-10-17
+
+- **VERIFICADO COM SERVIÇO SIMULADO:** ausência de organização encerra carregamento, sinaliza erro e não consulta eventos; resposta bem-sucedida armazena a lista e encerra carregamento.
+- **SUÍTE:** 223 testes aprovados; lint e build aprovados. O ambiente de teste alerta que variáveis Supabase não estão configuradas.
+- **PRÓXIMA AÇÃO:** validar comportamento real da interface e das gravações pendentes durante troca de sessão; conciliar a branch antes de publicar.
+
+## Navegador local sem autenticação — 2026-10-17
+
+- **VERIFICADO:** Vite iniciado em `127.0.0.1`; Chrome headless com navegação externa bloqueada abriu `/app/eventos` sem sessão e apresentou a tela de login. O endereço permaneceu `/app/eventos`; não se observou redirecionamento de URL. O processo local foi encerrado após o teste.
+- **LIMITES:** este teste não acessou dados reais nem a agenda autenticada; não comprova RLS, troca de organização, modal, gravações ou homologação. Playwright existe no runtime fornecido, mas o Chromium desse pacote está ausente; foi utilizado o Chrome instalado.
+- **PRÓXIMA AÇÃO:** preparar ambiente autenticado sintético isolado para validar agenda e fluxos de sessão, sem expor credenciais nem alterar dados reais.
+
+## Logs agregados DEV — 2026-10-17
+
+- **CONSULTA SOMENTE LEITURA:** o projeto autorizado respondeu `ACTIVE_HEALTHY`. Na janela padrão das últimas 24 horas, PostgreSQL retornou 56 registros LOG `00000`, sete ERROR `P0001`, dois WARNING (`25P01` e `25001`) e um LOG `08006`. Não foram expostas mensagens nem informações pessoais.
+- **OUTRAS FONTES:** busca textual limitada por error/fatal/panic/warning não encontrou correspondência nos 11.592 registros do pooler, 77 do PostgREST e dois do Storage; isso não comprova ausência de falhas. A classificação textual dos sete P0001 não identificou categoria específica.
+- **LIMITAÇÃO:** não foi possível atribuir os sete erros a testes ou fluxos reais somente com as contagens; não há evidência suficiente para alterar código ou banco. Nenhum SQL mutável foi executado.
+- **PRÓXIMA AÇÃO:** correlacionar P0001 por horário e operação com dados sintéticos e metadados minimizados, sem publicar payloads de logs ou assumir que sejam incidentes.
+
+## Correlação de logs DEV — 2026-10-17
+
+- **SOMENTE LEITURA:** os sete erros P0001 ocorreram às 03h UTC; seis mensagens contêm expressões compatíveis com asserções sintéticas. Os sete comandos registrados incluem expressões encontradas nos testes SQL locais, mas isso não comprova, por si só, que todos os erros tenham sido esperados ou inofensivos.
+- **LIMITAÇÃO:** não foram divulgados comandos, mensagens completas ou dados pessoais. A causa exata, o resultado dos testes e qualquer impacto real continuam sem confirmação; nenhum SQL mutável foi executado.
+- **PRÓXIMA AÇÃO:** correlacionar os resultados dos testes de segurança com suas execuções e validar os fluxos autenticados em ambiente sintético, preservando as restrições de RLS.
+
+## Asserção de escrita em lideranças — 2026-10-17
+
+- **EVIDÊNCIA EM LOG:** um dos sete P0001 corresponde à mensagem `Non-admin leader update was permitted`; o comando registrado inclui teste com papel `authenticated`, a asserção e `ROLLBACK`. O teste local contém essa asserção após tentativa de UPDATE por líder não administrador. Isso indica falha de teste registrada às 03h UTC, mas não comprova o estado atual nem exposição de dados reais; a versão exata do teste executado e a conclusão da transação não foram verificadas.
+- **ESTADO ATUAL, SOMENTE LEITURA:** a política `leaders_update` exige organização correspondente e `private.nexus_is_admin()` em USING e WITH CHECK. A presença da política não comprova seu comportamento efetivo nem explica a falha histórica.
+- **PENDÊNCIA DE SEGURANÇA:** conferir histórico e contexto da execução e reproduzir isoladamente sem dados reais somente quando houver ambiente apropriado; não afirmar homologação de escrita por papel com base apenas na política ou no registro anterior de sucesso. Não se executou SQL mutável nem se modificou RLS.
+
+### Complemento da investigação
+
+- O comando registrado contém, nesta ordem, `SET LOCAL ROLE authenticated`, o bloco `write_test`, `RESET ROLE` e `ROLLBACK`; o contexto aponta para a linha 28 do bloco, compatível com a asserção de atualização por líder. A presença desses comandos no log não comprova que todos foram executados nem a efetivação do rollback.
+- Consulta atual de catálogo mostra RLS habilitada em `leaders`; `authenticated` não é superusuário, não possui BYPASSRLS e não é membro do proprietário. A função atual `private.nexus_is_admin()` consulta o perfil ativo e aceita apenas `admin` ou `superadmin`.
+- O teste local de escrita é parte de alterações ainda não commitadas e não estava incluído no teste mais antigo registrado como aprovado. Persistem a divergência entre a falha observada e a configuração atual e a necessidade de reprodução isolada com captura da identidade efetiva, sem usar dados reais.
+- Consulta posterior, somente leitura, encontrou zero dos IDs sintéticos explícitos do teste nas tabelas `organizations`, `auth.users` e `leaders`. Isso não comprova o rollback histórico nem verifica todas as tabelas. O histórico lista 13 migrações; seus identificadores não comprovam a data efetiva de aplicação ou a política vigente no instante da falha.
+
+## Revisão da PR e divergência local — 2026-10-17
+
+- **GitHub:** PR #1 aberta em rascunho no commit `6b1917997ef3a6d6d30092f3a0c6ad4242a3d31f`; branch remota está quatro commits à frente do HEAD local `e01b94e`, com alterações sobrepostas a arquivos locais já modificados. Nenhum merge, rebase, commit ou push foi realizado.
+- **CI:** workflow 39057130731 terminou em `action_required`; status Vercel aponta sucesso, sem comprovar fluxos autenticados. A API não retornou revisões submetidas. A descrição da PR contém evidências antigas e precisa ser reconciliada antes da homologação, preservando seu conteúdo e o histórico.
+- **PRÓXIMA AÇÃO:** conciliar os arquivos sobrepostos sem descartar modificações, validar o HEAD integrado e esclarecer a ação necessária no CI antes de publicar. Segurança de escrita por papel e E2E continuam pendentes.
+- **CAUSA DO CI:** a página da execução 39057130731 informa que o workflow aguarda aprovação de um mantenedor na PR #1; a API retornou lista de jobs vazia. A aprovação não foi concedida nem foi alterada qualquer proteção. Após a aprovação, verificar o resultado efetivo dos jobs e o commit testado.
+
+## Corrida de atualização da agenda — 2026-10-17
+
+- **REPRODUZIDO:** uma atualização iniciada pelo callback da organização anterior após a mudança invalidava o carregamento da organização atual. Teste sintético com referências de hooks persistidas falhou antes da correção e passou depois.
+- **CORREÇÃO LOCAL:** o carregamento rejeita callbacks de organização anterior após a organização atual ser confirmada no ciclo de renderização. A alteração não foi publicada.
+- **LIMITES:** o teste simula hooks e serviços; não substitui navegador autenticado nem valida resultado de gravações em trânsito, mensagens e modal após troca de sessão. RLS e banco não foram alterados.
+- **PRÓXIMA AÇÃO:** validar o ciclo completo de gravação/troca de sessão em ambiente sintético e conciliar as alterações locais com a branch remota antes de publicar.
+- **REGRESSÃO ADICIONAL:** resposta de erro já em andamento da organização anterior podia ser exibida após a mudança, antes do efeito de limpeza. Um teste com hooks simulados falhou antes e passou depois de invalidar a requisição no efeito de layout; permanece pendente validação com React e navegador reais.
+- **GRAVAÇÃO EM TRÂNSITO:** teste sintético reproduziu mensagem de sucesso de criação da organização anterior na organização seguinte; criação e atualização agora ignoram resultados e erros após troca de organização. A requisição já enviada não é cancelada e sua autorização depende do servidor. Persistem testes de edição, exclusão, estado de envio concorrente e troca de usuário na mesma organização; a correção continua local.
+- **RETORNO À ORGANIZAÇÃO:** uma sequência sintética A → B → A revelou que comparar apenas IDs permitia confirmação antiga. A resposta da gravação agora também confere a geração da organização; teste falhou antes e passou depois. O ambiente usa hooks e serviço simulados, não comprova comportamento em navegador autenticado.
+- **ENVIOS SOBREPOSTOS:** teste sintético mostrou que o término de uma gravação anterior liberava o estado de envio de uma gravação da organização seguinte. O estado agora é reiniciado na troca e finalizado apenas pela geração correspondente; teste falhou antes e passou depois. Falta validação com React e navegador reais.
+
+## Revalidação do CI remoto — 2026-10-18
+
+- **CONFIRMADO:** o relatório da conversa referenciada apontou a execução `39078664793` como concluída com sucesso no commit `19310842ec2b7d70a0d7b5895b2606224f3ff851`. A API do GitHub confirmou `success` e dois jobs concluídos: typecheck/build/testes de autenticação e validação das Edge Functions.
+- **LIMITES:** o status verificado cobre o commit remoto informado, não o HEAD local com alterações não publicadas. O status Vercel associado também é sucesso, mas não substitui homologação E2E autenticada com duas organizações.
+- **PENDÊNCIAS:** PR #1 continua draft; não houve merge, push, alteração de produção, banco, RLS ou permissões. A reconciliação entre branch remota e mudanças locais permanece necessária antes de qualquer publicação.
+
+## Exportação CSV e Storage privado — 2026-10-18
+
+- **CORRIGIDO LOCALMENTE:** a exportação de relatórios agora escapa aspas, vírgulas e quebras de linha e neutraliza prefixos de fórmula (`=`, `+`, `-`, `@`). Testes regressivos passaram; nenhum dado é enviado ao banco por essa operação.
+- **VERIFICAÇÃO:** `npm test` 230/230, `npm run lint` e `npm run build` concluídos com sucesso.
+- **BANCO:** o bucket `nexus-evidence-private` não existe no DEV. A tentativa de aplicar o script revisado foi recusada pelo controle de segurança por exigir aprovação específica para criação de bucket/RLS. Nenhum objeto, política ou dado foi alterado.
+- **PENDÊNCIA REAL:** aprovar explicitamente o script `docs/proposed-migrations/NEXUS_PRIVATE_STORAGE_REVIEW_ONLY.sql` ou manter o Storage desativado; não habilitar uploads antes dessa decisão.
+
+## Convites de cadastro — 2026-10-18
+
+- **CORRIGIDO LOCALMENTE:** `URLSearchParams` já decodifica os parâmetros de convite; removida a segunda chamada de `decodeURIComponent`, que podia lançar `URIError` em valores com `%` literal.
+- **VERIFICAÇÃO:** teste regressivo falhou antes da alteração e passou depois; suíte completa 232/232, lint e build concluídos com sucesso.
+- **LIMITES:** não houve cadastro real, envio de convite, alteração de Auth ou banco. A correção ainda aguarda publicação na branch remota.
+
+## Carregamento de metas — 2026-10-18
+
+- **CORRIGIDO LOCALMENTE:** a página agora encerra o carregamento e limpa os dados quando não há organização selecionada; erros de metas ou coordenadores não são tratados como listas vazias.
+- **VERIFICAÇÃO:** regressão reproduzida antes e aprovada depois; suíte completa 234/234, lint e build concluídos com sucesso.
+- **LIMITES:** sem consulta autenticada real; a correção aguarda publicação e homologação E2E.
+
+## Distribuição de materiais — 2026-10-18
+
+- **CORRIGIDO LOCALMENTE:** a tela não informa entrega concluída quando a atualização do saldo falha; agora exibe erro, recarrega o estado e interrompe a confirmação de sucesso.
+- **LIMITES:** o registro da distribuição já criado pode exigir reconciliação no servidor; uma operação atômica continua pendente e requer SQL/função revisada. Nenhum SQL foi aplicado.
+- **VERIFICAÇÃO:** regressão passou após falhar antes da correção; suíte 235/235, lint e build concluídos com sucesso.
+
+## Adesivos e evidências — 2026-10-18
+
+- **AUDITORIA:** serviços de carros e casas já exigem confirmação de linha criada, atualizada ou excluída e rejeitam referências de foto inválidas; não foi encontrada nova confirmação falsa neste módulo.
+- **DECISÃO:** não foram feitas alterações redundantes. O Storage privado continua desativado até aprovação específica do script revisado.
+
+## Carregamento de estoque — 2026-10-18
+
+- **CORRIGIDO LOCALMENTE:** inventário, distribuições e coordenadores agora propagam erros em vez de exibir listas vazias; sem organização, o estado é limpo e o carregamento termina.
+- **VERIFICAÇÃO:** regressão passou após falhar antes; suíte 237/237, lint e build concluídos com sucesso.
+- **LIMITES:** sem consulta autenticada real; a correção ainda não foi publicada na branch remota.
+
+## Carregamento de relatórios — 2026-10-18
+
+- **CORRIGIDO LOCALMENTE:** relatórios agora limpam dados e encerram o carregamento sem organização e propagam erros de todas as sete consultas, evitando relatório parcial apresentado como vazio.
+- **VERIFICAÇÃO:** regressão passou após falhar antes; suíte 239/239, lint e build concluídos com sucesso.
+- **LIMITES:** sem consulta autenticada real; publicação e E2E continuam pendentes.
+
+## Carregamento do modo de campo — 2026-10-18
+
+- **CORRIGIDO LOCALMENTE:** troca ou ausência de organização agora limpa líderes, contatos, adesivos e presenças e encerra o carregamento, evitando retenção visual de dados de outro tenant.
+- **VERIFICAÇÃO:** regressão passou após falhar antes; suíte 244/244, lint e build concluídos com sucesso.
+- **LIMITES:** sem consulta autenticada real; RLS continua sendo a autoridade de isolamento.
+
+## Carregamento de presença — 2026-10-18
+
+- **CORRIGIDO LOCALMENTE:** presença agora propaga erros de logs, eventos e reuniões; sem organização, limpa as três listas e encerra o carregamento.
+- **VERIFICAÇÃO:** regressão passou após falhar antes; suíte 246/246, lint e build concluídos com sucesso.
+- **LIMITES:** sem consulta autenticada real; a alteração ainda aguarda publicação.
+
+## Carregamento de reuniões — 2026-10-18
+
+- **CORRIGIDO LOCALMENTE:** reuniões agora propagam o erro retornado pelo serviço; sem organização, limpam a lista e encerram o carregamento.
+- **VERIFICAÇÃO:** regressão passou após falhar antes; suíte 248/248, lint e build concluídos com sucesso.
+- **LIMITES:** sem consulta autenticada real; alteração ainda não publicada.
+
+## Dashboard e falhas parciais — 2026-10-18
+
+- **CORRIGIDO LOCALMENTE:** quando qualquer uma das oito consultas do painel falha ou expira, a Dashboard agora exibe estado de erro visível e opção de nova tentativa, em vez de mostrar indicadores zerados como se fossem dados reais.
+- **VERIFICAÇÃO:** regressão passou após falhar antes; suíte 251/251, lint e build concluídos com sucesso.
+- **LIMITES:** logs continuam sem dados autenticados reais; publicação e E2E permanecem pendentes.
+
+## Reconciliação da pendência RLS de perfis — 2026-10-18
+
+- **VERIFICADO NO DEV, somente leitura:** `public.profiles` está com RLS habilitado; as policies atuais expostas são `profile_read` e `profile_update_own_contact`. Não foi encontrada policy INSERT na consulta atual, embora o papel `authenticated` ainda possua privilégio de tabela INSERT.
+- **DIVERGÊNCIA:** a descrição da PR #1 menciona uma antiga policy de inserção própria e risco de alteração de `role`/`organization_id`; essa descrição não prova que a policy ainda exista. A configuração atual precisa ser tratada como fonte de verdade.
+- **DECISÃO:** não aplicar SQL com base na descrição antiga. Qualquer ajuste de privilégios ou RLS exige script específico, revisão e aprovação; nenhum banco foi alterado.
+
+## Estado remoto da PR — 2026-10-18
+
+- **VERIFICADO:** PR #1 continua aberta, draft e não mesclada, mas a branch remota está no head `4ecc5161dd115909b8a6f7db6e3f784e3ab16053`, com 150 commits e 101 arquivos; o checkout local permanece em `e01b94e` com alterações não publicadas.
+- **CI:** a execução `39080394393` do head remoto terminou `action_required`; não tratar o CI como aprovado sem autorização do mantenedor e jobs concluídos.
+- **RISCO:** não é seguro reconciliar automaticamente esse volume com o working tree sujo. Nenhum reset, rebase, force-push ou merge foi realizado.
+
+## Executor horário remoto — 2026-10-18
+
+- **VERIFICADO:** o repositório contém um workflow horário `autonomous-nexus.yml`, mas ele só executa quando `NEXUS_AUTONOMY_ENABLED=true` e o segredo `OPENAI_API_KEY` existe; sem ambos, o job é pulado.
+- **LIMITAÇÃO:** não é possível confirmar nem configurar segredos/variáveis pelo checkout ou por este ciclo. Não há evidência de execução autônoma ativa contínua.
+- **SEGURANÇA:** o workflow remoto declara que não aplica migrações, não acessa produção e não faz merge; não alterei o workflow.
+
+## Carregamento de inteligência territorial — 2026-10-18
+
+- **CORRIGIDO LOCALMENTE:** demandas, contatos e lideranças agora limpam o estado sem organização e propagam erros individuais das consultas.
+- **VERIFICAÇÃO:** regressão passou após falhar antes; suíte 250/250, lint e build concluídos com sucesso.
+- **LIMITES:** sem consulta autenticada real; alteração ainda não publicada.
+
+## Carregamento do CRM — 2026-10-18
+
+- **CORRIGIDO LOCALMENTE:** CRM agora limpa contatos e lideranças e encerra o carregamento sem organização; erros de ambas as consultas deixam de ser tratados como listas vazias.
+- **VERIFICAÇÃO:** regressão passou após falhar antes; suíte 243/243, lint e build concluídos com sucesso.
+- **LIMITES:** sem consulta autenticada real; publicação e E2E continuam pendentes.
+
+## Carregamento de coordenação — 2026-10-18
+
+- **CORRIGIDO LOCALMENTE:** a tela agora limpa coordenadores e líderes e encerra o carregamento sem organização; erros de ambas as consultas são propagados em vez de tratados como listas vazias.
+- **VERIFICAÇÃO:** regressão passou após falhar antes; suíte 241/241, lint e build concluídos com sucesso.
+- **LIMITES:** sem consulta autenticada real; publicação e E2E continuam pendentes.
+## Leaders/Stickers — 2026-10-18
+
+- Corrigido tratamento de falhas de carregamento em `LeadersPage.tsx` e `StickersPage.tsx`: erros retornados por serviços agora interrompem o fluxo e são exibidos, em vez de serem tratados como listas vazias.
+- Ao perder a organização ativa, os estados dessas telas são limpos e o carregamento é encerrado.
+- Validação: `npm test` — 253/253; `npm run lint` — aprovado; `npm run build` — aprovado.
+## Users — 2026-10-18
+
+- Corrigido `UsersPage.tsx` para limpar membros e encerrar o carregamento quando não existe organização ativa.
+- O tratamento de erro da consulta de membros já estava presente e foi preservado.
+- Validação: `npm test` — 254/254; `npm run lint` — aprovado; `npm run build` — aprovado.
+## Profiles — 2026-10-18
+
+- Corrigido `profilesService.create`: INSERT sem linha retornada agora retorna `PROFILE_CREATE_NOT_CONFIRMED`, evitando sucesso falso no cadastro inicial.
+- Validação: `npm test` — 255/255; `npm run lint` — aprovado; `npm run build` — aprovado.
+## Modal acessível e Storage privado — 2026-10-18
+
+- Corrigido `Modal.tsx` com `role=dialog`, nome/descrição acessíveis, `aria-modal`, foco inicial, armadilha de Tab/Shift+Tab, Escape e restauração do foco ao fechar.
+- Adicionados 2 testes de regressão de acessibilidade.
+- SQL aprovado pelo usuário e aplicado exclusivamente no Supabase DEV `qidstqsbxwkbkwowhpab`: bucket `nexus-evidence-private` privado, limite 5 MiB, MIME JPG/PNG/WebP, políticas SELECT/INSERT/DELETE tenant-scoped e sem UPDATE.
+- Verificação pós-aplicação confirmou o bucket e as três políticas. Nenhuma produção foi alterada.

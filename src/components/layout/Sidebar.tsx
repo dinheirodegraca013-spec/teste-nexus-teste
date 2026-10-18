@@ -18,8 +18,7 @@ import {
   CreditCard, 
   Settings, 
   User, 
-  LogOut,
-  ChevronDown
+  LogOut
 } from 'lucide-react';
 import { useAuth, normalizeRole } from '../../contexts/AuthContext';
 import { AppModule } from '../../types';
@@ -48,8 +47,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isMobileOpen,
   onCloseMobile,
 }) => {
-  const { profile, organization, organizations, switchOrganization, signOut, hasPermission } = useAuth();
-  const [isOrgDropdownOpen, setIsOrgDropdownOpen] = React.useState(false);
+  const { profile, organization, signOut, hasPermission } = useAuth();
 
   const isLeader = normalizeRole(profile?.role) === 'leader';
 
@@ -159,52 +157,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
 
-        {/* Multi-Tenant Organization Switcher */}
-        <div className="p-3 border-b border-slate-100 relative">
-          <button
-            onClick={() => setIsOrgDropdownOpen(!isOrgDropdownOpen)}
-            className="w-full text-left p-2 rounded-lg bg-slate-50 border border-slate-200 hover:border-slate-300 flex items-center justify-between transition-colors text-xs cursor-pointer shadow-2xs"
-          >
+        {/* Active organization. Membership changes are managed server-side. */}
+        <div className="p-3 border-b border-slate-100">
+          <div className="w-full text-left p-2 rounded-lg bg-slate-50 border border-slate-200 text-xs shadow-2xs">
             <div className="truncate pr-2">
               <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Organização Ativa</div>
               <div className="text-slate-900 font-semibold truncate mt-0.5">{organization?.name || 'Carregando...'}</div>
             </div>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-          </button>
-
-          {isOrgDropdownOpen && (
-            <div className="absolute top-full left-3 right-3 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl py-1 z-30 max-h-48 overflow-y-auto">
-              <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                Alternar Organização
-              </div>
-              {organizations.map(org => (
-                <button
-                  key={org.id}
-                  onClick={() => {
-                    switchOrganization(org.id);
-                    setIsOrgDropdownOpen(false);
-                  }}
-                  className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition-colors cursor-pointer ${
-                    org.id === organization?.id ? 'text-slate-950 font-semibold bg-slate-100/70' : 'text-slate-600'
-                  }`}
-                >
-                  <span className="truncate">{org.name}</span>
-                  {org.id === organization?.id && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />}
-                </button>
-              ))}
-              <div className="border-t border-slate-100 mt-1 pt-1">
-                <button
-                  onClick={() => {
-                    setIsOrgDropdownOpen(false);
-                    handleItemClick('/app/organizacoes');
-                  }}
-                  className="w-full text-left px-3 py-1.5 text-[11px] font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 cursor-pointer"
-                >
-                  + Nova Organização
-                </button>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
 
         {/* Navigation items */}

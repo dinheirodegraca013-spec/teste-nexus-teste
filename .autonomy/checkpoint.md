@@ -1,0 +1,46 @@
+# Checkpoint NEXUS
+
+- 2026-10-18 00:38 BRT: CI remoto `39078664793` confirmado verde no commit `1931084`; dois jobs concluídos.
+- Verificação local: `npm test` 228/228, `npm run lint` OK, `npm run build` OK.
+- Banco DEV `qidstqsbxwkbkwowhpab`: 13 migrations; `nexus_module_read_rls` já aplicada remotamente. Não reaplicar migração duplicada.
+- Alterações locais permanecem não publicadas e misturam mudanças do usuário com correções locais; não fazer commit/push sem separar o conjunto.
+- Pendências: homologação E2E autenticada, reconciliação branch/PR draft e revisão explícita de qualquer SQL estrutural adicional.
+- 2026-10-18: exportação CSV protegida contra CSV injection e delimitadores; testes 230/230, lint/build OK.
+- Tentativa de aplicar Storage privado foi recusada pelo gate de SQL estrutural/RLS; nenhuma alteração no banco ocorreu. Script pendente de aprovação específica.
+- 2026-10-18: dupla decodificação dos parâmetros de convite corrigida; suíte 232/232, lint/build OK. Sem Auth/banco real.
+- 2026-10-18: carregamento de metas corrigido para erro e ausência de organização; suíte 234/234, lint/build OK.
+- 2026-10-18: distribuição de materiais deixou de confirmar sucesso após falha no saldo; suíte 235/235, lint/build OK. Operação atômica no servidor segue pendente.
+- 2026-10-18: auditoria de adesivos/evidências não encontrou nova falha; confirmações de CRUD e validação de foto já existem.
+- 2026-10-18: carregamento de estoque corrigido para erros e ausência de organização; suíte 237/237, lint/build OK.
+- 2026-10-18: carregamento de relatórios corrigido para erros e ausência de organização; suíte 239/239, lint/build OK.
+- 2026-10-18: carregamento de coordenação corrigido para erros e ausência de organização; suíte 241/241, lint/build OK.
+- 2026-10-18: carregamento do CRM corrigido para erros e ausência de organização; suíte 243/243, lint/build OK.
+- 2026-10-18: carregamento do modo de campo limpa dados ao trocar/ausentar organização; suíte 244/244, lint/build OK.
+- 2026-10-18: carregamento de presença corrigido para erros e ausência de organização; suíte 246/246, lint/build OK.
+- 2026-10-18: carregamento de reuniões corrigido para erro e ausência de organização; suíte 248/248, lint/build OK.
+- 2026-10-18: carregamento de inteligência territorial corrigido; suíte 250/250, lint/build OK.
+- 2026-10-18: Dashboard passou a exibir falha parcial em vez de zeros silenciosos; suíte 251/251, lint/build OK.
+- 2026-10-18: DEV confirmou RLS de profiles habilitado e sem policy INSERT atual; descrição da PR contém evidência antiga não confirmada. Nenhum SQL aplicado.
+- 2026-10-18: PR #1 remoto confirmado no head 4ecc5161 (150 commits/101 arquivos), CI action_required; local e remoto divergentes. Sem reset/rebase/merge/push.
+- 2026-10-18: runner horário remoto existe, mas permanece condicionado a `NEXUS_AUTONOMY_ENABLED` e `OPENAI_API_KEY`; configuração não verificada nem alterada.
+## Consolidação solicitada pelo usuário — 2026-10-18
+- Confirmado: correções de código e testes estão aplicadas no workspace local; `git diff --check` passou.
+- Validação mais recente: `npm test` 251/251, lint e build concluídos com sucesso.
+- Publicação ainda pendente: não há `user.name`/`user.email` Git configurados, portanto não criei commit nem push.
+- Banco: migration de RLS de módulos já consta como aplicada no DEV; proposta de Storage privado permanece somente em `docs/proposed-migrations/NEXUS_PRIVATE_STORAGE_REVIEW_ONLY.sql` e não foi executada pelo bloqueio de aprovação específica do SQL.
+- Auditoria direcionada de criação de lideranças/cadastro inicial: `leadersService.create` usa confirmação de linha persistida (`CREATE_NOT_CONFIRMED`) e o fluxo de cadastro exige RPC de provisionamento e perfil/organização carregados; nenhum defeito novo comprovado nesta rodada.
+- Validação direcionada: `npm test -- --runInBand` passou com 251/251 testes.
+- 2026-10-18: corrigido tratamento de erro/limpeza de tenant em `LeadersPage` e `StickersPage`; adicionados 2 testes. Validação: 253/253, lint e build aprovados.
+- 2026-10-18: `UsersPage` agora limpa membros sem organização; teste adicionado. Validação: 254/254, lint e build aprovados.
+- 2026-10-18: `profilesService.create` agora rejeita INSERT sem linha persistida; teste adicionado. Validação: 255/255, lint e build aprovados.
+- 2026-10-18: auditoria pontual de segurança não encontrou `dangerouslySetInnerHTML` nem persistência de `organization_id` em `localStorage`/`sessionStorage`; sem correção necessária.
+- 2026-10-18: auditoria de arquitetura confirmou que telas não fazem chamadas diretas ao Supabase; acessos permanecem concentrados em serviços/contexto, preservando validações de tenant.
+- 2026-10-18: revisão final de padrões `if (!orgId) return` confirmou que a única ocorrência restante em `EventsPage` é guarda de abertura de modal, não carregamento; nenhum defeito novo.
+- 2026-10-18: revalidação de `EventsPage` confirmou limpeza de eventos, erro visível e guarda contra respostas antigas ao trocar de organização; nenhuma alteração necessária.
+- 2026-10-18: `npm audit --omit=dev --audit-level=high` não conseguiu consultar o endpoint de advisories (falha de rede/cache); nenhuma conclusão de segurança de dependências foi inferida e não houve alteração.
+- 2026-10-18: workflow `autonomous-nexus.yml` não existe no checkout local; executor horário citado em auditorias remotas não está disponível para validação local. Nenhuma automação foi criada ou alterada.
+- 2026-10-18: corrigido apenas o formato de finais de linha no bloco de confirmação de criação de perfil; `git diff --check` passou. Revalidação: 255/255, lint e build aprovados.
+- 2026-10-18: integridade local de migrations: 10 arquivos, nenhum timestamp duplicado. Divergência com as 13 migrations remotas permanece apenas como reconciliação pendente; nenhum SQL foi aplicado.
+- 2026-10-18: revisão de nomes de políticas RLS locais encontrou políticas estáticas distintas; as ocorrências dinâmicas usam DROP/CREATE intencionalmente. Nenhuma alteração necessária.
+- 2026-10-18: marcadores `NotImplementedError` encontrados apenas em exclusão de perfil e revogação de membro; ambos são bloqueios fail-closed documentados e exigem fluxo privilegiado seguro, não correção client-side.
+- 2026-10-18: correção de acessibilidade do Modal validada com 257/257 testes; lint/build aprovados. SQL `nexus_private_storage_reviewed` aplicado e verificado no Supabase DEV: bucket privado e políticas SELECT/INSERT/DELETE confirmados.

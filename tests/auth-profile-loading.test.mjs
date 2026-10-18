@@ -24,7 +24,7 @@ const result = await build({
         };
         export default { useRef, createElement: (_type, props) => { if (props.value) globalThis.__authContext = props.value; return null; } };
       ` : args.path.endsWith('/supabase') ? `
-        export const supabase = { auth: { signOut: async () => ({ error: null }), getSession: () => globalThis.__authProfileTest.session(), onAuthStateChange: callback => { globalThis.__authProfileTest.onChange = callback; return { data: { subscription: { unsubscribe() {} } } }; } }, rpc: (...args) => globalThis.__authProfileTest.rpc(...args) };
+        export const supabase = { auth: { signOut: async () => ({ error: null }), signInWithPassword: (...args) => globalThis.__authProfileTest.signIn(...args), getSession: () => (globalThis.__authProfileTest.getSession || globalThis.__authProfileTest.session)(), onAuthStateChange: callback => { globalThis.__authEvent = callback; globalThis.__authProfileTest.onChange = callback; return { data: { subscription: { unsubscribe() {} } } }; } }, rpc: (...args) => globalThis.__authProfileTest.rpc(...args) };
         export const isSupabaseConfigured = true, supabaseUrl = '';
       ` : `
         export const profilesService = { getById: (...args) => globalThis.__authProfileTest.lookup(...args) };
@@ -39,6 +39,149 @@ const result = await build({
 });
 const bundled = result.outputFiles[0].text;
 const { AuthProvider, callbacks, states, effects } = await import(`data:text/javascript;base64,${Buffer.from(bundled).toString('base64')}`);
+
+test('late initial session cannot restore access after SIGNED_OUT', async () => {
+  let releaseSession;
+  const pending = new Promise(resolve => { releaseSession = resolve; });
+  let lookups = 0;
+  globalThis.__authProfileTest = {
+    getSession: () => pending,
+    lookup: async () => { lookups++; return { data: { id: 'old-user', role: 'admin' }, error: null }; },
+    rpc: () => { throw new Error('Unexpected provisioning'); },
+  };
+  callbacks.length = 0; states.length = 0; effects.length = 0;
+  AuthProvider({ children: null });
+  const cleanup = effects[0]();
+  await globalThis.__authEvent('SIGNED_OUT', null);
+  releaseSession({ data: { session: { user: { id: 'old-user' } } }, error: null });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(states[0], null);
+  assert.equal(states[1], null);
+  assert.equal(lookups, 0);
+  cleanup();
+  delete globalThis.__authProfileTest;
+  delete globalThis.__authEvent;
+});
+
+test('late INITIAL_SESSION event does not restore user after SIGNED_OUT', async () => {
+  globalThis.__authProfileTest = {
+    getSession: async () => ({ data: { session: null }, error: null }),
+    lookup: async () => { throw new Error('Unexpected profile lookup'); },
+    rpc: () => { throw new Error('Unexpected provisioning'); },
+  };
+  callbacks.length = 0; states.length = 0; effects.length = 0;
+  AuthProvider({ children: null });
+  const cleanup = effects[0]();
+  await new Promise(resolve => setImmediate(resolve));
+  await globalThis.__authEvent('SIGNED_OUT', null);
+  await globalThis.__authEvent('INITIAL_SESSION', { user: { id: 'old-user' } });
+  assert.equal(states[0], null);
+  assert.equal(states[1], null);
+  cleanup();
+  delete globalThis.__authProfileTest;
+  delete globalThis.__authEvent;
+});
+
+test('late refresh session cannot restore access after SIGNED_OUT', async () => {
+  let releaseSession;
+  const pending = new Promise(resolve => { releaseSession = resolve; });
+  let calls = 0;
+  globalThis.__authProfileTest = {
+    getSession: () => ++calls === 1 ? Promise.resolve({ data: { session: null }, error: null }) : pending,
+    lookup: async () => ({ data: { id: 'old-user', organization_id: 'old-tenant', role: 'admin' }, error: null }),
+    rpc: () => { throw new Error('Unexpected provisioning'); },
+  };
+  callbacks.length = 0; states.length = 0; effects.length = 0;
+  AuthProvider({ children: null });
+  const cleanup = effects[0]();
+  await new Promise(resolve => setImmediate(resolve));
+  const refresh = globalThis.__authContext.refreshUserData();
+  await globalThis.__authEvent('SIGNED_OUT', null);
+  releaseSession({ data: { session: { user: { id: 'old-user' } } }, error: null });
+  await refresh;
+  assert.equal(states[0], null);
+  assert.equal(states[1], null);
+  assert.equal(states[2], null);
+  cleanup();
+  delete globalThis.__authProfileTest;
+  delete globalThis.__authEvent;
+});
+
+test('SIGNED_OUT during sign-in profile loading prevents successful access', async () => {
+  let releaseProfile;
+  const pending = new Promise(resolve => { releaseProfile = resolve; });
+  const user = { id: 'old-user' };
+  globalThis.__authProfileTest = {
+    getSession: async () => ({ data: { session: null }, error: null }),
+    signIn: async () => ({ data: { user, session: { user } }, error: null }),
+    lookup: () => pending,
+    rpc: () => { throw new Error('Unexpected provisioning'); },
+  };
+  callbacks.length = 0; states.length = 0; effects.length = 0;
+  AuthProvider({ children: null });
+  const cleanup = effects[0]();
+  await new Promise(resolve => setImmediate(resolve));
+  const signingIn = globalThis.__authContext.signIn('test@example.invalid', 'synthetic');
+  await new Promise(resolve => setImmediate(resolve));
+  await globalThis.__authEvent('SIGNED_OUT', null);
+  releaseProfile({ data: { id: 'old-user', organization_id: 'old-tenant', role: 'admin' }, error: null });
+  const result = await signingIn;
+  assert.ok(result.error);
+  assert.equal(states[0], null);
+  assert.equal(states[1], null);
+  assert.equal(states[2], null);
+  cleanup();
+  delete globalThis.__authProfileTest;
+  delete globalThis.__authEvent;
+});
+
+test('SIGNED_OUT before sign-in response prevents stale login from restoring access', async () => {
+  let releaseSignIn;
+  const pending = new Promise(resolve => { releaseSignIn = resolve; });
+  const user = { id: 'old-user' };
+  globalThis.__authProfileTest = {
+    getSession: async () => ({ data: { session: null }, error: null }),
+    signIn: () => pending,
+    lookup: async () => ({ data: { id: user.id, organization_id: 'old-tenant', role: 'admin' }, error: null }),
+    rpc: () => { throw new Error('Unexpected provisioning'); },
+  };
+  callbacks.length = 0; states.length = 0; effects.length = 0;
+  AuthProvider({ children: null });
+  const cleanup = effects[0]();
+  await new Promise(resolve => setImmediate(resolve));
+  const signingIn = globalThis.__authContext.signIn('test@example.invalid', 'synthetic');
+  await globalThis.__authEvent('SIGNED_OUT', null);
+  releaseSignIn({ data: { user, session: { user } }, error: null });
+  const result = await signingIn;
+  assert.ok(result.error);
+  assert.equal(states[0], null);
+  assert.equal(states[1], null);
+  assert.equal(states[2], null);
+  cleanup();
+  delete globalThis.__authProfileTest;
+  delete globalThis.__authEvent;
+});
+
+test('sign-in without a concurrent logout succeeds', async () => {
+  const user = { id: 'current-user' };
+  globalThis.__authProfileTest = {
+    getSession: async () => ({ data: { session: null }, error: null }),
+    signIn: async () => ({ data: { user, session: { user } }, error: null }),
+    lookup: async () => ({ data: { id: user.id, organization_id: 'current-tenant', role: 'admin' }, error: null }),
+    rpc: () => { throw new Error('Unexpected provisioning'); },
+  };
+  callbacks.length = 0; states.length = 0; effects.length = 0;
+  AuthProvider({ children: null });
+  const cleanup = effects[0]();
+  await new Promise(resolve => setImmediate(resolve));
+  const result = await globalThis.__authContext.signIn('test@example.invalid', 'synthetic');
+  assert.equal(result.error, null);
+  assert.equal(states[0].id, user.id);
+  assert.equal(states[2].id, user.id);
+  cleanup();
+  delete globalThis.__authProfileTest;
+  delete globalThis.__authEvent;
+});
 
 for (const kind of ['returned error', 'rejected request', 'timeout']) {
   test(`profile ${kind} clears cached access without provisioning`, async () => {
@@ -58,17 +201,15 @@ for (const kind of ['returned error', 'rejected request', 'timeout']) {
     // Model a previously loaded administrator and tenant before a refresh fails.
     states[2] = { role: 'admin' };
     states[3] = { id: 'old-tenant' };
-    states[4] = [{ id: 'old-tenant' }];
-    states[5] = [{ module: 'crm', can_view: true }];
+    states[4] = [{ module: 'crm', can_view: true }];
     const loaded = await callbacks[0]({ id: 'synthetic-user', user_metadata: {} });
     assert.deepEqual(loaded, { profile: null, organization: null, permissions: [] });
     assert.equal(rpcCalls, 0);
     assert.equal(states[2], null);
     assert.equal(states[3], null);
     assert.deepEqual(states[4], []);
-    assert.deepEqual(states[5], []);
+    assert.equal(states[6], failure.message);
     assert.equal(states[7], failure.message);
-    assert.equal(states[8], failure.message);
     delete globalThis.__authProfileTest;
   });
 }
@@ -118,8 +259,8 @@ for (const staleOutcome of ['profile', 'missing', 'error']) {
     assert.equal(loadedB.profile.id, 'user-b');
     assert.equal(states[2].id, 'user-b');
     assert.equal(states[3].id, 'tenant-b');
-    assert.equal(states[5][0].user_id, 'user-b');
-    assert.equal(states[7], null);
+    assert.equal(states[4][0].user_id, 'user-b');
+    assert.equal(states[6], null);
     assert.equal(rpcCalls, 0);
     delete globalThis.__authProfileTest;
   });
@@ -146,7 +287,6 @@ for (const stage of ['profile', 'organization']) {
     assert.equal(states[2], null);
     assert.equal(states[3], null);
     assert.deepEqual(states[4], []);
-    assert.deepEqual(states[5], []);
     delete globalThis.__authProfileTest;
     delete globalThis.__authContext;
   });
@@ -182,7 +322,7 @@ for (const event of ['SIGNED_OUT', 'SIGNED_IN']) {
         assert.deepEqual(states[1], nextSession);
         assert.equal(states[2]?.id || null, nextSession?.user.id || null);
         assert.equal(states[3]?.id || null, nextSession ? 'tenant-b' : null);
-        assert.equal(states[8], null);
+        assert.equal(states[7], null);
       } finally {
         cleanup();
         delete globalThis.__authProfileTest;
@@ -205,9 +345,9 @@ test('initial session without a newer event still loads access', async () => {
     assert.equal(states[0].id, 'user-a');
     assert.equal(states[2].id, 'user-a');
     assert.equal(states[3].id, 'tenant-a');
-    assert.equal(states[5][0].user_id, 'user-a');
-    assert.equal(states[6], false);
-    assert.equal(states[8], null);
+    assert.equal(states[4][0].user_id, 'user-a');
+    assert.equal(states[5], false);
+    assert.equal(states[7], null);
   } finally {
     cleanup();
     delete globalThis.__authProfileTest;

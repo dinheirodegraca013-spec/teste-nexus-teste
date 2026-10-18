@@ -81,7 +81,15 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
   const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
 
   const loadData = useCallback(async () => {
-    if (!orgId) return;
+    if (!orgId) {
+      setLeaders([]);
+      setRecentContacts([]);
+      setCarStickers([]);
+      setHouseStickers([]);
+      setPresenceLogs([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const [leadsRes, contactsRes, carsRes, housesRes, presenceRes] = await Promise.all([

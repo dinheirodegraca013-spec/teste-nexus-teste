@@ -32,6 +32,16 @@ export const organizationsService = {
       .eq('id', id)
       .select()
       .maybeSingle();
+    if (!error && !data) {
+      return {
+        data: null,
+        error: {
+          name: 'PermissionError',
+          code: 'ORGANIZATION_UPDATE_NOT_APPLIED',
+          message: 'Atualização não realizada: organização não autorizada ou indisponível.',
+        },
+      };
+    }
     return { data: data as Organization | null, error };
   }
 };
@@ -202,6 +212,15 @@ export const profilesService = {
         table: 'profiles',
         hasData: Boolean(data),
       });
+      if (!data) {
+        const confirmationError = {
+          name: 'PermissionError',
+          code: 'PROFILE_CREATE_NOT_CONFIRMED',
+          message: 'A criação do perfil não foi confirmada. O registro pode não ter sido salvo ou você pode não ter permissão.',
+        };
+        console.error('[NEXUS PROFILE] INSERT_NOT_CONFIRMED', confirmationError);
+        return { data: null, error: confirmationError as any };
+      }
       console.log('[NEXUS PROFILE] SELECT_AFTER_INSERT', {
         operation: 'SELECT',
         table: 'profiles',
@@ -256,10 +275,47 @@ export const permissionsService = {
         can_delete: Boolean(permission.can_delete),
       }));
 
+    if (permissions.length > 0 && dbRows.length !== permissions.length) {
+      return {
+        data: [],
+        error: {
+          name: 'ValidationError',
+          code: 'PERMISSIONS_INVALID',
+          message: 'Todas as permissões devem identificar usuário e módulo.',
+        },
+      };
+    }
+    if (dbRows.length === 0) {
+      return {
+        data: [],
+        error: {
+          name: 'ValidationError',
+          code: 'PERMISSIONS_EMPTY',
+          message: 'Nenhuma permissão válida foi informada para salvar.',
+        },
+      };
+    }
+
     const { data, error } = await supabase
       .from('user_module_permissions')
       .upsert(dbRows, { onConflict: 'user_id,module_key' })
       .select();
+
+    const rowKey = (row: typeof dbRows[number]) => JSON.stringify([
+      row.user_id, row.module_key, row.can_read, row.can_write, row.can_delete,
+    ]);
+    const returnedRows = new Set((data || []).map(rowKey));
+    if (!error && (!data || data.length !== dbRows.length ||
+      returnedRows.size !== dbRows.length || !dbRows.every((row) => returnedRows.has(rowKey(row))))) {
+      return {
+        data: [],
+        error: {
+          name: 'PermissionError',
+          code: 'PERMISSIONS_NOT_CONFIRMED',
+          message: 'As permissões não foram confirmadas integralmente. Verifique o acesso e tente novamente.',
+        },
+      };
+    }
 
     const mapped = ((data || []) as any[]).map((row) => ({
       ...row,
@@ -281,8 +337,8 @@ export const membersService = {
       .select('*')
       .eq('organization_id', organizationId)
       .order('created_at', { ascending: false });
-    
-    return { 
+
+    return {
       data: (data || []).map((p: any) => {
         const nameVal = p.name || p.full_name || '';
         return {
@@ -298,8 +354,8 @@ export const membersService = {
           is_blocked: Boolean(p.is_blocked),
           created_at: p.created_at || new Date().toISOString(),
         };
-      }), 
-      error 
+      }),
+      error
     };
   },
 

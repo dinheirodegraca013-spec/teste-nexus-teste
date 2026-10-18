@@ -45,7 +45,13 @@ export const MaterialsPage: React.FC = () => {
   });
 
   const loadData = useCallback(async () => {
-    if (!orgId) return;
+    if (!orgId) {
+      setMaterials([]);
+      setDistributions([]);
+      setCoordinators([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const [matsRes, distRes, coordsRes] = await Promise.all([
@@ -53,6 +59,9 @@ export const MaterialsPage: React.FC = () => {
         materialsService.getDistributions(orgId),
         coordinatorsService.getAll(orgId),
       ]);
+      if (matsRes.error) throw matsRes.error;
+      if (distRes.error) throw distRes.error;
+      if (coordsRes.error) throw coordsRes.error;
       setMaterials(matsRes.data || []);
       setDistributions(distRes.data || []);
       setCoordinators(coordsRes.data || []);
@@ -139,9 +148,14 @@ export const MaterialsPage: React.FC = () => {
       }
 
       // 2. Update material distributed_quantity
-      await materialsService.updateItem(mat.id, {
+      const { error: inventoryErr } = await materialsService.updateItem(mat.id, {
         distributed_quantity: mat.distributed_quantity + qty,
       });
+      if (inventoryErr) {
+        toastError('Erro ao atualizar estoque: ' + inventoryErr.message);
+        await loadData();
+        return;
+      }
 
       await loadData();
       setIsDistributeModalOpen(false);
