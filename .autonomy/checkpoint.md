@@ -200,3 +200,4 @@
 - 2026-10-18: Code Review/CI do head 714646c aprovou build/typecheck, Edge Functions, GitGuardian (250 commits sem segredos) e Vercel; Supabase Preview skipped por ausência de branch associada.
 - 2026-10-18: Rechecagem do head 26b79b2 aprovou Vercel, GitGuardian, Edge Functions e typecheck/build; Supabase Preview skipped por ausência de branch associada.
 - 2026-10-18: Logs DEV enumerados somente leitura; contagens por fonte disponíveis, mas filtro por level/schema falhou no backend. Nenhuma intervenção baseada em contagens.
+- 2026-10-18: Supabase DEV qwvbvqlzcyfkuszxrlgv confirmado ACTIVE_HEALTHY em PostgreSQL 17.11; verificação read-only.

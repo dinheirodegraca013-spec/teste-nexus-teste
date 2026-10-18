@@ -1401,3 +1401,7 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **READ-ONLY:** stream do DEV enumerou `pgbouncer_logs` (11.097), `postgrest_logs` (168), `edge_logs` (158), `postgres_logs` (98), `auth_logs` (80), `storage_logs` (22), `auth_audit_logs` (17) e `realtime_logs` (13) registros na janela padrão.
 - **LIMITAÇÃO:** o backend não expôs o campo `level` e uma consulta ampla retornou erro transitório; não há classificação confiável de erros nesta rodada.
 - **DECISÃO:** nenhuma alteração foi baseada apenas nessas contagens.
+## Ciclo autônomo — 2026-10-18: saúde do DEV
+
+- **APROVADO:** Supabase DEV `qwvbvqlzcyfkuszxrlgv` permanece `ACTIVE_HEALTHY`, PostgreSQL 17.11, região `us-west-2`.
+- **ESCOPO:** verificação somente leitura; nenhum dado, schema ou configuração foi alterado nesta rodada.
