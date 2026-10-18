@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { UsersRound, Plus, Phone, Mail, MapPin, Edit2, Trash2, Eye, UserCheck, Share2, Copy, Check, MessageSquare, Link, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -23,6 +23,7 @@ export const CoordinatorsPage: React.FC = () => {
   const [allLeaders, setAllLeaders] = useState<Leader[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const loadGenerationRef = useRef(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
@@ -50,7 +51,10 @@ export const CoordinatorsPage: React.FC = () => {
   });
 
   const loadData = useCallback(async () => {
+    const loadGeneration = ++loadGenerationRef.current;
+    const isCurrentLoad = () => loadGeneration === loadGenerationRef.current;
     if (!orgId) {
+      if (!isCurrentLoad()) return;
       setCoordinators([]);
       setAllLeaders([]);
       setIsLoading(false);
@@ -64,12 +68,13 @@ export const CoordinatorsPage: React.FC = () => {
       ]);
       if (coordsRes.error) throw coordsRes.error;
       if (leadersRes.error) throw leadersRes.error;
+      if (!isCurrentLoad()) return;
       setCoordinators(coordsRes.data || []);
       setAllLeaders(leadersRes.data || []);
     } catch (err: any) {
-      toastError('Erro ao carregar dados de coordenadores: ' + err.message);
+      if (isCurrentLoad()) toastError('Erro ao carregar dados de coordenadores: ' + err.message);
     } finally {
-      setIsLoading(false);
+      if (isCurrentLoad()) setIsLoading(false);
     }
   }, [orgId, toastError]);
 

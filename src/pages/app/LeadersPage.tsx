@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { UserCheck, Plus, Phone, Mail, MapPin, Edit2, Trash2, Eye, Target, Contact, Share2, Copy, Check, MessageSquare, Car, Home, Users, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -24,6 +24,7 @@ export const LeadersPage: React.FC = () => {
   const [contacts, setContacts] = useState<CrmContact[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const loadGenerationRef = useRef(0);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [coordFilter, setCoordFilter] = useState('all');
@@ -54,7 +55,10 @@ export const LeadersPage: React.FC = () => {
   });
 
   const loadData = useCallback(async () => {
+    const loadGeneration = ++loadGenerationRef.current;
+    const isCurrentLoad = () => loadGeneration === loadGenerationRef.current;
     if (!orgId) {
+      if (!isCurrentLoad()) return;
       setLeaders([]);
       setCoordinators([]);
       setContacts([]);
@@ -71,13 +75,14 @@ export const LeadersPage: React.FC = () => {
       if (leadsRes.error) throw leadsRes.error;
       if (coordsRes.error) throw coordsRes.error;
       if (contactsRes.error) throw contactsRes.error;
+      if (!isCurrentLoad()) return;
       setLeaders(leadsRes.data || []);
       setCoordinators(coordsRes.data || []);
       setContacts(contactsRes.data || []);
     } catch (err: any) {
-      toastError('Erro ao carregar lideranças: ' + err.message);
+      if (isCurrentLoad()) toastError('Erro ao carregar lideranças: ' + err.message);
     } finally {
-      setIsLoading(false);
+      if (isCurrentLoad()) setIsLoading(false);
     }
   }, [orgId, toastError]);
 
