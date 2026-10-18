@@ -1378,3 +1378,7 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **CONFIRMADO:** o frontend lê exclusivamente `import.meta.env.VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`; não há fallback incorreto para `SUPABASE_*` ou `NEXT_PUBLIC_*`.
 - **CONCLUSÃO:** o erro do domínio público é de configuração do ambiente Production, não de código do cliente.
+## Ciclo autônomo — 2026-10-18: reconciliação confirmada
+
+- **CONFIRMADO:** DEV Supabase lista 16 migrations e o repositório local contém 16 arquivos.
+- **PENDÊNCIA RESIDUAL:** o identificador temporal remoto de `nexus_bootstrap_schema` difere do prefixo local, mas o conteúdo lógico já está versionado; não houve reexecução nem reset.
