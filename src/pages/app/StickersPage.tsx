@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Tag, Plus, Car, Home, Phone, MapPin, Trash2, Edit2, CheckCircle2, Image as ImageIcon, Eye, X, Loader2, Camera } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -23,6 +23,7 @@ export const StickersPage: React.FC = () => {
   const [houseStickers, setHouseStickers] = useState<HouseSticker[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const loadGenerationRef = useRef(0);
 
   const [activeTab, setActiveTab] = useState<'cars' | 'houses'>('cars');
   const [searchTerm, setSearchTerm] = useState('');
@@ -54,7 +55,10 @@ export const StickersPage: React.FC = () => {
   const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
 
   const loadData = useCallback(async () => {
+    const loadGeneration = ++loadGenerationRef.current;
+    const isCurrentLoad = () => loadGeneration === loadGenerationRef.current;
     if (!orgId) {
+      if (!isCurrentLoad()) return;
       setCarStickers([]);
       setHouseStickers([]);
       setIsLoading(false);
@@ -68,12 +72,13 @@ export const StickersPage: React.FC = () => {
       ]);
       if (carsRes.error) throw carsRes.error;
       if (housesRes.error) throw housesRes.error;
+      if (!isCurrentLoad()) return;
       setCarStickers(carsRes.data || []);
       setHouseStickers(housesRes.data || []);
     } catch (err: any) {
-      toastError('Erro ao carregar adesivagens: ' + err.message);
+      if (isCurrentLoad()) toastError('Erro ao carregar adesivagens: ' + err.message);
     } finally {
-      setIsLoading(false);
+      if (isCurrentLoad()) setIsLoading(false);
     }
   }, [orgId, toastError]);
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Users, Plus, Clock, MapPin, FileText, CheckSquare, Edit2, Trash2, CheckCircle2, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -21,6 +21,7 @@ export const MeetingsPage: React.FC = () => {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const loadGenerationRef = useRef(0);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -37,7 +38,10 @@ export const MeetingsPage: React.FC = () => {
   });
 
   const loadData = useCallback(async () => {
+    const loadGeneration = ++loadGenerationRef.current;
+    const isCurrentLoad = () => loadGeneration === loadGenerationRef.current;
     if (!orgId) {
+      if (!isCurrentLoad()) return;
       setMeetings([]);
       setIsLoading(false);
       return;
@@ -46,11 +50,12 @@ export const MeetingsPage: React.FC = () => {
     try {
       const { data, error } = await meetingsService.getAll(orgId);
       if (error) throw error;
+      if (!isCurrentLoad()) return;
       setMeetings(data || []);
     } catch (err: any) {
-      toastError('Erro ao carregar reuniões: ' + err.message);
+      if (isCurrentLoad()) toastError('Erro ao carregar reuniões: ' + err.message);
     } finally {
-      setIsLoading(false);
+      if (isCurrentLoad()) setIsLoading(false);
     }
   }, [orgId, toastError]);
 

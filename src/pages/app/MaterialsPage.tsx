@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Package, Plus, ArrowUpRight, AlertTriangle, CheckCircle2, Trash2, Loader2, Send } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -22,6 +22,7 @@ export const MaterialsPage: React.FC = () => {
   const [coordinators, setCoordinators] = useState<Coordinator[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const loadGenerationRef = useRef(0);
 
   const [activeTab, setActiveTab] = useState<'inventory' | 'distributions'>('inventory');
 
@@ -45,7 +46,10 @@ export const MaterialsPage: React.FC = () => {
   });
 
   const loadData = useCallback(async () => {
+    const loadGeneration = ++loadGenerationRef.current;
+    const isCurrentLoad = () => loadGeneration === loadGenerationRef.current;
     if (!orgId) {
+      if (!isCurrentLoad()) return;
       setMaterials([]);
       setDistributions([]);
       setCoordinators([]);
@@ -62,6 +66,7 @@ export const MaterialsPage: React.FC = () => {
       if (matsRes.error) throw matsRes.error;
       if (distRes.error) throw distRes.error;
       if (coordsRes.error) throw coordsRes.error;
+      if (!isCurrentLoad()) return;
       setMaterials(matsRes.data || []);
       setDistributions(distRes.data || []);
       setCoordinators(coordsRes.data || []);
@@ -74,9 +79,9 @@ export const MaterialsPage: React.FC = () => {
         }));
       }
     } catch (err: any) {
-      toastError('Erro ao carregar materiais: ' + err.message);
+      if (isCurrentLoad()) toastError('Erro ao carregar materiais: ' + err.message);
     } finally {
-      setIsLoading(false);
+      if (isCurrentLoad()) setIsLoading(false);
     }
   }, [orgId, toastError]);
 
