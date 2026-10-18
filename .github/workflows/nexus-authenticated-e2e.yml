@@ -33,6 +33,6 @@ jobs:
         with:
           node-version: 24
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
       - name: Verify two-tenant signed-in isolation (read only)
         run: node scripts/e2e/tenant-auth-readonly.mjs

@@ -904,3 +904,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CONFIRMADO:** advisories de segurança e performance permanecem iguais: 2 tabelas privadas sem policy, 3 RPCs `SECURITY DEFINER` expostas, proteção contra senha vazada desativada, 2 FKs privadas sem índice e 12 índices não usados.
 - **DECISÃO:** nenhum ajuste automático; os itens estruturais exigem script revisado, teste de impacto e aprovação específica.
 - **CI:** Vercel e GitGuardian do commit `0fdbd56` aprovados; typecheck/build e Edge Functions ainda estavam em execução no momento da consulta.
+
+## Ciclo autônomo — 2026-10-18: instalação determinística
+
+- **MELHORIA:** workflows CI e E2E passaram de `npm install` para `npm ci`, usando o `package-lock.json` existente.
+- **VALIDADO:** `npm ci --dry-run --ignore-scripts --no-audit --no-fund` concluiu com sucesso localmente.
