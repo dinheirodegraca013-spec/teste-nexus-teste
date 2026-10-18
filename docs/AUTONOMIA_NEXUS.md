@@ -1110,3 +1110,4 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORREÇÃO:** variáveis recriadas no Vercel apontando para o DEV `qwvbvqlzcyfkuszxrlgv`, sem expor chaves no repositório.
 - **PUBLICAÇÃO:** novo deployment `dpl_A6iKK2Pv7UJZniJtwYQMBZhZQE1N` READY e associado ao domínio público.
 - **VERIFICAÇÃO:** `/cadastro` e bundle retornaram HTTP 200; bundle contém o projeto `qwvbvqlzcyfkuszxrlgv` e não contém o projeto antigo `wrovgjhpyacmmetejiqk`.
+- **VALIDAÇÃO LOCAL:** `npm test` 243/243, `npm run lint` e `npm run build` aprovados após o diagnóstico.
