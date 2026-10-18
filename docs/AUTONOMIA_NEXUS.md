@@ -1142,6 +1142,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO:** validação comum rejeita distribuição não positiva, estoque inicial não positivo e alerta negativo; dois testes de regressão adicionados.
 - **VERIFICAÇÃO:** suíte 245/245, TypeScript/lint e build aprovados.
 - **RISCO RESIDUAL:** a baixa ainda usa duas escritas independentes. Foi preparada a RPC transacional em `docs/proposed-migrations/ADD_ATOMIC_MATERIAL_DISTRIBUTION.sql`; aplicação e integração dependem de aprovação estrutural específica.
+- **ATUALIZAÇÃO:** a RPC foi aplicada no DEV após autorização e o frontend passou a chamá-la; a baixa agora confirma um único identificador transacional.
+- **VERIFICAÇÃO READ-ONLY:** função presente com `SECURITY DEFINER`; ACL limita execução a `authenticated` e `service_role`, sem concessão a `PUBLIC` ou `anon`.
+- **TESTES:** suíte 247/247, TypeScript/lint e build aprovados.
 
 ## Ciclo autônomo — 2026-10-18: advisories do DEV
 

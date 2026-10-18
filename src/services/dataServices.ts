@@ -45,6 +45,17 @@ function confirmCreatedRow<T>(
   return { data, error: null };
 }
 
+function confirmRpcUuid(
+  data: unknown,
+  error: { message: string; code?: string } | null,
+  code: string,
+  message: string,
+): { data: string | null; error: { message: string; code?: string } | null } {
+  if (error) return { data: null, error };
+  if (typeof data !== 'string' || !data) return { data: null, error: { code, message } };
+  return { data, error: null };
+}
+
 // All update methods must confirm a returned row: RLS can silently affect zero rows.
 function confirmDeletedRow(
   data: { id: string } | null,
@@ -553,6 +564,26 @@ export const materialsService = {
       error,
       'MATERIAL_DISTRIBUTION_CREATE_NOT_CONFIRMED',
       'Não foi possível confirmar a distribuição do material. Verifique a lista antes de tentar novamente.',
+    );
+  },
+
+  async distributeAtomically(input: {
+    material_id: string;
+    recipient_name: string;
+    territory: string;
+    quantity: number;
+  }) {
+    const { data, error } = await supabase.rpc('nexus_distribute_material', {
+      p_material_id: input.material_id,
+      p_recipient_name: input.recipient_name,
+      p_territory: input.territory,
+      p_quantity: input.quantity,
+    });
+    return confirmRpcUuid(
+      data,
+      error,
+      'MATERIAL_DISTRIBUTION_NOT_CONFIRMED',
+      'Não foi possível confirmar a baixa atômica do material. Verifique o estoque antes de tentar novamente.',
     );
   },
 

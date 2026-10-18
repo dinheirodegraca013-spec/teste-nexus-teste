@@ -147,29 +147,14 @@ export const MaterialsPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      // 1. Create distribution record
-      const { error: distErr } = await materialsService.createDistribution({
-        organization_id: orgId,
+      const { error } = await materialsService.distributeAtomically({
         material_id: mat.id,
-        material_name: mat.name,
-        recipient_name: distForm.recipient_name,
-        territory: distForm.territory,
+        recipient_name: distForm.recipient_name.trim(),
+        territory: distForm.territory.trim(),
         quantity: qty,
-        status: 'delivered',
       });
-
-      if (distErr) {
-        toastError('Erro ao registrar distribuição: ' + distErr.message);
-        return;
-      }
-
-      // 2. Update material distributed_quantity
-      const { error: inventoryErr } = await materialsService.updateItem(mat.id, {
-        distributed_quantity: mat.distributed_quantity + qty,
-      });
-      if (inventoryErr) {
-        toastError('Erro ao atualizar estoque: ' + inventoryErr.message);
-        await loadData();
+      if (error) {
+        toastError('Erro ao registrar distribuição: ' + error.message);
         return;
       }
 
