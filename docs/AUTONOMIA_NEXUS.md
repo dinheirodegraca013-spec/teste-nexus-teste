@@ -1382,3 +1382,7 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **CONFIRMADO:** DEV Supabase lista 16 migrations e o repositório local contém 16 arquivos.
 - **PENDÊNCIA RESIDUAL:** o identificador temporal remoto de `nexus_bootstrap_schema` difere do prefixo local, mas o conteúdo lógico já está versionado; não houve reexecução nem reset.
+## Ciclo autônomo — 2026-10-18: atualização final da PR
+
+- **REVISADO:** descrição da PR #1 atualizada com a paridade de 16 migrations e o estado atual do DEV.
+- **STATUS:** PR permanece DRAFT, mergeable e sem merge; check Vercel do head anterior permaneceu `success`.

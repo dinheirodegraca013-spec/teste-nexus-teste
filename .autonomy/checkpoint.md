@@ -196,3 +196,4 @@
 - 2026-10-18: PR #1 continua DRAFT/mergeable; check Vercel success e deployment dpl_XVLuW4HLTWKERRzf7xgHbvAW4k5c READY para 34b722b.
 - 2026-10-18: Auditoria estática confirmou que o frontend Vite lê somente as duas variáveis VITE_*; divergência em Production é configuração, sem novo defeito de código.
 - 2026-10-18: Revalidação confirmou 16 migrations no DEV e 16 arquivos locais; nenhum reset ou reexecução executado.
+- 2026-10-18: PR #1 atualizada com paridade de 16 migrations e estado DEV; continua DRAFT, mergeable e sem merge.
