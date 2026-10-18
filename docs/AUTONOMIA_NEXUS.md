@@ -1204,6 +1204,7 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO:** adicionadas no projeto Vercel `nexusteste`, somente no alvo `preview`, `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` apontando para o Supabase DEV `qwvbvqlzcyfkuszxrlgv`.
 - **ESCOPO:** alteração somente de configuração do preview; produção, banco, Auth, `main` e dados reais não foram alterados.
 - **PRÓXIMO PASSO:** o próximo deploy da branch validará o cadastro/login no ambiente preview com as variáveis presentes.
+- **VERIFICAÇÃO:** deployment `dpl_AxXAaVnRYAQkwK4ymAvyVb1UXwZ9` para `2c97164` concluiu `READY`; a listagem do Vercel confirmou ambas as variáveis no alvo `preview`.
 
 ## Ciclo autônomo — 2026-10-18: revisão de acessibilidade e advisors
 
