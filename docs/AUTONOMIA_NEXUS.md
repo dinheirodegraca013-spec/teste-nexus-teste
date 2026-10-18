@@ -1205,6 +1205,7 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **REVISÃO READ-ONLY DEV:** Security Advisor reportou 2 tabelas privadas sem policies, 5 funções `SECURITY DEFINER` executáveis por `authenticated` (incluindo as duas RPCs transacionais) e proteção contra senhas vazadas desativada. As funções têm uso legítimo no frontend e não serão revogadas sem script, revisão de impacto e aprovação específica.
 - **LOGS:** consulta agregada das últimas 24 horas retornou erro transitório do backend de logs; nenhuma conclusão sobre incidentes foi feita e nenhum SQL mutável foi executado.
 - **ESCOPO:** sem alteração de código, banco, Auth, produção ou `main` nesta revisão.
+- **CI:** GitHub Actions `NEXUS CI` run `39168452621` (#498) para o commit `a44950d` concluiu `success`.
 
 ## Ciclo autônomo — 2026-10-18: confirmação de cadastros
 
