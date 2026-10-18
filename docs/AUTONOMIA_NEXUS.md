@@ -1337,3 +1337,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **APLICADO:** foram criadas policies `insert/update/delete_admin` para as 12 tabelas operacionais previstas em `ADD_OPERATIONAL_ADMIN_WRITE_POLICIES.sql`.
 - **VERIFICAÇÃO:** consulta somente leitura em `pg_policies` confirmou `organizations_update` e as 36 policies operacionais (3 por tabela).
 - **ESCOPO:** nenhum dado foi copiado; produção, `main`, funções privilegiadas e Auth não foram alterados.
+## Ciclo autônomo — 2026-10-18: revalidação pós-RLS
+
+- **CONFIRMADO:** as 37 policies administrativas aplicadas no DEV continuam presentes.
+- **PENDENTE:** as três policies `nexus_private_evidence_*` ainda usam a expressão de extensão com barra duplicada. O script existente aponta para o projeto antigo `qidstqsbxwkbkwowhpab`; não foi executado no projeto atual `qwvbvqlzcyfkuszxrlgv` sem uma autorização específica para esse destino.
+- **ADVISORS:** permanecem 2 tabelas privadas sem policies, 5 funções `SECURITY DEFINER` executáveis por `authenticated`, proteção contra senhas vazadas desativada, 12 índices sem uso e 2 pares de policies permissivas. Nenhuma dessas alterações foi executada.

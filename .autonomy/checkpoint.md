@@ -186,3 +186,4 @@
 - 2026-10-18: CI #540 (`39171750214`) passou e preview Vercel `dpl_6k5sM7Lv9gjd3ivim7Q9FUUpCc6v` ficou READY para `e4faea7`; sem merge/promoção.
 - 2026-10-18: CI #522 (`39170125281`) passou e preview Vercel `dpl_AnkUkQSBDKrPQq8FMPKHQqaeRz8n` ficou READY para `53f23cf`; sem merge/promoção.
 - 2026-10-18: Aplicadas no Supabase DEV `qwvbvqlzcyfkuszxrlgv` as migrations autorizadas `add_organizations_update_policy` e `add_operational_admin_write_policies`; verificação read-only confirmou 1 policy de organizações e 36 policies operacionais. Produção/main/Auth/funções privilegiadas intactos.
+- 2026-10-18: Revalidação read-only do DEV confirmou as 37 policies administrativas. Storage privado ainda tem regex com barra duplicada; script disponível referencia projeto antigo qidstqsbxwkbkwowhpab, portanto não aplicado no DEV atual qwvbvqlzcyfkuszxrlgv. Advisors permanecem com os 2/5/1/12/2 achados já registrados.
