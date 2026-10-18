@@ -858,3 +858,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **APROVADO:** operações por ID permanecem centralizadas nos serviços e dependem das políticas RLS; não foi encontrada chamada client-side direta ao Supabase fora dessa camada.
 - **RESULTADO:** nenhuma falha nova comprovada e nenhuma alteração de código necessária nesta rodada.
 - **Próxima ação:** aguardar ambiente controlado para E2E autenticado; manter SQL/Auth advisories sob aprovação específica.
+
+## Ciclo autônomo — 2026-10-18: fechamento dos checks remotos
+
+- **APROVADO:** checks do commit `5c94744b385591ce45320ecf25d81022cf3a9d66` concluídos com sucesso em typecheck/build, Edge Functions, GitGuardian e Vercel.
+- **APROVADO:** nenhuma annotation de falha foi reportada pelos checks.
+- **PENDENTE:** E2E autenticado permanece dependente de duas contas TEST controladas; advisories estruturais continuam sob aprovação específica.
