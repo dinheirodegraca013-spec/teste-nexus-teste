@@ -102,3 +102,4 @@
 - 2026-10-18: o provisionamento via RPC agora exige retorno de organização UUID válido; respostas vazias ou inválidas não são tratadas como sucesso. Suíte 222/222, lint e build aprovados.
 - 2026-10-18: `organizationsService.update` passou a enviar somente `name` e `settings`, rejeitando payload vazio e impedindo alterações client-side de `id`, `plan` ou outros campos protegidos. Suíte 223/223, lint e build aprovados.
 - 2026-10-18: auditoria read-only confirmou que `organizations` ainda não possui policy `UPDATE`; script seguro foi preparado em `docs/proposed-migrations/ADD_ORGANIZATIONS_UPDATE_POLICY.sql` e aguarda aprovação específica, sem execução.
+- 2026-10-18: alinhada a validação de senha do cadastro com o AuthContext: mínimo de 8 caracteres tanto na tela quanto no envio. Suíte 223/223, lint e build aprovados.

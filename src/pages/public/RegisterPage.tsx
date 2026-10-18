@@ -116,8 +116,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
       setErrorMessage('Por favor, informe um e-mail válido.');
       return;
     }
-    if (password.length < 6) {
-      setErrorMessage('A senha deve possuir pelo menos 6 caracteres.');
+    if (password.length < 8) {
+      setErrorMessage('A senha deve possuir pelo menos 8 caracteres.');
       return;
     }
     if (password !== confirmPassword) {
@@ -345,7 +345,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
           />
 
           <Input
-            label="Criar Senha (mínimo 6 caracteres)"
+            label="Criar Senha (mínimo 8 caracteres)"
             type="password"
             placeholder="••••••••"
             value={password}

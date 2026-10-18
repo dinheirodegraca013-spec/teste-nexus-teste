@@ -1031,3 +1031,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CONFIRMADO:** auditoria read-only do DEV confirmou ausência de policy `UPDATE` em `public.organizations`, embora a interface use essa operação em Configurações e Onboarding.
 - **PREPARADO:** script restrito a administradores do próprio tenant em `docs/proposed-migrations/ADD_ORGANIZATIONS_UPDATE_POLICY.sql`.
 - **PENDENTE:** execução somente após aprovação específica; nenhum SQL foi aplicado.
+
+## Ciclo autônomo — 2026-10-18: validação de senha no cadastro
+
+- **CORRIGIDO:** a tela de cadastro agora exige e informa mínimo de 8 caracteres, igual ao requisito efetivo do AuthContext.
+- **VERIFICADO:** 223/223 testes, lint e build aprovados localmente.

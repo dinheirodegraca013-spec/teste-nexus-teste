@@ -7,4 +7,6 @@ test('cadastro não submete convite antes de resolver seus dados', async () => {
   assert.match(source, /inviteDetailsReady/);
   assert.match(source, /setInviteDetailsReady\(true\)/);
   assert.match(source, /if \(!inviteDetailsReady\)/);
+  assert.match(source, /password\.length < 8/);
+  assert.match(source, /mínimo 8 caracteres/);
 });
