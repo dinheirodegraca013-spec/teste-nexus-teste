@@ -1118,6 +1118,11 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **VERIFICADO:** bucket privado `nexus-evidence-private` presente e não público; as três policies de Storage estão presentes e sem regex com barra duplicada.
 - **PENDENTE REAL:** criar duas contas sintéticas em organizações distintas para executar o E2E multitenant; nenhuma conta ou dado real foi criado pelo agente.
 
+## Ciclo autônomo — 2026-10-18: primeira identidade DEV criada
+
+- **VERIFICADO:** o DEV agora possui uma conta Auth, uma organização e um perfil.
+- **PENDENTE:** falta uma segunda conta em outra organização para validar isolamento entre tenants; nenhum teste E2E foi declarado como aprovado antes dessa condição.
+
 ## Ciclo autônomo — 2026-10-18: advisories do DEV
 
 - **SEGURANÇA:** dois objetos privados com RLS sem policies e três funções `SECURITY DEFINER` acessíveis a `authenticated` foram reportados. As funções validam tenant/admin internamente e são chamadas pelo frontend; revogação exigiria mudança estrutural e revisão de fluxo.
