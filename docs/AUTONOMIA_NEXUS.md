@@ -1409,3 +1409,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **MELHORADO:** criada `docs/VERCEL_PRODUCTION_ENV.md` com os nomes exatos das variáveis Vite exigidas e o procedimento de redeploy sem cache.
 - **SEGURANÇA:** nenhuma chave foi gravada no arquivo ou no Git; nenhuma variável Production foi alterada.
+## Ciclo autônomo — 2026-10-18: regressão de configuração Vite
+
+- **MELHORADO:** adicionada regressão que impede trocar o cliente Supabase Vite para nomes de variáveis não suportados.
+- **TESTES:** `npm test` 272/272, `npm run lint` e `npm run build` aprovados.
+- **ESCOPO:** somente teste/contrato; nenhum ambiente remoto alterado.

@@ -202,3 +202,4 @@
 - 2026-10-18: Logs DEV enumerados somente leitura; contagens por fonte disponíveis, mas filtro por level/schema falhou no backend. Nenhuma intervenção baseada em contagens.
 - 2026-10-18: Supabase DEV qwvbvqlzcyfkuszxrlgv confirmado ACTIVE_HEALTHY em PostgreSQL 17.11; verificação read-only.
 - 2026-10-18: Criada documentação operacional para configurar VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY em Production sem expor chaves; nenhum ambiente alterado.
+- 2026-10-18: Adicionada regressão para o contrato VITE_* do Supabase; testes 272/272, lint e build aprovados.

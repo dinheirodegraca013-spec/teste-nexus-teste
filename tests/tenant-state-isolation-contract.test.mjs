@@ -114,6 +114,13 @@ test('shared auth status does not claim verified Supabase connectivity', async (
   assert.doesNotMatch(login, /RLS ativo/);
 });
 
+test('Vite Supabase client uses the deployment variables documented for Production', async () => {
+  const source = await readFile(new URL('../src/lib/supabase.ts', import.meta.url), 'utf8');
+  assert.match(source, /import\.meta\.env\.VITE_SUPABASE_URL/);
+  assert.match(source, /import\.meta\.env\.VITE_SUPABASE_ANON_KEY/);
+  assert.doesNotMatch(source, /import\.meta\.env\.(SUPABASE_URL|SUPABASE_ANON_KEY|NEXT_PUBLIC_SUPABASE_URL|NEXT_PUBLIC_SUPABASE_ANON_KEY)/);
+});
+
 test('signUp fails closed when Supabase does not return a user', async () => {
   const source = await readFile(new URL('../src/contexts/AuthContext.tsx', import.meta.url), 'utf8');
   assert.match(source, /if \(!data\?\.user\)/);
