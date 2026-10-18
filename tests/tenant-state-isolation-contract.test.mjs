@@ -128,3 +128,10 @@ test('password reset applies the same minimum as account creation', async () => 
   assert.match(source, /pelo menos 8 caracteres/);
   assert.doesNotMatch(source, /pelo menos 6 caracteres/);
 });
+
+test('shared password update rejects weak passwords before Supabase', async () => {
+  const source = await readFile(new URL('../src/contexts/AuthContext.tsx', import.meta.url), 'utf8');
+  assert.match(source, /const updatePassword = async/);
+  assert.match(source, /if \(!password \|\| password\.length < 8\)/);
+  assert.match(source, /A senha deve possuir pelo menos 8 caracteres/);
+});

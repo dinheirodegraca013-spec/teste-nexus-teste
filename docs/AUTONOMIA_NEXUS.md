@@ -1226,6 +1226,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO:** `ResetPasswordPage` agora aplica e informa o mínimo de 8 caracteres, igual ao cadastro, evitando que uma senha aceita em uma tela seja rejeitada em outra.
 - **TESTES:** contrato de regressão adicionado; `npm test` 268/268, `npm run lint` e `npm run build` aprovados.
 - **ESCOPO:** somente frontend/teste; nenhum Auth, SQL, produção, `main` ou dado real alterado.
+
+## Ciclo autônomo — 2026-10-18: validação defensiva de senha
+
+- **CORRIGIDO:** `AuthContext.updatePassword` agora rejeita senhas com menos de 8 caracteres antes de chamar o Supabase, protegendo caminhos futuros além das telas atuais.
+- **TESTES:** contrato de regressão adicionado; `npm test` 269/269, `npm run lint` e `npm run build` aprovados.
+- **ESCOPO:** somente autenticação/frontend/teste; nenhuma alteração em Auth remoto, SQL, produção, `main` ou dados reais.
 - **CI/PREVIEW:** `NEXUS CI` run `39171750214` (#540) concluiu `success`; preview Vercel `dpl_6k5sM7Lv9gjd3ivim7Q9FUUpCc6v` ficou `READY` para `e4faea7`.
 
 ## Ciclo autônomo — 2026-10-18: revisão de acessibilidade e advisors
