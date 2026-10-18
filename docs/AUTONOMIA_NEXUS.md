@@ -1214,6 +1214,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **ESCOPO:** somente frontend/testes; nenhum SQL, Auth, produção, `main` ou dado real alterado.
 - **CI/PREVIEW:** GitHub Actions `NEXUS CI` run `39168995738` (#502) concluiu `success`; preview Vercel `dpl_D6V2hBXbYa3yRcFEG4hx6v3MKg4d` ficou `READY` para o commit `871d66d`.
 
+## Ciclo autônomo — 2026-10-18: confirmação de contatos CRM
+
+- **CORRIGIDO:** `CrmPage` agora informa erro explícito quando o cadastro não retorna um contato confirmado, em vez de permanecer silenciosa.
+- **TESTES:** contrato de regressão ampliado; `npm test` 262/262, `npm run lint` e `npm run build` aprovados.
+- **ESCOPO:** somente frontend/teste; nenhum SQL, Auth, produção, `main` ou dado real alterado.
+
 ## Ciclo autônomo — 2026-10-18: confirmação de cadastros
 
 - **CORRIGIDO:** `LeadersPage` e `CoordinatorsPage` agora exibem erro explícito quando a criação não retorna registro confirmado, evitando silêncio após uma tentativa inconclusiva.

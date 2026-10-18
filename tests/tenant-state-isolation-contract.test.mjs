@@ -77,6 +77,8 @@ test('GoalsPage rejects invalid target and progress values before saving', async
 test('leader and coordinator forms never silently accept an unconfirmed create', async () => {
   const leaders = await readFile(new URL('../src/pages/app/LeadersPage.tsx', import.meta.url), 'utf8');
   const coordinators = await readFile(new URL('../src/pages/app/CoordinatorsPage.tsx', import.meta.url), 'utf8');
+  const crm = await readFile(new URL('../src/pages/app/CrmPage.tsx', import.meta.url), 'utf8');
   assert.match(leaders, /Não foi possível confirmar o cadastro da liderança/);
   assert.match(coordinators, /Não foi possível confirmar o cadastro do coordenador/);
+  assert.match(crm, /Não foi possível confirmar o cadastro do contato/);
 });

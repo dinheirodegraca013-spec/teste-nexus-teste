@@ -164,6 +164,8 @@ export const CrmPage: React.FC = () => {
           success('Contato cadastrado no CRM com sucesso!');
           await loadData();
           setIsModalOpen(false);
+        } else {
+          toastError('Não foi possível confirmar o cadastro do contato. Verifique a lista antes de tentar novamente.');
         }
       }
     } catch (err: any) {
