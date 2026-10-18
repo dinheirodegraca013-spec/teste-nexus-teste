@@ -139,3 +139,4 @@
 - 2026-10-18: migrations RLS autorizadas aplicadas somente no DEV: policy `organizations_update` e 36 policies admin nas 12 tabelas operacionais; verificação read-only, E2E multitenant, 250 testes, lint e build aprovados. Advisors residuais registrados; produção/main intactas.
 - 2026-10-18: preview Vercel do head `7e49ffd` concluiu `READY`; produção permanece sem promoção.
 - 2026-10-18: corrigido isolamento visual em Metas e Adesivagens (limpeza ao trocar tenant e fechamento de UI); `FileUpload` agora ignora resultados assíncronos obsoletos. Foram adicionados 3 testes. `npm test` 253/253, lint e build aprovados. Nenhuma alteração em banco, Auth, produção ou main.
+- 2026-10-18: preview Vercel do commit `bdb6506` ficou READY e `/cadastro` respondeu HTTP 200.

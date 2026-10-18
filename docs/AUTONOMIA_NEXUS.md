@@ -1166,6 +1166,7 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO:** `FileUpload` invalida processamentos assíncronos anteriores após substituição, remoção ou desmontagem, impedindo que uma imagem antiga sobrescreva a seleção atual.
 - **TESTES:** adicionados três contratos de regressão; `npm test` 253/253, `npm run lint` e `npm run build` aprovados.
 - **ESCOPO:** somente código e testes na branch `fix/persist-rbac-permissions`; nenhum SQL, Auth, produção, `main` ou dado real alterado.
+- **PREVIEW:** Vercel criou deployment READY para o commit `bdb6506`; a rota pública `/cadastro` respondeu HTTP 200. Nenhuma promoção para produção foi executada.
 
 ## Ciclo autônomo — 2026-10-18: confirmação segura da recuperação de senha
 
