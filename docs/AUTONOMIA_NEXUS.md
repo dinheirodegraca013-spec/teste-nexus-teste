@@ -1205,6 +1205,7 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **ESCOPO:** alteração somente de configuração do preview; produção, banco, Auth, `main` e dados reais não foram alterados.
 - **PRÓXIMO PASSO:** o próximo deploy da branch validará o cadastro/login no ambiente preview com as variáveis presentes.
 - **VERIFICAÇÃO:** deployment `dpl_AxXAaVnRYAQkwK4ymAvyVb1UXwZ9` para `2c97164` concluiu `READY`; a listagem do Vercel confirmou ambas as variáveis no alvo `preview`.
+- **CI:** GitHub Actions `NEXUS CI` run `39171043911` (#532) concluiu `success` para `8c0c283`.
 
 ## Ciclo autônomo — 2026-10-18: revisão de acessibilidade e advisors
 

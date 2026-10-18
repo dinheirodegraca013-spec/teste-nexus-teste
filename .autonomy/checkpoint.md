@@ -168,4 +168,5 @@
 - 2026-10-18: preview Vercel `dpl_7W8cqAMy4Uh84iRzwWYqdnWv8xhc` READY para `1912b5e`; status combinado retornou somente Vercel, sem workflow GitHub Actions disponível nesta consulta.
 - 2026-10-18: Vercel recebeu `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` do Supabase DEV somente no alvo preview; próximo deploy deve validar o erro de conexão do cadastro.
 - 2026-10-18: deployment `dpl_AxXAaVnRYAQkwK4ymAvyVb1UXwZ9` concluiu READY para `2c97164`; listagem confirmou as duas variáveis VITE no alvo preview.
+- 2026-10-18: GitHub Actions `NEXUS CI` #532 (`39171043911`) concluiu success para `8c0c283`; preview segue com check Vercel success.
 - 2026-10-18: CI #522 (`39170125281`) passou e preview Vercel `dpl_AnkUkQSBDKrPQq8FMPKHQqaeRz8n` ficou READY para `53f23cf`; sem merge/promoção.
