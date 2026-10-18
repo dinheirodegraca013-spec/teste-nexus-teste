@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Users, 
   UserCheck, 
@@ -101,12 +101,24 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   const [presenceLogs, setPresenceLogs] = useState<PresenceLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const loadGenerationRef = useRef(0);
 
   const loadData = useCallback(async () => {
+    const loadGeneration = ++loadGenerationRef.current;
+    const isCurrentLoad = () => loadGeneration === loadGenerationRef.current;
     setIsLoading(true);
     try {
       if (!orgId) {
+        if (!isCurrentLoad()) return;
         console.warn('[NEXUS DASHBOARD] Nenhum organization_id válido encontrado no perfil ou organização.');
+        setContacts([]);
+        setLeaders([]);
+        setCoordinators([]);
+        setGoals([]);
+        setEvents([]);
+        setCarStickers([]);
+        setHouseStickers([]);
+        setPresenceLogs([]);
         setLoadError('Nenhuma organização vinculada ao seu usuário. Entre em contato com o administrador para vincular sua conta.');
         return;
       }
@@ -132,6 +144,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         withTimeout(presenceService.getLogs(orgId), 6000, 'field_presences'),
       ]);
 
+      if (!isCurrentLoad()) return;
+
       const failedQuery = [
         contactsRes, leadersRes, coordsRes, goalsRes,
         eventsRes, carsRes, housesRes, presenceRes,
@@ -149,6 +163,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
       setHouseStickers(processQueryResult(housesRes, 'house_stickers'));
       setPresenceLogs(processQueryResult(presenceRes, 'field_presences'));
     } catch (err: any) {
+      if (!isCurrentLoad()) return;
       console.error('[NEXUS DASHBOARD] Erro inesperado ao carregar dados da dashboard:', {
         service: 'dashboard_general',
         code: err?.code || 'UNEXPECTED_ERROR',
@@ -158,7 +173,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
       });
       toastError('Erro ao carregar painel geral: ' + (err?.message || 'Erro inesperado'));
     } finally {
-      setIsLoading(false);
+      if (isCurrentLoad()) setIsLoading(false);
     }
   }, [orgId, toastError]);
 
