@@ -175,6 +175,7 @@
 - 2026-10-18: `ResetPasswordPage` alinhada ao mínimo de 8 caracteres; regressão adicionada. `npm test` 268/268, lint e build aprovados; sem alteração remota.
 - 2026-10-18: `AuthContext.updatePassword` passou a rejeitar senha curta antes do Supabase; regressão adicionada. `npm test` 269/269, lint e build aprovados; sem alteração remota.
 - 2026-10-18: `ProfilePage` passou a informar o mínimo de 8 caracteres no campo de senha; regressão adicionada. `npm test` 270/270, lint e build aprovados; sem alteração remota.
+- 2026-10-18: `permissionsService.upsertPermissions` passou a rejeitar payload vazio antes do Supabase; regressão adicionada. `npm test` 271/271, lint e build aprovados; sem alteração remota.
 - 2026-10-18: CI #556 (`39172891641`) passou e preview Vercel `dpl_AQjwiTMyRpQq5QhnAhvdsZ2APfEg` ficou READY para `4405d9f`; sem merge/promoção.
 - 2026-10-18: CI #548 (`39172360883`) passou e preview Vercel `dpl_Azhz6TPiUQArTGnJwBtYVJ2gWMhP` ficou READY para `5503f97`; sem merge/promoção.
 - 2026-10-18: auditoria de dependências de produção (`npm audit --omit=dev --audit-level=moderate`) encontrou 0 vulnerabilidades; nenhum pacote foi alterado.

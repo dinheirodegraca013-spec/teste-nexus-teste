@@ -1239,6 +1239,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **MELHORADO:** o campo de nova senha em `ProfilePage` agora informa o mínimo de 8 caracteres já aplicado pela validação compartilhada.
 - **TESTES:** contrato de regressão adicionado; `npm test` 270/270, `npm run lint` e `npm run build` aprovados.
 - **ESCOPO:** somente frontend/teste; nenhum Auth remoto, SQL, produção, `main` ou dado real alterado.
+
+## Ciclo autônomo — 2026-10-18: payload vazio de permissões
+
+- **CORRIGIDO:** `permissionsService.upsertPermissions` agora rejeita payloads sem nenhuma permissão válida antes de chamar o Supabase, evitando sucesso falso no editor RBAC.
+- **TESTES:** contrato de regressão adicionado; `npm test` 271/271, `npm run lint` e `npm run build` aprovados.
+- **ESCOPO:** somente frontend/serviço/teste; nenhuma policy, função, schema, produção, `main` ou dado real alterado.
 - **CI/PREVIEW:** `NEXUS CI` run `39172891641` (#556) concluiu `success`; preview Vercel `dpl_AQjwiTMyRpQq5QhnAhvdsZ2APfEg` ficou `READY` para `4405d9f`.
 
 ## Ciclo autônomo — 2026-10-18: auditoria de dependências

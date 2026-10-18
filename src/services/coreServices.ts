@@ -288,6 +288,17 @@ export const permissionsService = {
         can_delete: Boolean(permission.can_delete),
       }));
 
+    if (dbRows.length === 0) {
+      return {
+        data: [],
+        error: {
+          name: 'ValidationError',
+          code: 'NO_PERMISSIONS_TO_SAVE',
+          message: 'Nenhuma permissão válida foi informada para salvar.',
+        },
+      };
+    }
+
     const expectedKeys = new Set(dbRows.map((row) => `${row.user_id}:${row.module_key}`));
 
     const { data, error } = await supabase

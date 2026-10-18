@@ -141,3 +141,10 @@ test('profile password field communicates the enforced minimum', async () => {
   assert.match(source, /newPassword\.length < 8/);
   assert.match(source, /Nova Senha \(mínimo 8 caracteres\)/);
 });
+
+test('RBAC persistence rejects an empty permission payload before Supabase', async () => {
+  const source = await readFile(new URL('../src/services/coreServices.ts', import.meta.url), 'utf8');
+  assert.match(source, /if \(dbRows\.length === 0\)/);
+  assert.match(source, /NO_PERMISSIONS_TO_SAVE/);
+  assert.match(source, /Nenhuma permissão válida foi informada para salvar/);
+});
