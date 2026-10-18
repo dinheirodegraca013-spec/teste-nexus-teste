@@ -1396,3 +1396,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **APROVADO:** no head `26b79b2`, Vercel Preview Comments, GitGuardian, Edge Functions, typecheck/build e Vercel concluíram com `success`.
 - **SEGURANÇA:** GitGuardian manteve 250 commits sem segredos detectados.
 - **PENDÊNCIA CONTROLADA:** Supabase Preview segue `skipped` por ausência de branch Supabase associada; isso não altera o DEV principal.
+## Ciclo autônomo — 2026-10-18: logs DEV
+
+- **READ-ONLY:** stream do DEV enumerou `pgbouncer_logs` (11.097), `postgrest_logs` (168), `edge_logs` (158), `postgres_logs` (98), `auth_logs` (80), `storage_logs` (22), `auth_audit_logs` (17) e `realtime_logs` (13) registros na janela padrão.
+- **LIMITAÇÃO:** o backend não expôs o campo `level` e uma consulta ampla retornou erro transitório; não há classificação confiável de erros nesta rodada.
+- **DECISÃO:** nenhuma alteração foi baseada apenas nessas contagens.
