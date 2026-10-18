@@ -24,3 +24,11 @@ test('FileUpload ignores stale image processing results after replacement or rem
   assert.match(source, /processGeneration !== processGenerationRef\.current/);
   assert.match(source, /processGenerationRef\.current \+= 1/);
 });
+
+test('EventsPage validates non-negative and consistent attendance values before saving', async () => {
+  const source = await readFile(new URL('../src/pages/app/EventsPage.tsx', import.meta.url), 'utf8');
+  assert.match(source, /nonNegativeQuantity/);
+  assert.match(source, /confirmedAttendees > expectedAttendees/);
+  assert.match(source, /expected_attendees: expectedAttendees/);
+  assert.match(source, /confirmed_attendees: confirmedAttendees/);
+});

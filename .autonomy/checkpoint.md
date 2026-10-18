@@ -140,3 +140,4 @@
 - 2026-10-18: preview Vercel do head `7e49ffd` concluiu `READY`; produção permanece sem promoção.
 - 2026-10-18: corrigido isolamento visual em Metas e Adesivagens (limpeza ao trocar tenant e fechamento de UI); `FileUpload` agora ignora resultados assíncronos obsoletos. Foram adicionados 3 testes. `npm test` 253/253, lint e build aprovados. Nenhuma alteração em banco, Auth, produção ou main.
 - 2026-10-18: preview Vercel do commit `bdb6506` ficou READY e `/cadastro` respondeu HTTP 200.
+- 2026-10-18: `EventsPage` passou a validar público não negativo e consistência entre estimado/confirmado; suíte 254/254, lint e build aprovados.

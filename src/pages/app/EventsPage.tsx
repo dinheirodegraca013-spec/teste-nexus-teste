@@ -12,6 +12,7 @@ import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { nonNegativeQuantity } from '../../utils/materialQuantities';
 
 export const EventsPage: React.FC = () => {
   const { organization } = useAuth();
@@ -138,6 +139,17 @@ export const EventsPage: React.FC = () => {
       return;
     }
 
+    const expectedAttendees = nonNegativeQuantity(formData.expected_attendees);
+    const confirmedAttendees = nonNegativeQuantity(formData.confirmed_attendees);
+    if (expectedAttendees === null || confirmedAttendees === null) {
+      toastError('Informe números válidos e não negativos para o público.');
+      return;
+    }
+    if (confirmedAttendees > expectedAttendees) {
+      toastError('O público confirmado não pode superar o público estimado.');
+      return;
+    }
+
     const saveOrgVersion = orgVersion.current;
     setIsSubmitting(true);
     try {
@@ -150,8 +162,8 @@ export const EventsPage: React.FC = () => {
           time: formData.time,
           location: formData.location.trim(),
           territory: formData.territory.trim() || undefined,
-          expected_attendees: Number(formData.expected_attendees) || 0,
-          confirmed_attendees: Number(formData.confirmed_attendees) || 0,
+          expected_attendees: expectedAttendees,
+          confirmed_attendees: confirmedAttendees,
           status: formData.status,
         });
 
@@ -173,8 +185,8 @@ export const EventsPage: React.FC = () => {
           time: formData.time,
           location: formData.location.trim(),
           territory: formData.territory.trim() || undefined,
-          expected_attendees: Number(formData.expected_attendees) || 0,
-          confirmed_attendees: Number(formData.confirmed_attendees) || 0,
+          expected_attendees: expectedAttendees,
+          confirmed_attendees: confirmedAttendees,
           status: formData.status,
         });
 
