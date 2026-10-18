@@ -193,12 +193,7 @@ export const GoalsPage: React.FC = () => {
   };
 
   const handleQuickIncrement = async (goal: Goal, amount: number) => {
-    const nextVal = Math.max(0, goal.current_value + amount);
-    const nextStatus = nextVal >= goal.target_value ? 'completed' : goal.status;
-    const { error } = await goalsService.update(goal.id, {
-      current_value: nextVal,
-      status: nextStatus,
-    });
+    const { error } = await goalsService.incrementAtomically(goal.id, amount);
 
     if (error) {
       toastError('Erro ao atualizar progresso: ' + error.message);

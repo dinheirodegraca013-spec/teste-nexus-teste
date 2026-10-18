@@ -1176,6 +1176,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **MELHORIA DE SEGURANÇA:** convites enviados ao WhatsApp agora abrem novas janelas com `noopener,noreferrer`, impedindo acesso da página externa à janela do NEXUS.
 - **TESTES:** contrato de segurança adicionado; suíte `npm test` 257/257, `npm run lint` e `npm run build` aprovados.
 - **REVISÃO READ-ONLY:** Security Advisor do DEV continua com 2 tabelas privadas sem policy, 4 funções `SECURITY DEFINER` para `authenticated` e proteção contra senhas vazadas desativada. Performance continua com 12 índices sem uso e 2 pares de policies permissivas. Nenhuma alteração estrutural foi executada.
+- **APLICADO NO DEV:** após autorização explícita, `ADD_ATOMIC_GOAL_INCREMENT.sql` foi executada somente no projeto `qwvbvqlzcyfkuszxrlgv`; verificação read-only confirmou `nexus_increment_goal(uuid, integer)`, `SECURITY DEFINER`, sem EXECUTE para `anon` e com EXECUTE para `authenticated`/`service_role`.
+- **INTEGRADO:** `GoalsPage` usa a RPC atômica no incremento rápido, removendo o read-modify-write client-side. Suíte `npm test` 258/258, `npm run lint` e `npm run build` aprovados.
 
 ## Ciclo autônomo — 2026-10-18: confirmação segura da recuperação de senha
 

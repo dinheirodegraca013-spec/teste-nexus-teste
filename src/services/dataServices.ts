@@ -340,6 +340,14 @@ export const goalsService = {
     return confirmUpdatedRow(data as Goal | null, error);
   },
 
+  async incrementAtomically(id: string, amount: number) {
+    const { data, error } = await supabase.rpc('nexus_increment_goal', {
+      p_goal_id: id,
+      p_amount: amount,
+    });
+    return confirmUpdatedRow(data as Goal | null, error);
+  },
+
   async delete(id: string) {
     const { data, error } = await supabase
       .from('goals')

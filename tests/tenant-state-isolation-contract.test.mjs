@@ -57,3 +57,10 @@ test('WhatsApp invite windows cannot access the opener', async () => {
     assert.match(source, /window\.open\(waUrl, '_blank', 'noopener,noreferrer'\)/);
   }
 });
+
+test('GoalsPage uses the atomic server increment instead of client read-modify-write', async () => {
+  const page = await readFile(new URL('../src/pages/app/GoalsPage.tsx', import.meta.url), 'utf8');
+  const services = await readFile(new URL('../src/services/dataServices.ts', import.meta.url), 'utf8');
+  assert.match(page, /goalsService\.incrementAtomically\(goal\.id, amount\)/);
+  assert.match(services, /supabase\.rpc\('nexus_increment_goal'/);
+});
