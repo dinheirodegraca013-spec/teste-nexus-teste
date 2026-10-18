@@ -113,3 +113,4 @@
 - 2026-10-18: corrigido export CSV em `ReportsPage`/`csv.ts`: Blob revogável, proteção de fórmulas após espaços iniciais e sem data URL. Suíte integrada 243/243, lint e build aprovados.
 - 2026-10-18: commits remotos foram integrados sem reescrever histórico; commit `c3d6ec9` publicado na branch. CI remoto confirmou Vercel, typecheck/build e Edge Functions como sucesso; GitGuardian ficou `neutral` por limite de tamanho, sem indicação de segredo.
 - 2026-10-18: consulta read-only do DEV confirmou `auth.users=0`; portanto a homologação E2E multitenant não pode iniciar. Policies públicas seguem somente SELECT nas 12 tabelas operacionais e em organizations; as 13 migrations DEV estão registradas e alinhadas ao checkout.
+- 2026-10-18: Vercel confirmou Preview READY para o commit `3dca09f` da branch; o domínio público/produção não foi alterado.

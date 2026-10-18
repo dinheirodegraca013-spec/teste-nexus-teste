@@ -1090,3 +1090,4 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **VERIFICADO:** consulta somente leitura confirmou `auth.users=0` no DEV `qwvbvqlzcyfkuszxrlgv`; não há duas contas sintéticas para executar o E2E.
 - **VERIFICADO:** as 13 migrations registradas no DEV estão alinhadas aos nomes do checkout; as tabelas operacionais e `organizations` ainda têm apenas policies `SELECT`.
 - **PENDENTE:** criação de duas contas de teste em organizações distintas e aprovação específica para policies de escrita.
+- **PREVIEW:** Vercel confirmou deployment READY do commit `3dca09f`; produção permanece fora do escopo.
