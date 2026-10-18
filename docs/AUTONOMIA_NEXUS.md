@@ -1360,3 +1360,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CONFIRMADO:** o deployment Preview READY usa as variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` apontadas ao DEV.
 - **PENDÊNCIA DE PRODUÇÃO:** o alvo Production possui variáveis `SUPABASE_*`/`NEXT_PUBLIC_*`, mas não a dupla `VITE_*` usada pelo build Vite. Isso explica o erro de conexão no domínio público.
 - **ESCOPO:** nenhuma variável de Production foi criada, removida ou alterada; a correção exige autorização explícita para Production, que permanece fora deste ciclo.
+## Ciclo autônomo — 2026-10-18: reconciliação de migrations
+
+- **CORRIGIDO:** versionadas no repositório as três migrations que já constavam aplicadas no DEV, mas estavam ausentes localmente: `add_atomic_material_distribution`, `add_organizations_update_policy` e `add_operational_admin_write_policies`.
+- **RESULTADO:** o diretório local agora contém 16 migrations, alinhado à contagem do DEV. A migration lógica `nexus_bootstrap_schema` ainda possui identificador temporal diferente no remoto e requer reconciliação formal futura, sem reexecução.
+- **ESCOPO:** somente arquivos de histórico/migration no repositório; nenhum SQL foi executado nesta rodada.
