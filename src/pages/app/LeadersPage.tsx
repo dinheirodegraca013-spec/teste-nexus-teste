@@ -241,6 +241,8 @@ export const LeadersPage: React.FC = () => {
           setTimeout(() => {
             handleOpenShare(created);
           }, 300);
+        } else {
+          toastError('Não foi possível confirmar o cadastro da liderança. Verifique a lista antes de tentar novamente.');
         }
       }
     } catch (err: any) {

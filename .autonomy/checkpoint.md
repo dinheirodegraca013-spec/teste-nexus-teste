@@ -150,3 +150,4 @@
 - 2026-10-18: `npm ls --depth=0` consistente; `npm audit` bloqueado por falha de acesso ao endpoint do registry. Nenhuma dependência alterada.
 - 2026-10-18: auditoria de dependências repetida com acesso autorizado ao registry; resultado `0 vulnerabilidades`. Nenhum pacote alterado.
 - 2026-10-18: `GoalsPage` passou a rejeitar meta inválida/não positiva e progresso negativo/não numérico antes de salvar; contrato de regressão adicionado. `npm test` 259/259, lint e build aprovados. Alteração somente na branch de desenvolvimento; produção/main e banco intactos.
+- 2026-10-18: `LeadersPage` e `CoordinatorsPage` passaram a informar falha quando o cadastro não retorna registro confirmado; contrato de regressão adicionado. `npm test` 260/260, lint e build aprovados. Banco, produção e main intactos.

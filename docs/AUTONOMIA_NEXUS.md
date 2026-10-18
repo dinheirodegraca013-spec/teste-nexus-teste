@@ -1198,3 +1198,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO:** `GoalsPage` agora rejeita meta inválida/não positiva e progresso negativo ou não numérico antes de salvar, sem converter entradas inválidas em valores padrão.
 - **TESTES:** contrato de regressão adicionado; `npm test` 259/259, `npm run lint` e `npm run build` aprovados.
 - **ESCOPO:** alteração somente de frontend/teste na branch `fix/persist-rbac-permissions`; nenhum SQL, Auth, produção, `main` ou dado real alterado.
+
+## Ciclo autônomo — 2026-10-18: confirmação de cadastros
+
+- **CORRIGIDO:** `LeadersPage` e `CoordinatorsPage` agora exibem erro explícito quando a criação não retorna registro confirmado, evitando silêncio após uma tentativa inconclusiva.
+- **TESTES:** contrato de regressão adicionado; `npm test` 260/260, `npm run lint` e `npm run build` aprovados.
+- **ESCOPO:** alteração somente de frontend/teste na branch `fix/persist-rbac-permissions`; nenhum SQL, Auth, produção, `main` ou dado real alterado.

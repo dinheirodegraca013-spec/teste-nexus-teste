@@ -243,6 +243,8 @@ export const CoordinatorsPage: React.FC = () => {
           setTimeout(() => {
             handleOpenCoordInvite(created, 'coord_access');
           }, 350);
+        } else {
+          toastError('Não foi possível confirmar o cadastro do coordenador. Verifique a lista antes de tentar novamente.');
         }
       }
     } catch (err: any) {
