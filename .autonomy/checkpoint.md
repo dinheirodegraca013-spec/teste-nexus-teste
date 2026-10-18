@@ -61,3 +61,4 @@
 - 2026-10-18: advisories DEV revalidados sem mudança; nenhum SQL aplicado. Vercel/GitGuardian do commit 0fdbd56 aprovados; typecheck/build e Edge Functions ainda em execução na consulta.
 - 2026-10-18: workflows CI/E2E passaram a usar `npm ci` com lockfile; dry-run local aprovado. Nenhuma alteração em código de aplicação ou banco.
 - 2026-10-18: auditoria estática direcionada não encontrou segredo administrativo no frontend, `dangerouslySetInnerHTML` nem persistência de organization_id; CI do commit c368093 ainda estava em execução.
+- 2026-10-18: checks do commit 7c31bfb concluídos com sucesso: Vercel, GitGuardian, typecheck/build e Edge Functions. Nenhuma annotation de falha; sem merge ou produção alterada.
