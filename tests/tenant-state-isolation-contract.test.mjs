@@ -50,3 +50,10 @@ test('atomic goal increment migration is tenant-scoped and does not expose publi
   assert.match(source, /REVOKE ALL ON FUNCTION public\.nexus_increment_goal/);
   assert.match(source, /GRANT EXECUTE ON FUNCTION public\.nexus_increment_goal/);
 });
+
+test('WhatsApp invite windows cannot access the opener', async () => {
+  for (const file of ['CoordinatorsPage.tsx', 'LeadersPage.tsx']) {
+    const source = await readFile(new URL(`../src/pages/app/${file}`, import.meta.url), 'utf8');
+    assert.match(source, /window\.open\(waUrl, '_blank', 'noopener,noreferrer'\)/);
+  }
+});

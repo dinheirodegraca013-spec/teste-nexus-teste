@@ -1173,6 +1173,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **TESTES:** contrato de regressão adicionado; suíte `npm test` 255/255, `npm run lint` e `npm run build` aprovados.
 - **PREPARADO (AGUARDA APROVAÇÃO SQL):** `docs/proposed-migrations/ADD_ATOMIC_GOAL_INCREMENT.sql` cria a RPC `nexus_increment_goal(uuid, integer)`, com incremento atômico, tenant/admin check e ACL sem `PUBLIC`/`anon`. Não foi executada no Supabase.
 - **TESTES:** contrato estrutural adicionado; suíte `npm test` 256/256, `npm run lint` e `npm run build` aprovados.
+- **MELHORIA DE SEGURANÇA:** convites enviados ao WhatsApp agora abrem novas janelas com `noopener,noreferrer`, impedindo acesso da página externa à janela do NEXUS.
+- **TESTES:** contrato de segurança adicionado; suíte `npm test` 257/257, `npm run lint` e `npm run build` aprovados.
 
 ## Ciclo autônomo — 2026-10-18: confirmação segura da recuperação de senha
 
