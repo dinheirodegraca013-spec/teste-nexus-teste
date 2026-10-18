@@ -1010,3 +1010,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **MELHORADO:** convites com liderança ou coordenação inválida agora falham antes da criação da conta, evitando provisionamento parcial.
 - **VERIFICADO:** 221/221 testes, lint e build aprovados localmente.
+
+## Ciclo autônomo — 2026-10-18: consistência do convite
+
+- **CORRIGIDO:** a Edge Function agora desfaz o usuário Auth quando não consegue persistir o perfil, evitando contas órfãs e convites impossíveis de repetir.
+- **VERIFICADO:** 222/222 testes, lint e build aprovados localmente; a validação da Edge Function também passou no CI.

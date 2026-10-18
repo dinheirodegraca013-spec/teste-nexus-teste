@@ -127,8 +127,18 @@ Deno.serve(async (req: Request) => {
       userId: invitation.user.id,
       code: profileError?.code,
     });
+    const { error: rollbackError } = await adminClient.auth.admin.deleteUser(invitation.user.id);
+    if (rollbackError) {
+      console.error("Invite rollback failed", {
+        userId: invitation.user.id,
+        code: rollbackError.status,
+        message: rollbackError.message,
+      });
+    }
     return jsonResponse(500, {
-      error: "O convite foi criado, mas o perfil não pôde ser concluído. A equipe técnica precisa finalizar o provisionamento.",
+      error: rollbackError
+        ? "O convite foi criado, mas o perfil não pôde ser concluído e a limpeza automática falhou. A equipe técnica precisa finalizar o provisionamento."
+        : "O convite não pôde ser concluído e foi cancelado automaticamente. Tente novamente.",
     });
   }
 
