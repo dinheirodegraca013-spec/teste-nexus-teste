@@ -13,6 +13,7 @@ import { Drawer } from '../../components/ui/Drawer';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { nonNegativeQuantity, positiveQuantity } from '../../utils/materialQuantities';
 
 export const LeadersPage: React.FC = () => {
   const { organization } = useAuth();
@@ -175,6 +176,16 @@ export const LeadersPage: React.FC = () => {
       return;
     }
 
+    const goalTarget = positiveQuantity(formData.goal_target);
+    const goalReached = nonNegativeQuantity(formData.goal_reached);
+    const goalCars = nonNegativeQuantity(formData.goal_cars);
+    const goalHouses = nonNegativeQuantity(formData.goal_houses);
+    const goalPresence = nonNegativeQuantity(formData.goal_presence);
+    if (goalTarget === null || goalReached === null || goalCars === null || goalHouses === null || goalPresence === null) {
+      toastError('Informe metas válidas e não negativas. A meta de apoiadores deve ser maior que zero.');
+      return;
+    }
+
     setIsSubmitting(true);
     const assignedCoord = coordinators.find(c => c.id === formData.coordinator_id);
 
@@ -188,11 +199,11 @@ export const LeadersPage: React.FC = () => {
           phone: formData.phone.trim() || undefined,
           territory: formData.territory.trim(),
           neighborhood: formData.neighborhood.trim() || undefined,
-          goal_target: Number(formData.goal_target) || 0,
-          goal_reached: Number(formData.goal_reached) || 0,
-          goal_cars: Number(formData.goal_cars) || 0,
-          goal_houses: Number(formData.goal_houses) || 0,
-          goal_presence: Number(formData.goal_presence) || 0,
+          goal_target: goalTarget,
+          goal_reached: goalReached,
+          goal_cars: goalCars,
+          goal_houses: goalHouses,
+          goal_presence: goalPresence,
           status: formData.status,
         });
 
@@ -213,11 +224,11 @@ export const LeadersPage: React.FC = () => {
           phone: formData.phone.trim() || undefined,
           territory: formData.territory.trim(),
           neighborhood: formData.neighborhood.trim() || undefined,
-          goal_target: Number(formData.goal_target) || 10,
-          goal_reached: Number(formData.goal_reached) || 0,
-          goal_cars: Number(formData.goal_cars) || 50,
-          goal_houses: Number(formData.goal_houses) || 30,
-          goal_presence: Number(formData.goal_presence) || 20,
+          goal_target: goalTarget,
+          goal_reached: goalReached,
+          goal_cars: goalCars,
+          goal_houses: goalHouses,
+          goal_presence: goalPresence,
           status: formData.status,
         });
 

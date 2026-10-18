@@ -32,3 +32,12 @@ test('EventsPage validates non-negative and consistent attendance values before 
   assert.match(source, /expected_attendees: expectedAttendees/);
   assert.match(source, /confirmed_attendees: confirmedAttendees/);
 });
+
+test('LeadersPage rejects negative or invalid campaign goals before saving', async () => {
+  const source = await readFile(new URL('../src/pages/app/LeadersPage.tsx', import.meta.url), 'utf8');
+  assert.match(source, /positiveQuantity/);
+  assert.match(source, /nonNegativeQuantity/);
+  assert.match(source, /goalTarget === null/);
+  assert.match(source, /goal_target: goalTarget/);
+  assert.match(source, /goal_reached: goalReached/);
+});

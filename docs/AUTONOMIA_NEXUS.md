@@ -1169,6 +1169,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **PREVIEW:** Vercel criou deployment READY para o commit `bdb6506`; a rota pública `/cadastro` respondeu HTTP 200. Nenhuma promoção para produção foi executada.
 - **CORRIGIDO:** `EventsPage` rejeita público estimado/confirmado inválido ou negativo e impede confirmado acima do estimado.
 - **TESTES:** contrato de regressão adicionado; suíte `npm test` 254/254, `npm run lint` e `npm run build` aprovados.
+- **CORRIGIDO:** `LeadersPage` agora rejeita metas inválidas/negativas e preserva zero válido nos campos não obrigatórios.
+- **TESTES:** contrato de regressão adicionado; suíte `npm test` 255/255, `npm run lint` e `npm run build` aprovados.
 
 ## Ciclo autônomo — 2026-10-18: confirmação segura da recuperação de senha
 
