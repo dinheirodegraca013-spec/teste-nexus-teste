@@ -1092,3 +1092,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **PENDENTE:** criação de duas contas de teste em organizações distintas e aprovação específica para policies de escrita.
 - **PREVIEW:** Vercel confirmou deployment READY do commit `3dca09f`; produção permanece fora do escopo.
 - **CI:** checks do commit `74d6b23` passaram em Vercel, typecheck/build e Edge Functions; Supabase Preview foi ignorado por ausência de branch Supabase e GitGuardian ficou `neutral` por limite de tamanho.
+
+## Ciclo autônomo — 2026-10-18: diagnóstico do domínio público
+
+- **CONFIRMADO:** `teste-nexus-teste.vercel.app` pertence ao projeto Vercel, porém não está associado como alias ao deployment READY da branch `fix/persist-rbac-permissions`.
+- **PREVIEW CORRETO:** `nexusteste-git-fix-per-35d7b5-dinheirodegraca013-specs-projects.vercel.app` aponta para o commit `4dd43c6`.
+- **BLOQUEIO:** reatribuir o domínio público ao deployment corrigido alteraria produção e permanece fora do escopo.

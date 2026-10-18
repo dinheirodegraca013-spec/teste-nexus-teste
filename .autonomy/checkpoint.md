@@ -115,3 +115,4 @@
 - 2026-10-18: consulta read-only do DEV confirmou `auth.users=0`; portanto a homologação E2E multitenant não pode iniciar. Policies públicas seguem somente SELECT nas 12 tabelas operacionais e em organizations; as 13 migrations DEV estão registradas e alinhadas ao checkout.
 - 2026-10-18: Vercel confirmou Preview READY para o commit `3dca09f` da branch; o domínio público/produção não foi alterado.
 - 2026-10-18: checks do commit `74d6b23` concluídos: Vercel, typecheck/build e Edge Functions passaram; Supabase Preview foi ignorado por não haver branch Supabase; GitGuardian ficou `neutral` por limite de tamanho.
+- 2026-10-18: Vercel confirmou que `teste-nexus-teste.vercel.app` está cadastrado no projeto, mas não é alias do deployment READY da branch (`4dd43c6`); o alias atual da branch é `nexusteste-git-fix-per-35d7b5-dinheirodegraca013-specs-projects.vercel.app`. Reatribuir o domínio público exigiria alteração de produção, não executada.
