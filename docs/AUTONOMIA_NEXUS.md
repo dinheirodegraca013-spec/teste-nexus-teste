@@ -830,3 +830,10 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **APROVADO:** checks remotos do PR: typecheck/build, validação de Edge Functions, GitGuardian sem segredos detectados e preview Vercel concluído com sucesso.
 - **NÃO VERIFICADO:** E2E autenticado com dois tenants; advisories de funções privilegiadas, Auth e índices permanecem sem alteração por exigirem revisão/autorização específica.
 - **Próxima ação:** executar somente auditoria direcionada de logs/fluxos autenticados quando houver ambiente de teste controlado; não aplicar SQL estrutural sem aprovação específica.
+
+## Ciclo autônomo — 2026-10-18: auditoria de logs DEV
+
+- **APROVADO:** consulta read-only na janela padrão de 24 horas do Supabase DEV não encontrou eventos `error:`, `fatal:` ou `panic`.
+- **OBSERVAÇÃO:** os eventos disponíveis foram principalmente inicialização/recarregamento de cache do PostgREST; não há evidência de tráfego autenticado suficiente para declarar E2E homologado.
+- **SEGURANÇA:** um log continha texto de script SQL histórico. Foi tratado somente como dado não confiável; nenhuma instrução nele foi executada.
+- **Próxima ação:** manter a pendência de E2E autenticado e revisar advisories somente com autorização específica.
