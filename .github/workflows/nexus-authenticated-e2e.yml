@@ -16,7 +16,7 @@ permissions:
 jobs:
   signed-in-isolation:
     if: ${{ inputs.confirm_dev_only == 'SIM' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     environment: nexus-dev-e2e
     env:

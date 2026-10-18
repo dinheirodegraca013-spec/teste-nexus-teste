@@ -893,3 +893,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **VALIDADO:** `npm test` passou com 198/198; `npm run lint` passou; `npm run build` passou.
 - **REMOTO:** os checks do commit `3f5bf1e` estavam verdes; as anotações eram apenas aviso de depreciação Node 20 e notice de migração do Ubuntu, sem falha funcional.
 - **PENDENTE:** os checks do novo commit ainda precisam concluir; E2E autenticado permanece manual e dependente de duas contas sintéticas DEV.
+
+## Ciclo autônomo — 2026-10-18: estabilidade do runner
+
+- **CORRIGIDO:** fixado `runs-on` em `ubuntu-24.04` nos workflows CI e E2E manual para evitar a migração automática anunciada para Ubuntu 26.
+- **VALIDADO:** checks remotos anteriores permaneceram funcionais; o aviso era operacional, sem falha de código.
