@@ -1405,3 +1405,7 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **APROVADO:** Supabase DEV `qwvbvqlzcyfkuszxrlgv` permanece `ACTIVE_HEALTHY`, PostgreSQL 17.11, região `us-west-2`.
 - **ESCOPO:** verificação somente leitura; nenhum dado, schema ou configuração foi alterado nesta rodada.
+## Ciclo autônomo — 2026-10-18: instrução operacional Vercel
+
+- **MELHORADO:** criada `docs/VERCEL_PRODUCTION_ENV.md` com os nomes exatos das variáveis Vite exigidas e o procedimento de redeploy sem cache.
+- **SEGURANÇA:** nenhuma chave foi gravada no arquivo ou no Git; nenhuma variável Production foi alterada.
