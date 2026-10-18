@@ -1331,3 +1331,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO:** `LeadersPage` e `CoordinatorsPage` agora exibem erro explícito quando a criação não retorna registro confirmado, evitando silêncio após uma tentativa inconclusiva.
 - **TESTES:** contrato de regressão adicionado; `npm test` 260/260, `npm run lint` e `npm run build` aprovados.
 - **ESCOPO:** alteração somente de frontend/teste na branch `fix/persist-rbac-permissions`; nenhum SQL, Auth, produção, `main` ou dado real alterado.
+## Ciclo autônomo — 2026-10-18: policies DEV autorizadas
+
+- **APLICADO:** no Supabase DEV `qwvbvqlzcyfkuszxrlgv`, foi aplicada a policy `organizations_update`, restringindo atualização à própria organização e administradores.
+- **APLICADO:** foram criadas policies `insert/update/delete_admin` para as 12 tabelas operacionais previstas em `ADD_OPERATIONAL_ADMIN_WRITE_POLICIES.sql`.
+- **VERIFICAÇÃO:** consulta somente leitura em `pg_policies` confirmou `organizations_update` e as 36 policies operacionais (3 por tabela).
+- **ESCOPO:** nenhum dado foi copiado; produção, `main`, funções privilegiadas e Auth não foram alterados.
