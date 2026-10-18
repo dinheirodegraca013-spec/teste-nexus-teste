@@ -144,3 +144,4 @@
 - 2026-10-18: `LeadersPage` passou a rejeitar metas inválidas/negativas; suíte 255/255, lint e build aprovados.
 - 2026-10-18: preparada, mas não executada, a migration `ADD_ATOMIC_GOAL_INCREMENT.sql` para eliminar perda de incrementos concorrentes em metas. Suíte 256/256, lint e build aprovados; aguarda aprovação SQL específica.
 - 2026-10-18: links de convite do WhatsApp passaram a usar `noopener,noreferrer`; suíte 257/257, lint e build aprovados.
+- 2026-10-18: advisories read-only do DEV revalidados; achados estruturais permanecem inalterados e documentados.

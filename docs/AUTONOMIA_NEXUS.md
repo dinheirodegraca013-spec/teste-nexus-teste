@@ -1175,6 +1175,7 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **TESTES:** contrato estrutural adicionado; suíte `npm test` 256/256, `npm run lint` e `npm run build` aprovados.
 - **MELHORIA DE SEGURANÇA:** convites enviados ao WhatsApp agora abrem novas janelas com `noopener,noreferrer`, impedindo acesso da página externa à janela do NEXUS.
 - **TESTES:** contrato de segurança adicionado; suíte `npm test` 257/257, `npm run lint` e `npm run build` aprovados.
+- **REVISÃO READ-ONLY:** Security Advisor do DEV continua com 2 tabelas privadas sem policy, 4 funções `SECURITY DEFINER` para `authenticated` e proteção contra senhas vazadas desativada. Performance continua com 12 índices sem uso e 2 pares de policies permissivas. Nenhuma alteração estrutural foi executada.
 
 ## Ciclo autônomo — 2026-10-18: confirmação segura da recuperação de senha
 
