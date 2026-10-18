@@ -916,6 +916,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **APROVADO:** no commit `7c31bfb`, Vercel Preview, GitGuardian, typecheck/build e validação das Edge Functions concluíram com sucesso.
 - **RESULTADO:** nenhuma annotation de falha ou segredo detectado; branch de desenvolvimento permanece sincronizada e sem merge em produção.
 
+## Ciclo autônomo — 2026-10-18: logs pós-CI
+
+- **CONFIRMADO:** a consulta de fontes do log DEV retornou `pgbouncer_logs`, `postgres_logs` e `postgrest_logs`.
+- **BLOQUEIO TÉCNICO:** a consulta agregada de erros e a leitura de campos detalhados retornaram erro do backend/coluna inexistente do conector; não tratei isso como ausência de erros e não repeti a mesma consulta.
+- **REFERÊNCIA:** a última auditoria válida anterior não encontrou `error:`, `fatal:` ou `panic`; é necessária uma janela posterior com esquema de campos confirmado para nova conclusão.
+
 ## Ciclo autônomo — 2026-10-18: instalação determinística
 
 - **MELHORIA:** workflows CI e E2E passaram de `npm install` para `npm ci`, usando o `package-lock.json` existente.
