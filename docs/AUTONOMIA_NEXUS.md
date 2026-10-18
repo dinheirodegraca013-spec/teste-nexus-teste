@@ -1145,6 +1145,7 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **ATUALIZAÇÃO:** a RPC foi aplicada no DEV após autorização e o frontend passou a chamá-la; a baixa agora confirma um único identificador transacional.
 - **VERIFICAÇÃO READ-ONLY:** função presente com `SECURITY DEFINER`; ACL limita execução a `authenticated` e `service_role`, sem concessão a `PUBLIC` ou `anon`.
 - **TESTES:** suíte 247/247, TypeScript/lint e build aprovados.
+- **PREVIEW:** Vercel READY para o commit `2bdcc16`; produção/domínio público permaneceram sem alteração.
 
 ## Ciclo autônomo — 2026-10-18: advisories do DEV
 
