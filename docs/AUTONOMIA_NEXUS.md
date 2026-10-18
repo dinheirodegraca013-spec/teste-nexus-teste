@@ -1084,3 +1084,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO:** `buildCsvBlob` foi implementado e `ReportsPage` passou a usar URL de Blob revogável; fórmulas precedidas por espaços agora também são neutralizadas.
 - **VERIFICADO:** suíte integrada 243/243, lint, build e `git diff --check` aprovados.
 - **PUBLICADO:** commit `c3d6ec9` na branch de desenvolvimento; checks remotos de Vercel, typecheck/build e Edge Functions passaram. GitGuardian não escaneou por limite de tamanho (`neutral`), sem falha de segurança reportada.
+
+## Ciclo autônomo — 2026-10-18: prontidão para E2E
+
+- **VERIFICADO:** consulta somente leitura confirmou `auth.users=0` no DEV `qwvbvqlzcyfkuszxrlgv`; não há duas contas sintéticas para executar o E2E.
+- **VERIFICADO:** as 13 migrations registradas no DEV estão alinhadas aos nomes do checkout; as tabelas operacionais e `organizations` ainda têm apenas policies `SELECT`.
+- **PENDENTE:** criação de duas contas de teste em organizações distintas e aprovação específica para policies de escrita.
