@@ -146,3 +146,4 @@
 - 2026-10-18: links de convite do WhatsApp passaram a usar `noopener,noreferrer`; suíte 257/257, lint e build aprovados.
 - 2026-10-18: advisories read-only do DEV revalidados; achados estruturais permanecem inalterados e documentados.
 - 2026-10-18: migration `ADD_ATOMIC_GOAL_INCREMENT.sql` aplicada somente no DEV após autorização; ACL verificada e `GoalsPage` integrado à RPC. Suíte 258/258, lint e build aprovados.
+- 2026-10-18: CI `NEXUS CI` #39167147169 do head `772a93a` concluiu com sucesso; PR #1 permanece DRAFT e sem merge.
