@@ -25,6 +25,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const [confirmationSent, setConfirmationSent] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState('');
+  const [inviteDetailsReady, setInviteDetailsReady] = useState(false);
 
   // Referral / Invitation query parameters
   const [isInvite, setIsInvite] = useState(false);
@@ -38,6 +39,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
 
   useEffect(() => {
     async function loadInviteDetails() {
+      setInviteDetailsReady(false);
       try {
         let searchStr = window.location.search || '';
         if (!searchStr && window.location.hash && window.location.hash.includes('?')) {
@@ -89,6 +91,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
         }
       } catch (e) {
         console.error('Error parsing invite params', e);
+      } finally {
+        setInviteDetailsReady(true);
       }
     }
 
@@ -98,6 +102,11 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
+
+    if (!inviteDetailsReady) {
+      setErrorMessage('Aguarde o carregamento dos dados do convite e tente novamente.');
+      return;
+    }
 
     if (!name.trim()) {
       setErrorMessage('Por favor, informe seu nome completo.');

@@ -995,3 +995,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **CORRIGIDO:** `FieldPage` agora descarta respostas e erros de consultas paralelas iniciadas para uma organização anterior, protegendo também o estado de carregamento e as seleções de liderança.
 - **VERIFICADO:** 219/219 testes, lint e build aprovados localmente; produção e `main` não foram alterados.
+
+## Ciclo autônomo — 2026-10-18: prontidão do cadastro por convite
+
+- **CORRIGIDO:** `RegisterPage` não aceita submissão antes de terminar a resolução dos parâmetros do convite; isso impede criar conta comum ou associar o usuário ao tenant errado durante a corrida de carregamento.
+- **VERIFICADO:** 220/220 testes, lint e build aprovados localmente. Nenhuma alteração em produção ou no banco foi feita.
