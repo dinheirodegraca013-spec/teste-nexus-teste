@@ -529,8 +529,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error: new Error('Informe uma senha com pelo menos 8 caracteres para criar sua conta.') };
     }
 
+    if (organizationId && !isValidUUID(organizationId)) {
+      return { error: new Error('O convite contém uma organização inválida. Solicite um novo convite ao administrador.') };
+    }
+
     try {
-      const sanitizedOrgId = (organizationId && isValidUUID(organizationId)) ? organizationId : null;
+      const sanitizedOrgId = organizationId || null;
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
@@ -557,23 +561,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.user && data.session) {
         setUser(data.user);
         setSession(data.session);
-        const orgName = organizationName?.trim() || `Campanha de ${name.trim().split(' ')[0]}`;
-        const orgSlug = orgName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-        try {
-          const { data: rpcOrgId, error: rpcErr } = await supabase.rpc('provision_new_user', {
-            p_org_name: orgName,
-            p_org_slug: orgSlug,
-            p_campaign_type: 'DEPUTADO_FEDERAL',
-            p_profile_name: name.trim(),
-          });
-          if (rpcErr) {
-            console.error('[NEXUS PROVISION] Erro na RPC provision_new_user no signUp:', rpcErr);
-            return { error: new Error('Conta criada, mas não foi possível configurar a organização. Tente entrar novamente ou contate o suporte.'), user: data.user };
+        // Convites já apontam para um tenant existente. Nunca execute a RPC
+        // de novo usuário nesse caminho, pois ela cria uma organização nova.
+        if (!sanitizedOrgId) {
+          const orgName = organizationName?.trim() || `Campanha de ${name.trim().split(' ')[0]}`;
+          const orgSlug = orgName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+          try {
+            const { data: rpcOrgId, error: rpcErr } = await supabase.rpc('provision_new_user', {
+              p_org_name: orgName,
+              p_org_slug: orgSlug,
+              p_campaign_type: 'DEPUTADO_FEDERAL',
+              p_profile_name: name.trim(),
+            });
+            if (rpcErr) {
+              console.error('[NEXUS PROVISION] Erro na RPC provision_new_user no signUp:', rpcErr);
+              return { error: new Error('Conta criada, mas não foi possível configurar a organização. Tente entrar novamente ou contate o suporte.'), user: data.user };
+            }
+            console.log('[NEXUS PROVISION] RPC provision_new_user bem-sucedida no signUp:', { rpcOrgId });
+          } catch (rpcEx) {
+            console.error('[NEXUS PROVISION] Exceção na RPC provision_new_user no signUp:', rpcEx);
+            return { error: new Error('Conta criada, mas houve uma falha ao configurar a organização. Tente entrar novamente ou contate o suporte.'), user: data.user };
           }
-          console.log('[NEXUS PROVISION] RPC provision_new_user bem-sucedida no signUp:', { rpcOrgId });
-        } catch (rpcEx) {
-          console.error('[NEXUS PROVISION] Exceção na RPC provision_new_user no signUp:', rpcEx);
-          return { error: new Error('Conta criada, mas houve uma falha ao configurar a organização. Tente entrar novamente ou contate o suporte.'), user: data.user };
         }
         const loaded = await loadUserDataSafe(data.user);
         if (!loaded.profile || !loaded.organization) {

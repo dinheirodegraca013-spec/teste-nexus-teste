@@ -1000,3 +1000,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **CORRIGIDO:** `RegisterPage` não aceita submissão antes de terminar a resolução dos parâmetros do convite; isso impede criar conta comum ou associar o usuário ao tenant errado durante a corrida de carregamento.
 - **VERIFICADO:** 220/220 testes, lint e build aprovados localmente. Nenhuma alteração em produção ou no banco foi feita.
+
+## Ciclo autônomo — 2026-10-18: provisionamento seguro de convites
+
+- **CORRIGIDO:** o cadastro autenticado de um convite válido não executa mais a RPC de criação de tenant; convites inválidos são rejeitados antes da autenticação.
+- **VERIFICADO:** 221/221 testes, lint e build aprovados localmente. Nenhum dado, schema ou ambiente de produção foi alterado.
