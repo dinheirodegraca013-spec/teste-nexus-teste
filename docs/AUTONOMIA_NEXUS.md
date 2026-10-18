@@ -1351,3 +1351,7 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **REVISADO:** PR #1 continua aberta, DRAFT, mergeable e sem merge; a descrição foi atualizada para refletir 271 testes e as policies DEV aplicadas.
 - **VALIDAÇÃO:** `npm test` 271/271, `npm run lint` e `npm run build` aprovados nesta rodada.
+## Ciclo autônomo — 2026-10-18: preview pós-revisão
+
+- **VERCEL:** deployment `dpl_ADrUcM7Gis3iJYWRwa48UhLopLco` está `READY` para o commit `5db1aca` na branch `fix/persist-rbac-permissions`.
+- **GITHUB:** o commit documental não gerou workflow associado; a validação equivalente permanece registrada nos commits de código anteriores.

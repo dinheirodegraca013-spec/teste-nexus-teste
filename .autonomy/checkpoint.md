@@ -189,3 +189,4 @@
 - 2026-10-18: Revalidação read-only do DEV confirmou as 37 policies administrativas. Storage privado ainda tem regex com barra duplicada; script disponível referencia projeto antigo qidstqsbxwkbkwowhpab, portanto não aplicado no DEV atual qwvbvqlzcyfkuszxrlgv. Advisors permanecem com os 2/5/1/12/2 achados já registrados.
 - 2026-10-18: Preparada migration `FIX_PRIVATE_STORAGE_POLICY_REGEX_QWVB.sql` para o DEV atual, sem execução. Testes atuais: 271/271, lint e build aprovados. Aguardando autorização específica para aplicar somente as três policies Storage.
 - 2026-10-18: PR #1 revisada e descrição atualizada para 271 testes e policies DEV aplicadas; permanece DRAFT, sem merge. Validação local 271/271, lint e build aprovados.
+- 2026-10-18: Vercel deployment dpl_ADrUcM7Gis3iJYWRwa48UhLopLco READY para 5db1aca; commit documental sem workflow GitHub associado.
