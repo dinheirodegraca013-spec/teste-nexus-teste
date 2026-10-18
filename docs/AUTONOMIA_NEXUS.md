@@ -1443,3 +1443,10 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **BROWSER TESTING — BLOCKED:** o navegador recusou a autorização de egress para abrir o domínio; não houve tentativa de contorno. O HTML/bundle já foi validado por leitura HTTP read-only.
 - **PR:** no head `feeaf62c`, typecheck/build, Edge Functions e GitGuardian estão `success`; Supabase Preview `skipped`. O check Vercel do commit ainda reporta rate limit, embora o deployment mais recente separado esteja READY.
 - **PR #1:** descrição sincronizada com o estado atual (274 testes, correção de `auditService.log`, deployment READY e pendências estruturais); PR continua DRAFT, aberta e sem merge.
+
+## Ciclo autônomo — 2026-10-19: Storage privado no DEV
+
+- **APLICADO:** executada no Supabase DEV `qwvbvqlzcyfkuszxrlgv` a migration `20261018235446_fix_private_storage_policy_regex_qwvb`, com preflight do bucket privado e exatamente três policies.
+- **VERIFICADO:** bucket `nexus-evidence-private` permanece privado; SELECT/INSERT/DELETE usam caminho tenant-scoped e extensões `jpg|png|webp`.
+- **ADVISORS:** o achado específico de Storage não reaparece; permanecem somente os avisos já conhecidos de tabelas privadas, funções `SECURITY DEFINER` e leaked-password protection.
+- **TESTES:** `npm test` 274/274, lint e build aprovados; migration versionada no repositório.
