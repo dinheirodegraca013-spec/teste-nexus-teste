@@ -109,3 +109,4 @@
 - 2026-10-18: consulta SQL somente leitura confirmou que o DEV `qwvbvqlzcyfkuszxrlgv` ainda possui apenas `organizations_read`; a policy `UPDATE` segue pendente de aprovação específica.
 - 2026-10-18: consulta read-only confirmou ausência de INSERT/UPDATE/DELETE nas 12 tabelas operacionais; preparado SQL admin-only em `docs/proposed-migrations/ADD_OPERATIONAL_ADMIN_WRITE_POLICIES.sql`, sem execução, aguardando aprovação específica.
 - 2026-10-18: adicionado contrato automatizado para validar a migration operacional proposta antes de qualquer execução estrutural.
+- 2026-10-18: auditoria read-only dos logs DEV refinou o resultado de erros: 6 `ERROR` e 4 `FATAL` são eventos históricos de bootstrap/infraestrutura (FK inválida `42830`, consultas a tabelas internas ausentes `42P01` e reinícios controlados `57P01`); nenhuma evidência de falha atual da aplicação. Advisors permanecem sem mudança; nenhum SQL aplicado.

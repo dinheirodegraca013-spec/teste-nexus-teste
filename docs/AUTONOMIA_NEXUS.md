@@ -1067,3 +1067,4 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 ## Ciclo autônomo — 2026-10-18: contrato da migration operacional
 
 - **MELHORADO:** adicionado `tests/operational-write-policy-contract.test.mjs`, garantindo que a proposta mantenha tenant ativo, papel administrativo e as três operações protegidas para todas as 12 tabelas.
+- 2026-10-18: auditoria read-only dos logs DEV refinou o resultado: 6 `ERROR` e 4 `FATAL` em `postgres_logs` são eventos históricos de bootstrap/infraestrutura (`42830`, `42P01` e `57P01`), sem evidência de falha atual da aplicação. Nenhum SQL aplicado.
