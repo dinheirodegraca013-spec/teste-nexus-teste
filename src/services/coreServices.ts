@@ -32,19 +32,29 @@ export const organizationsService = {
       .eq('id', id)
       .select()
       .maybeSingle();
+    if (!error && !data) {
+      return {
+        data: null,
+        error: {
+          name: 'PermissionError',
+          code: 'ORGANIZATION_UPDATE_NOT_APPLIED',
+          message: 'Nenhuma organização foi atualizada. Verifique o registro e suas permissões.',
+        },
+      };
+    }
     return { data: data as Organization | null, error };
   }
 };
 
-function normalizeProfile(dbRecord: any): Profile | null {
+export function normalizeProfile(dbRecord: any): Profile | null {
   if (!dbRecord) return null;
   const nameValue = dbRecord.name || dbRecord.full_name || '';
   return {
     ...dbRecord,
     name: nameValue,
     full_name: nameValue,
-    status: 'active',
-    is_active: true,
+    status: dbRecord.is_blocked ? 'inactive' : 'active',
+    is_active: !dbRecord.is_blocked,
     user_id: dbRecord.user_id || dbRecord.id,
   } as Profile;
 }
@@ -69,29 +79,68 @@ export const profilesService = {
   },
 
   async update(id: string, updates: Partial<Profile> & { name?: string }) {
-    const dbUpdates: Record<string, any> = {};
-    if (updates.name !== undefined) {
-      dbUpdates.name = updates.name;
-    } else if (updates.full_name !== undefined) {
-      dbUpdates.name = updates.full_name;
+    // Browser edits only name/phone. The DB independently enforces column
+    // UPDATE grants and an RLS self/tenant policy (defense in depth).
+    const rejectedFields = Object.keys(updates).filter(
+      (field) => !['name', 'full_name', 'phone'].includes(field)
+    );
+    if (rejectedFields.length > 0) {
+      return {
+        data: null,
+        error: { name: 'PermissionError', code: 'PROTECTED_PROFILE_FIELDS',
+          message: 'Alterações de cargo, e-mail, organização ou bloqueio exigem autorização administrativa.' },
+      };
     }
-
-    if (updates.role !== undefined) dbUpdates.role = updates.role;
-    if (updates.organization_id !== undefined) {
-      if (isValidUUID(updates.organization_id)) {
-        dbUpdates.organization_id = updates.organization_id;
-      } else {
-        console.warn('[NEXUS PROFILE] UPDATE_IGNORED_INVALID_ORG_UUID', { organization_id: updates.organization_id });
+    if (!isValidUUID(id)) {
+      return {
+        data: null,
+        error: { name: 'ValidationError', code: 'INVALID_USER_UUID',
+          message: 'Identificador do usuário inválido.' },
+      };
+    }
+    const dbUpdates: { name?: string; phone?: string | null } = {};
+    const requestedName = updates.name ?? updates.full_name;
+    if (requestedName !== undefined) {
+      if (typeof requestedName !== 'string' || !requestedName.trim() || requestedName.trim().length > 120) {
+        return {
+          data: null,
+          error: { name: 'ValidationError', code: 'INVALID_PROFILE_NAME',
+            message: 'Informe um nome entre 1 e 120 caracteres.' },
+        };
       }
+      dbUpdates.name = requestedName.trim();
     }
-    if (updates.email !== undefined) dbUpdates.email = updates.email;
-
+    if (updates.phone !== undefined) {
+      if (typeof updates.phone !== 'string' || updates.phone.trim().length > 32) {
+        return {
+          data: null,
+          error: { name: 'ValidationError', code: 'INVALID_PROFILE_PHONE',
+            message: 'O telefone deve ter no máximo 32 caracteres.' },
+        };
+      }
+      dbUpdates.phone = updates.phone.trim() || null;
+    }
+    if (Object.keys(dbUpdates).length === 0) {
+      return {
+        data: null,
+        error: { name: 'ValidationError', code: 'NO_PROFILE_CHANGES',
+          message: 'Nenhum campo editável foi informado.' },
+      };
+    }
     const { data, error } = await supabase
       .from('profiles')
       .update(dbUpdates)
       .eq('id', id)
       .select()
       .maybeSingle();
+    // maybeSingle can return no row and no error when RLS denies UPDATE.
+    if (!error && !data) {
+      return {
+        data: null,
+        error: { name: 'PermissionError', code: 'PROFILE_UPDATE_NOT_APPLIED',
+          message: 'Atualização não realizada: perfil não autorizado ou indisponível.' },
+      };
+    }
     return { data: normalizeProfile(data), error };
   },
 
@@ -173,12 +222,17 @@ export const profilesService = {
     return { data: normalizeProfile(data), error };
   },
 
-  async delete(id: string) {
-    const { error } = await supabase
-      .from('profiles')
-      .delete()
-      .eq('id', id);
-    return { error };
+  async delete(_id: string) {
+    // Deleting a profile does not revoke a Supabase Auth account or its
+    // existing sessions. Fail closed until a reviewed server-side admin
+    // workflow can disable authentication and audit the action atomically.
+    return {
+      error: {
+        name: 'NotImplementedError',
+        code: 'PROFILE_DELETE_FORBIDDEN',
+        message: 'Exclusão direta de perfil indisponível: é preciso revogar o acesso no Supabase Auth por um fluxo administrativo seguro.',
+      },
+    };
   }
 };
 
@@ -188,15 +242,45 @@ export const permissionsService = {
       .from('user_module_permissions')
       .select('*')
       .eq('user_id', userId);
-    return { data: (data as UserModulePermission[]) || [], error };
+
+    const mapped = ((data || []) as any[]).map((row) => ({
+      ...row,
+      module: row.module_key,
+      can_view: Boolean(row.can_read),
+      can_create: Boolean(row.can_write),
+      can_edit: Boolean(row.can_write),
+      can_delete: Boolean(row.can_delete),
+    })) as UserModulePermission[];
+
+    return { data: mapped, error };
   },
 
   async upsertPermissions(permissions: Partial<UserModulePermission>[]) {
+    const dbRows = permissions
+      .filter((permission) => Boolean(permission.user_id && permission.module))
+      .map((permission) => ({
+        user_id: permission.user_id,
+        module_key: permission.module,
+        can_read: Boolean(permission.can_view),
+        can_write: Boolean(permission.can_create ?? permission.can_edit),
+        can_delete: Boolean(permission.can_delete),
+      }));
+
     const { data, error } = await supabase
       .from('user_module_permissions')
-      .upsert(permissions)
+      .upsert(dbRows, { onConflict: 'user_id,module_key' })
       .select();
-    return { data: (data as UserModulePermission[]) || [], error };
+
+    const mapped = ((data || []) as any[]).map((row) => ({
+      ...row,
+      module: row.module_key,
+      can_view: Boolean(row.can_read),
+      can_create: Boolean(row.can_write),
+      can_edit: Boolean(row.can_write),
+      can_delete: Boolean(row.can_delete),
+    })) as UserModulePermission[];
+
+    return { data: mapped, error };
   }
 };
 
@@ -219,8 +303,9 @@ export const membersService = {
           name: nameVal,
           full_name: nameVal,
           role: p.role || 'operator',
-          status: 'active' as const,
-          is_active: true,
+          status: (p.is_blocked ? 'inactive' : 'active') as 'inactive' | 'active',
+          is_active: !p.is_blocked,
+          is_blocked: Boolean(p.is_blocked),
           created_at: p.created_at || new Date().toISOString(),
         };
       }), 
@@ -240,25 +325,72 @@ export const membersService = {
     }
 
     const nameVal = params.name || params.full_name || params.email.split('@')[0];
-    const { data, error } = await supabase
-      .from('profiles')
-      .insert([{
+    const { data, error } = await supabase.functions.invoke('invite-organization-member', {
+      body: {
         organization_id: params.organization_id,
         email: params.email,
         name: nameVal,
         role: params.role,
-      }])
-      .select()
-      .maybeSingle();
-    return { data: normalizeProfile(data), error };
+      },
+    });
+
+    if (error) return { data: null, error };
+    // Edge Functions can respond HTTP 200 with a business-level error body.
+    // Treat absent success/member as failure, never as a sent invitation.
+    if (data?.success !== true || !data?.member?.id) {
+      return {
+        data: null,
+        error: { name: 'InvitationError', code: 'INVITATION_NOT_CONFIRMED',
+          message: data?.error || 'O servidor não confirmou a criação do convite.' },
+      };
+    }
+    return { data: normalizeProfile(data.member), error: null };
   },
 
-  async remove(id: string) {
-    const { error } = await supabase
-      .from('profiles')
-      .delete()
-      .eq('id', id);
-    return { error };
+  async remove(_id: string) {
+    // profiles DELETE is blocked by RLS and does not revoke a Supabase Auth
+    // session. A zero-row DELETE can misleadingly return no error.
+    return { error: { name: 'NotImplementedError', code: 'MEMBER_REVOKE_NOT_IMPLEMENTED',
+      message: 'Revogação de acesso indisponível até existir um fluxo administrativo seguro.' } };
   }
 };
 
+
+
+// Private hierarchy assignments are managed exclusively through authenticated,
+// server-validated tenant-admin RPCs. Never expose the private tables directly.
+export const teamScopeService = {
+  async assign(memberId: string, role: 'leader' | 'coordinator' | 'controller', scopeId: string) {
+    if (!isValidUUID(memberId) || !isValidUUID(scopeId)) {
+      return { error: { message: 'Identificadores de usuário ou território inválidos.' } };
+    }
+    if (role === 'controller') {
+      const { error } = await supabase.rpc('nexus_set_controller_scope', {
+        p_controller_user: memberId,
+        p_coordinator: scopeId,
+        p_enabled: true,
+      });
+      return { error };
+    }
+    if (role === 'leader' || role === 'coordinator') {
+      const { error } = await supabase.rpc('nexus_set_team_scope', {
+        p_target_user: memberId,
+        p_coordinator: role === 'coordinator' ? scopeId : null,
+        p_leader: role === 'leader' ? scopeId : null,
+      });
+      return { error };
+    }
+    return { error: { message: 'O perfil selecionado não permite vínculo de equipe.' } };
+  },
+  async revokeController(memberId: string, coordinatorId: string) {
+    if (!isValidUUID(memberId) || !isValidUUID(coordinatorId)) {
+      return { error: { message: 'Identificadores de usuário ou coordenação inválidos.' } };
+    }
+    const { error } = await supabase.rpc('nexus_set_controller_scope', {
+      p_controller_user: memberId,
+      p_coordinator: coordinatorId,
+      p_enabled: false,
+    });
+    return { error };
+    },
+};

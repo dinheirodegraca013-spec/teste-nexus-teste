@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Users, Plus, Shield, Mail, Edit2, Trash2, CheckCircle2, Lock, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
-import { OrganizationMember, UserRole } from '../../types';
-import { membersService } from '../../services';
+import { OrganizationMember, UserRole, Coordinator, Leader } from '../../types';
+import { membersService, permissionsService, teamScopeService, coordinatorsService, leadersService } from '../../services';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui/Table';
@@ -11,6 +11,33 @@ import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { EmptyState } from '../../components/ui/EmptyState';
+
+const permissionModuleKeys: Record<string, string> = {
+  painel: 'dashboard',
+  organizacoes: 'organizations',
+  usuarios: 'users',
+  crm: 'crm',
+  coordenadores: 'coordinators',
+  liderancas: 'leaders',
+  metas: 'goals',
+  campo: 'field',
+  presencas: 'presence',
+  eventos: 'events',
+  reunioes: 'meetings',
+  materiais: 'materials',
+  adesivos: 'stickers',
+  inteligencia: 'intelligence',
+  relatorios: 'reports',
+  configuracoes: 'settings',
+};
+
+const createDefaultPermissions = () =>
+  Object.fromEntries(
+    Object.keys(permissionModuleKeys).map((moduleKey) => [
+      moduleKey,
+      { can_view: false, can_edit: false, can_delete: false },
+    ])
+  ) as Record<string, { can_view: boolean; can_edit: boolean; can_delete: boolean }>;
 
 export const UsersPage: React.FC = () => {
   const { organization } = useAuth();
@@ -23,6 +50,10 @@ export const UsersPage: React.FC = () => {
 
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isPermModalOpen, setIsPermModalOpen] = useState(false);
+  const [isScopeModalOpen, setIsScopeModalOpen] = useState(false);
+  const [scopeId, setScopeId] = useState('');
+  const [teamCoordinators, setTeamCoordinators] = useState<Coordinator[]>([]);
+  const [teamLeaders, setTeamLeaders] = useState<Leader[]>([]);
   const [selectedMember, setSelectedMember] = useState<OrganizationMember | null>(null);
 
   const [inviteEmail, setInviteEmail] = useState('');
@@ -30,22 +61,14 @@ export const UsersPage: React.FC = () => {
   const [inviteRole, setInviteRole] = useState<UserRole>('operator');
 
   // Permission editor state
-  const [perms, setPerms] = useState<Record<string, { can_view: boolean; can_edit: boolean; can_delete: boolean }>>({
-    crm: { can_view: true, can_edit: true, can_delete: false },
-    coordenadores: { can_view: true, can_edit: false, can_delete: false },
-    liderancas: { can_view: true, can_edit: true, can_delete: false },
-    metas: { can_view: true, can_edit: false, can_delete: false },
-    campo: { can_view: true, can_edit: true, can_delete: false },
-    eventos: { can_view: true, can_edit: true, can_delete: false },
-    materiais: { can_view: true, can_edit: true, can_delete: false },
-    adesivos: { can_view: true, can_edit: true, can_delete: false },
-  });
+  const [perms, setPerms] = useState(createDefaultPermissions);
 
   const loadData = useCallback(async () => {
     if (!orgId) return;
     setIsLoading(true);
     try {
-      const { data } = await membersService.getAll(orgId);
+      const { data, error } = await membersService.getAll(orgId);
+      if (error) throw error;
       setMembers(data || []);
     } catch (err: any) {
       toastError('Erro ao carregar equipe: ' + err.message);
@@ -71,6 +94,7 @@ export const UsersPage: React.FC = () => {
         organization_id: orgId,
         email: inviteEmail.trim(),
         role: inviteRole,
+        name: inviteName.trim(),
       });
 
       if (error) {
@@ -89,26 +113,137 @@ export const UsersPage: React.FC = () => {
     }
   };
 
-  const handleDeleteMember = async (id: string) => {
-    if (window.confirm('Remover o acesso deste membro?')) {
-      const { error } = await membersService.remove(id);
+  const handleOpenPerms = async (member: OrganizationMember) => {
+    setSelectedMember(member);
+    setIsSubmitting(true);
+    try {
+      const { data, error } = await permissionsService.getByUserId(member.id);
       if (error) {
-        toastError('Erro ao remover: ' + error.message);
-      } else {
-        await loadData();
-        success('Acesso removido.');
+        toastError('Erro ao carregar permissões: ' + error.message);
+        return;
       }
+
+      const loadedPerms = createDefaultPermissions();
+      for (const permission of (data || []) as Array<{ module?: string; can_view?: boolean; can_edit?: boolean; can_delete?: boolean }>) {
+        const displayKey = Object.keys(permissionModuleKeys).find(
+          (key) => permissionModuleKeys[key] === permission.module
+        );
+        if (!displayKey) continue;
+        loadedPerms[displayKey] = {
+          can_view: Boolean(permission.can_view),
+          can_edit: Boolean(permission.can_edit),
+          can_delete: Boolean(permission.can_delete),
+        };
+      }
+      setPerms(loadedPerms);
+      setIsPermModalOpen(true);
+    } catch (err: any) {
+      toastError('Erro inesperado ao carregar permissões: ' + (err?.message || 'falha desconhecida'));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleOpenPerms = (member: OrganizationMember) => {
-    setSelectedMember(member);
-    setIsPermModalOpen(true);
+  const handleSavePerms = async () => {
+    if (!selectedMember) {
+      toastError('Selecione um membro antes de salvar as permissões.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const payload = Object.entries(perms as Record<string, { can_view: boolean; can_edit: boolean; can_delete: boolean }>).map(([displayKey, permission]) => ({
+        user_id: selectedMember.id,
+        module: permissionModuleKeys[displayKey],
+        can_view: permission.can_view,
+        can_create: permission.can_edit,
+        can_edit: permission.can_edit,
+        can_delete: permission.can_delete,
+      }));
+
+      const { error } = await permissionsService.upsertPermissions(payload);
+      if (error) {
+        toastError('Erro ao salvar permissões: ' + error.message);
+        return;
+      }
+
+      setIsPermModalOpen(false);
+      success(`Permissões salvas para ${selectedMember.full_name || selectedMember.email}`);
+    } catch (err: any) {
+      toastError('Erro inesperado ao salvar permissões: ' + (err?.message || 'falha desconhecida'));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleSavePerms = () => {
-    setIsPermModalOpen(false);
-    success(`Permissões atualizadas para ${selectedMember?.full_name || 'o membro'}`);
+  const handleOpenScope = async (member: OrganizationMember) => {
+    if (!['leader', 'coordinator', 'controller'].includes(member.role)) {
+      toastError('Este perfil não permite vínculo hierárquico.');
+      return;
+    }
+    setSelectedMember(member);
+    setScopeId('');
+    setIsSubmitting(true);
+    try {
+      const [coords, leaders] = await Promise.all([
+        coordinatorsService.getAll(orgId),
+        leadersService.getAll(orgId),
+      ]);
+      if (coords.error) throw coords.error;
+      if (leaders.error) throw leaders.error;
+      setTeamCoordinators(coords.data || []);
+      setTeamLeaders(leaders.data || []);
+      setIsScopeModalOpen(true);
+    } catch (err: any) {
+      toastError('Falha ao carregar equipes: ' + (err?.message || 'Erro inesperado.'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSaveScope = async () => {
+    if (!selectedMember || !scopeId) {
+      toastError('Selecione uma liderança ou coordenação para vincular.');
+      return;
+    }
+    const role = selectedMember.role;
+    if (role !== 'leader' && role !== 'coordinator' && role !== 'controller') {
+      toastError('Cargo não autorizado para vínculo hierárquico.');
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const { error } = await teamScopeService.assign(selectedMember.id, role, scopeId);
+      if (error) {
+        toastError('Não foi possível vincular equipe: ' + error.message);
+        return;
+      }
+      setIsScopeModalOpen(false);
+      success('Vínculo de equipe salvo e registrado na auditoria.');
+    } catch (err: any) {
+      toastError('Falha ao vincular equipe: ' + (err?.message || 'Erro inesperado.'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRevokeControllerScope = async () => {
+    if (!selectedMember || selectedMember.role !== 'controller' || !scopeId) return;
+    if (!window.confirm('Revogar esta coordenação do controlador?')) return;
+    setIsSubmitting(true);
+    try {
+      const { error } = await teamScopeService.revokeController(selectedMember.id, scopeId);
+      if (error) {
+        toastError('Falha ao revogar coordenação: ' + error.message);
+        return;
+      }
+      setIsScopeModalOpen(false);
+      success('Solicitação de revogação processada e registrada na auditoria.');
+    } catch (err: any) {
+      toastError('Falha ao revogar coordenação: ' + (err?.message || 'Erro inesperado.'));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getRoleBadge = (role: UserRole) => {
@@ -116,6 +251,7 @@ export const UsersPage: React.FC = () => {
       case 'admin': return <Badge variant="success" size="sm">Administrador</Badge>;
       case 'manager': return <Badge variant="primary" size="sm">Gerente</Badge>;
       case 'coordinator': return <Badge variant="neutral" size="sm">Coordenador</Badge>;
+      case 'controller': return <Badge variant="neutral" size="sm">Controlador</Badge>;
       case 'operator': return <Badge variant="warning" size="sm">Operador de Campo</Badge>;
       case 'viewer': return <Badge variant="neutral" size="sm">Visualizador</Badge>;
       default: return <Badge variant="neutral" size="sm">{role}</Badge>;
@@ -196,6 +332,15 @@ export const UsersPage: React.FC = () => {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1.5">
+                    {['leader', 'coordinator', 'controller'].includes(member.role) && (
+                      <button
+                        onClick={() => handleOpenScope(member)}
+                        className="p-1.5 rounded text-slate-400 hover:text-indigo-700 hover:bg-indigo-50 transition-colors cursor-pointer"
+                        title="Vincular liderança ou coordenação"
+                      >
+                        <Users className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                     <button
                       onClick={() => handleOpenPerms(member)}
                       className="p-1.5 rounded text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
@@ -204,9 +349,10 @@ export const UsersPage: React.FC = () => {
                       <Shield className="w-3.5 h-3.5" />
                     </button>
                     <button
-                      onClick={() => handleDeleteMember(member.id)}
-                      className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-slate-100 transition-colors cursor-pointer"
-                      title="Remover Acesso"
+                      type="button"
+                      disabled
+                      className="p-1.5 rounded text-slate-300 cursor-not-allowed"
+                      title="Revogação de acesso temporariamente indisponível: exige fluxo administrativo seguro"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -249,8 +395,9 @@ export const UsersPage: React.FC = () => {
             options={[
               { value: 'operator', label: 'Operador de Campo (Apenas Registro)' },
               { value: 'coordinator', label: 'Coordenador Territorial (Seu Território)' },
+              { value: 'controller', label: 'Controlador (Coordenações atribuídas)' },
+              { value: 'leader', label: 'Liderança (Sua Equipe)' },
               { value: 'manager', label: 'Gerente Operacional (Visualiza e Edita)' },
-              { value: 'admin', label: 'Administrador Geral (Acesso Total)' },
               { value: 'viewer', label: 'Visualizador / Auditor (Somente Leitura)' },
             ]}
           />
@@ -264,6 +411,47 @@ export const UsersPage: React.FC = () => {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Admin-only backend validates actor, role and tenant again. */}
+      <Modal
+        isOpen={isScopeModalOpen}
+        onClose={() => setIsScopeModalOpen(false)}
+        title={`Vincular equipe: ${selectedMember?.full_name || selectedMember?.email || 'Membro'}`}
+        description="Vincule um membro a seu território autorizado. Ação auditada no Supabase."
+      >
+        <div className="space-y-4 text-left">
+          <Select
+            label={selectedMember?.role === 'leader' ? 'Liderança de destino' : 'Coordenação de destino'}
+            value={scopeId}
+            onChange={(e) => setScopeId(e.target.value)}
+            options={[
+              { value: '', label: 'Selecione...' },
+              ...(selectedMember?.role === 'leader' ? teamLeaders : teamCoordinators)
+                .map((item) => ({ value: item.id, label: item.name })),
+            ]}
+          />
+          <p className="text-xs text-slate-600">
+            {selectedMember?.role === 'controller'
+              ? 'O controlador pode acumular coordenações. Cada atribuição é validada no servidor.'
+              : 'A nova atribuição substitui o vínculo anterior do membro.'}
+          </p>
+          <div className="flex justify-end gap-2">
+            {selectedMember?.role === 'controller' && (
+              <Button type="button" variant="outline" size="sm"
+                onClick={handleRevokeControllerScope} isLoading={isSubmitting} disabled={!scopeId}>
+                Revogar coordenação
+              </Button>
+            )}
+            <Button type="button" variant="outline" size="sm" onClick={() => setIsScopeModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type="button" variant="primary" size="sm"
+              onClick={handleSaveScope} isLoading={isSubmitting} disabled={!scopeId}>
+              Salvar vínculo
+            </Button>
+          </div>
+        </div>
       </Modal>
 
       {/* Permissions Modal */}
@@ -322,7 +510,7 @@ export const UsersPage: React.FC = () => {
             <Button type="button" variant="outline" size="sm" onClick={() => setIsPermModalOpen(false)}>
               Cancelar
             </Button>
-            <Button type="button" variant="primary" size="sm" onClick={handleSavePerms}>
+            <Button type="button" variant="primary" size="sm" onClick={handleSavePerms} isLoading={isSubmitting}>
               Salvar Permissões
             </Button>
           </div>

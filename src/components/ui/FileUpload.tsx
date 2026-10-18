@@ -9,6 +9,7 @@ interface FileUploadProps {
   fileName?: string | null;
   onChange: (dataUrl: string | null, fileMeta?: { name: string; size: number; type: string } | null) => void;
   maxSizeMB?: number;
+  disabled?: boolean;
   className?: string;
 }
 
@@ -20,6 +21,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   fileName,
   onChange,
   maxSizeMB = 10,
+  disabled = false,
   className = '',
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -87,6 +89,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   };
 
   const handleProcessFile = async (file: File) => {
+    if (disabled) return;
     setError(null);
 
     if (file.size > maxSizeMB * 1024 * 1024) {
@@ -108,7 +111,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (file && !disabled) {
       handleProcessFile(file);
     }
   };
@@ -116,7 +119,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsDragging(true);
+    if (!disabled) setIsDragging(true);
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
@@ -131,7 +134,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     setIsDragging(false);
 
     const file = e.dataTransfer.files?.[0];
-    if (file) {
+    if (file && !disabled) {
       handleProcessFile(file);
     }
   };
@@ -158,6 +161,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       <input
         ref={inputRef}
         type="file"
+        disabled={disabled}
         accept={accept}
         onChange={handleInputChange}
         className="hidden"
@@ -191,7 +195,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
             <div className="flex items-center gap-2 mt-1.5">
               <button
                 type="button"
-                onClick={() => inputRef.current?.click()}
+                onClick={() => { if (!disabled) inputRef.current?.click(); }}
                 className="text-[11px] font-medium text-slate-700 dark:text-zinc-300 hover:underline cursor-pointer"
               >
                 Trocar imagem
@@ -210,11 +214,11 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         </div>
       ) : (
         <div
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
+          onDragOver={disabled ? undefined : handleDragOver}
+          onDragLeave={disabled ? undefined : handleDragLeave}
+          onDrop={disabled ? undefined : handleDrop}
           onClick={() => inputRef.current?.click()}
-          className={`border-2 border-dashed rounded-xl p-4 transition-all text-center cursor-pointer flex flex-col items-center justify-center gap-2 ${
+          className={`border-2 border-dashed rounded-xl p-4 transition-all text-center ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'} flex flex-col items-center justify-center gap-2 ${
             isDragging
               ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30'
               : 'border-slate-300 dark:border-zinc-800 hover:border-slate-400 dark:hover:border-zinc-700 bg-slate-50/50 dark:bg-zinc-950/50'
@@ -226,10 +230,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
           <div>
             <div className="text-xs font-semibold text-slate-900 dark:text-zinc-200">
-              Clique para enviar foto ou tire com a câmera
+              {disabled ? 'Upload temporariamente indisponível' : 'Clique para enviar foto ou tire com a câmera'}
             </div>
             <p className="text-[11px] text-slate-500 dark:text-zinc-500 mt-0.5">
-              {helperText}
+              {disabled ? 'Aguardando Storage privado e políticas de acesso seguras.' : helperText}
             </p>
           </div>
         </div>

@@ -20,25 +20,25 @@ import { ForbiddenPage } from './pages/public/ForbiddenPage';
 import { NotFoundPage } from './pages/public/NotFoundPage';
 
 // App Pages
-import { DashboardPage } from './pages/app/DashboardPage';
-import { OnboardingPage } from './pages/app/OnboardingPage';
-import { CoordinatorsPage } from './pages/app/CoordinatorsPage';
-import { LeadersPage } from './pages/app/LeadersPage';
-import { CrmPage } from './pages/app/CrmPage';
-import { GoalsPage } from './pages/app/GoalsPage';
-import { FieldPage } from './pages/app/FieldPage';
-import { EventsPage } from './pages/app/EventsPage';
-import { MeetingsPage } from './pages/app/MeetingsPage';
-import { PresencePage } from './pages/app/PresencePage';
-import { MaterialsPage } from './pages/app/MaterialsPage';
-import { StickersPage } from './pages/app/StickersPage';
-import { IntelligencePage } from './pages/app/IntelligencePage';
-import { ReportsPage } from './pages/app/ReportsPage';
-import { UsersPage } from './pages/app/UsersPage';
-import { OrganizationsPage } from './pages/app/OrganizationsPage';
-import { PlansPage } from './pages/app/PlansPage';
-import { ProfilePage } from './pages/app/ProfilePage';
-import { SettingsPage } from './pages/app/SettingsPage';
+const DashboardPage = React.lazy(() => import('./pages/app/DashboardPage').then((module) => ({ default: module.DashboardPage })));
+const OnboardingPage = React.lazy(() => import('./pages/app/OnboardingPage').then((module) => ({ default: module.OnboardingPage })));
+const CoordinatorsPage = React.lazy(() => import('./pages/app/CoordinatorsPage').then((module) => ({ default: module.CoordinatorsPage })));
+const LeadersPage = React.lazy(() => import('./pages/app/LeadersPage').then((module) => ({ default: module.LeadersPage })));
+const CrmPage = React.lazy(() => import('./pages/app/CrmPage').then((module) => ({ default: module.CrmPage })));
+const GoalsPage = React.lazy(() => import('./pages/app/GoalsPage').then((module) => ({ default: module.GoalsPage })));
+const FieldPage = React.lazy(() => import('./pages/app/FieldPage').then((module) => ({ default: module.FieldPage })));
+const EventsPage = React.lazy(() => import('./pages/app/EventsPage').then((module) => ({ default: module.EventsPage })));
+const MeetingsPage = React.lazy(() => import('./pages/app/MeetingsPage').then((module) => ({ default: module.MeetingsPage })));
+const PresencePage = React.lazy(() => import('./pages/app/PresencePage').then((module) => ({ default: module.PresencePage })));
+const MaterialsPage = React.lazy(() => import('./pages/app/MaterialsPage').then((module) => ({ default: module.MaterialsPage })));
+const StickersPage = React.lazy(() => import('./pages/app/StickersPage').then((module) => ({ default: module.StickersPage })));
+const IntelligencePage = React.lazy(() => import('./pages/app/IntelligencePage').then((module) => ({ default: module.IntelligencePage })));
+const ReportsPage = React.lazy(() => import('./pages/app/ReportsPage').then((module) => ({ default: module.ReportsPage })));
+const UsersPage = React.lazy(() => import('./pages/app/UsersPage').then((module) => ({ default: module.UsersPage })));
+const OrganizationsPage = React.lazy(() => import('./pages/app/OrganizationsPage').then((module) => ({ default: module.OrganizationsPage })));
+const PlansPage = React.lazy(() => import('./pages/app/PlansPage').then((module) => ({ default: module.PlansPage })));
+const ProfilePage = React.lazy(() => import('./pages/app/ProfilePage').then((module) => ({ default: module.ProfilePage })));
+const SettingsPage = React.lazy(() => import('./pages/app/SettingsPage').then((module) => ({ default: module.SettingsPage })));
 import { AppModule } from './types';
 
 const routeModuleMap: Record<string, AppModule> = {
@@ -403,7 +403,9 @@ export default function App() {
   return (
     <ToastProvider>
       <AuthProvider>
-        <MainRouter />
+        <React.Suspense fallback={<LoadingState message="Carregando módulo..." />}>
+          <MainRouter />
+        </React.Suspense>
       </AuthProvider>
     </ToastProvider>
   );

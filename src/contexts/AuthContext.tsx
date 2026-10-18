@@ -65,6 +65,7 @@ export function normalizeRole(role: unknown): string {
   if (clean === 'superadmin' || clean === 'superadministrador') return 'superadmin';
   if (clean === 'admin' || clean === 'administrador' || clean === 'adm') return 'admin';
   if (clean === 'coordinator' || clean === 'coordenador') return 'coordinator';
+  if (clean === 'controller' || clean === 'controlador') return 'controller';
   if (clean === 'leader' || clean === 'lider' || clean === 'lideranca') return 'leader';
   if (clean === 'manager' || clean === 'gerente') return 'manager';
   if (clean === 'operator' || clean === 'operador') return 'operator';
@@ -78,46 +79,42 @@ export function checkUserPermission(
   module: AppModule,
   action: 'view' | 'create' | 'edit' | 'delete' = 'view'
 ): boolean {
-  if (!userProfile) return false;
+  if (!userProfile || userProfile.is_blocked) return false;
 
   const normRole = normalizeRole(userProfile.role);
   if (normRole === 'superadmin' || normRole === 'admin') return true;
-  if (normRole === 'leader') {
-    if (module === 'field' || module === 'stickers' || module === 'crm') return true;
-    return false;
-  }
-  if (normRole === 'coordinator') {
-    if (
-      module === 'coordinators' ||
-      module === 'leaders' ||
-      module === 'crm' ||
-      module === 'goals' ||
-      module === 'field' ||
-      module === 'stickers' ||
-      module === 'events' ||
-      module === 'meetings' ||
-      module === 'presence'
-    ) return true;
-  }
 
-  const userPerm = perms.find((p) => p.module === module);
-  if (!userPerm) return false;
-  if (action === 'view') return Boolean(userPerm.can_view);
-  if (action === 'create') return Boolean(userPerm.can_create);
-  if (action === 'edit') return Boolean(userPerm.can_edit);
-  if (action === 'delete') return Boolean(userPerm.can_delete);
-  return false;
+  // Operational table writes currently require private.nexus_is_admin()
+  // in PostgreSQL. Even a stored permission must not advertise a write
+  // which the server will refuse. Never trust frontend UI as a security gate.
+  if (action !== 'view') return false;
+
+  // Every non-admin must have an EXPLICIT saved module grant. A role
+  // indicates the maximum accessible module set; it does not itself grant
+  // access. The server's RLS is the final enforcement boundary.
+  const saved = perms.find((p) => p.module === module);
+  if (!saved?.can_view) return false;
+
+  const scopedReadModules: Partial<Record<string, readonly AppModule[]>> = {
+    leader: ['crm', 'presence'],
+    coordinator: ['coordinators', 'leaders', 'crm', 'presence'],
+    controller: ['coordinators', 'leaders', 'crm', 'presence'],
+  };
+  const scoped = scopedReadModules[normRole];
+  return scoped ? scoped.includes(module) : true;
 }
 
 export function getDefaultRouteForUser(userProfile: Profile | null, perms: UserModulePermission[]): string {
+  if (userProfile?.is_blocked) return '/403';
   if (!userProfile) return '/app/dashboard';
   const hasPerm = (mod: AppModule, act: 'view' | 'create' | 'edit' | 'delete' = 'view') =>
     checkUserPermission(userProfile, perms, mod, act);
   const normRole = normalizeRole(userProfile.role);
   if (normRole === 'superadmin' || normRole === 'admin') return '/app/dashboard';
   if (normRole === 'leader') {
-    return hasPerm('field', 'view') ? '/app/campo' : hasPerm('crm', 'view') ? '/app/crm' : hasPerm('stickers', 'view') ? '/app/adesivos' : '/403';
+    return hasPerm('crm', 'view') ? '/app/crm' : hasPerm('presence', 'view') ? '/app/presenca' : '/403';
   }
+
   const candidateModules: Array<{ module: AppModule; route: string }> = [
     { module: 'dashboard', route: '/app/dashboard' },
     { module: 'coordinators', route: '/app/coordenadores' },
@@ -156,11 +153,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profileError, setProfileError] = useState<string | null>(null);
   const [initializationError, setInitializationError] = useState<string | null>(null);
 
-  const loadUserData = useCallback(async (authUser: User): Promise<{
+  const loadUserData = useCallback(async (authUser: User, isCurrent = () => true): Promise<{
     profile: Profile | null;
     organization: Organization | null;
     permissions: UserModulePermission[];
   }> => {
+    const empty = { profile: null, organization: null, permissions: [] };
     setProfileError(null);
     let activeProfile: Profile | null = null;
     try {
@@ -170,15 +168,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           7000,
           'Tempo limite excedido ao consultar public.profiles'
         );
-        if (!profileErr) activeProfile = userProfile;
+        if (!isCurrent()) return empty;
+        if (profileErr) throw profileErr;
+        activeProfile = userProfile;
       } catch (profEx: any) {
+        if (!isCurrent()) return empty;
         console.error('[NEXUS AUTH] profile:error', profEx?.message || profEx);
+        throw profEx;
       }
 
       if (activeProfile) {
         console.log('[NEXUS AUTH] profile:success', { role: activeProfile.role });
       } else {
         const metadata = authUser.user_metadata || {};
+        const metadataRole = normalizeRole(metadata.role);
+        const hasInvitedOrganization = isValidUUID(metadata.organization_id);
+        const isInvitedRole = ['coordinator', 'controller', 'leader', 'manager', 'operator', 'viewer'].includes(metadataRole);
+
+        // A missing profile for an invited account must never trigger creation of a new tenant.
+        // The existing provision_new_user RPC always creates a new organization and an admin profile.
+        if (hasInvitedOrganization || isInvitedRole) {
+          const errMsg = 'Esta conta foi cadastrada por convite, mas o perfil ainda não foi provisionado na organização correta. O acesso foi bloqueado para evitar criar uma organização indevida. Solicite ao administrador que conclua o provisionamento.';
+          setProfile(null);
+          setOrganization(null);
+          setPermissions([]);
+          setProfileError(errMsg);
+          setInitializationError(errMsg);
+          return { profile: null, organization: null, permissions: [] };
+        }
+
         const profileName = metadata.full_name || metadata.name || authUser.email?.split('@')[0] || 'Usuário';
         const orgName = metadata.organization_name || `Campanha de ${profileName.split(' ')[0]}`;
         const orgSlug = orgName.toLowerCase().replace(/[^a-z0-9]/g, '-');
@@ -193,6 +211,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             8000,
             'Tempo limite ao provisionar usuário via RPC'
           );
+          if (!isCurrent()) return empty;
           if (rpcErr) {
             const errMsg = `Falha no provisionamento do usuário (RPC): ${rpcErr.message}`;
             setProfileError(errMsg);
@@ -205,6 +224,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             6000,
             'Tempo limite ao carregar perfil recém-provisionado'
           );
+          if (!isCurrent()) return empty;
           if (reloadErr || !createdProfile) {
             const errMsg = reloadErr?.message || 'Perfil de usuário não encontrado após provisionamento.';
             setProfileError(errMsg);
@@ -213,6 +233,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
           activeProfile = createdProfile;
         } catch (rpcEx: any) {
+          if (!isCurrent()) return empty;
           const errMsg = rpcEx?.message || 'Erro inesperado durante provisionamento via RPC.';
           setProfileError(errMsg);
           setInitializationError(errMsg);
@@ -230,8 +251,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             6000,
             'Tempo limite ao carregar organização ativa'
           );
+          if (!isCurrent()) return empty;
           if (!orgErr && orgData) loadedOrg = orgData;
         } catch (orgEx: any) {
+          if (!isCurrent()) return empty;
           console.warn('[NEXUS AUTH] organization:warn', orgEx?.message || orgEx);
         }
       }
@@ -243,8 +266,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           5000,
           'Tempo limite ao listar organizações'
         );
+        if (!isCurrent()) return empty;
         setOrganizations(allOrgs || (loadedOrg ? [loadedOrg] : []));
       } catch {
+        if (!isCurrent()) return empty;
         setOrganizations(loadedOrg ? [loadedOrg] : []);
       }
 
@@ -256,8 +281,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             7000,
             'Tempo limite excedido ao consultar user_module_permissions'
           );
+          if (!isCurrent()) return empty;
           if (!permsErr) loadedPerms = perms || [];
         } catch (permsEx: any) {
+          if (!isCurrent()) return empty;
           console.error('[NEXUS AUTH] permissions:error', permsEx?.message || permsEx);
         }
       }
@@ -265,29 +292,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return { profile: activeProfile || null, organization: loadedOrg, permissions: loadedPerms };
     } catch (err: any) {
+      if (!isCurrent()) return empty;
+      // A failed lookup does not establish that the profile is absent.
+      // Clear cached access and never provision a tenant on this path.
+      setProfile(null);
+      setOrganization(null);
+      setOrganizations([]);
+      setPermissions([]);
       setProfileError(err?.message || 'Erro inesperado ao carregar perfil.');
       setInitializationError(err?.message || 'Erro inesperado ao carregar sessão.');
       return { profile: null, organization: null, permissions: [] };
     }
   }, []);
 
-  const inFlightPromiseRef = React.useRef<Promise<{
-    profile: Profile | null;
-    organization: Organization | null;
-    permissions: UserModulePermission[];
-  }> | null>(null);
+  const loadGenerationRef = useRef(0);
+  const inFlightPromiseRef = useRef<{
+    userId: string;
+    promise: ReturnType<typeof loadUserData>;
+  } | null>(null);
+
+  const invalidateUserData = () => {
+    loadGenerationRef.current++;
+    inFlightPromiseRef.current = null;
+    setProfile(null);
+    setOrganization(null);
+    setOrganizations([]);
+    setPermissions([]);
+  };
 
   const loadUserDataSafe = useCallback(async (authUser: User) => {
-    if (inFlightPromiseRef.current) return inFlightPromiseRef.current;
-    const promise = loadUserData(authUser).finally(() => {
-      inFlightPromiseRef.current = null;
+    const pending = inFlightPromiseRef.current;
+    if (pending?.userId === authUser.id) return pending.promise;
+    invalidateUserData();
+    const generation = loadGenerationRef.current;
+    const promise = loadUserData(authUser, () => generation === loadGenerationRef.current).finally(() => {
+      if (generation === loadGenerationRef.current) inFlightPromiseRef.current = null;
     });
-    inFlightPromiseRef.current = promise;
+    inFlightPromiseRef.current = { userId: authUser.id, promise };
     return promise;
   }, [loadUserData]);
 
   useEffect(() => {
     let isMounted = true;
+    let hasNewAuthEvent = false;
     const watchdog = setTimeout(() => {
       if (isMounted) {
         setIsLoading((currentLoading) => currentLoading ? false : false);
@@ -297,12 +344,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     async function initAuth() {
       if (!isSupabaseConfigured) {
+        clearTimeout(watchdog);
         if (isMounted) setIsLoading(false);
         return;
       }
       try {
         const { data, error } = await withTimeout(supabase.auth.getSession(), 7000, 'Tempo limite excedido ao recuperar sessão do Supabase');
-        if (error && isMounted) setInitializationError(error.message);
+        // A newer auth event is authoritative over this initial snapshot.
+        if (!isMounted || hasNewAuthEvent) return;
+        if (error) setInitializationError(error.message);
         if (isMounted) {
           const currentSession = data?.session || null;
           setSession(currentSession);
@@ -310,15 +360,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (currentSession?.user) await loadUserDataSafe(currentSession.user);
         }
       } catch (err: any) {
-        if (isMounted) setInitializationError(err?.message || 'Falha ao inicializar a autenticação.');
+        if (isMounted && !hasNewAuthEvent) setInitializationError(err?.message || 'Falha ao inicializar a autenticação.');
       } finally {
-        if (isMounted) setIsLoading(false);
+        clearTimeout(watchdog);
+        if (isMounted && !hasNewAuthEvent) setIsLoading(false);
       }
     }
 
     initAuth();
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (!isMounted) return;
+      if (event !== 'INITIAL_SESSION') {
+        hasNewAuthEvent = true;
+        clearTimeout(watchdog);
+      }
       if (isSigningInRef.current) {
         if (newSession?.user) {
           setUser(newSession.user);
@@ -340,9 +395,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setIsLoading(true);
           await loadUserDataSafe(newSession.user);
         } else {
-          setProfile(null);
-          setOrganization(null);
-          setPermissions([]);
+          invalidateUserData();
           setProfileError(null);
           setInitializationError(null);
         }
@@ -355,30 +408,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       isMounted = false;
+      loadGenerationRef.current++;
+      inFlightPromiseRef.current = null;
       clearTimeout(watchdog);
       subscription.unsubscribe();
     };
   }, [loadUserDataSafe]);
 
   const refreshUserData = async () => {
+    let generation = loadGenerationRef.current;
+    const isCurrent = () => generation === loadGenerationRef.current;
     setIsLoading(true);
     setInitializationError(null);
     setProfileError(null);
     try {
       if (user) {
-        await loadUserDataSafe(user);
+        const loading = loadUserDataSafe(user);
+        generation = loadGenerationRef.current;
+        await loading;
       } else {
-        const { data } = await withTimeout(supabase.auth.getSession(), 7000, 'Tempo limite ao recuperar sessão');
+        const { data, error } = await withTimeout(supabase.auth.getSession(), 7000, 'Tempo limite ao recuperar sessão');
+        if (!isCurrent()) return;
+        if (error) throw error;
         if (data?.session?.user) {
           setUser(data.session.user);
           setSession(data.session);
-          await loadUserDataSafe(data.session.user);
+          const loading = loadUserDataSafe(data.session.user);
+          generation = loadGenerationRef.current;
+          await loading;
         }
       }
     } catch (err: any) {
-      setInitializationError(err?.message || 'Falha ao recarregar dados do usuário.');
+      if (isCurrent()) setInitializationError(err?.message || 'Falha ao recarregar dados do usuário.');
     } finally {
-      setIsLoading(false);
+      if (isCurrent()) setIsLoading(false);
     }
   };
 
@@ -396,10 +459,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.user) {
         setUser(data.user);
         setSession(data.session);
-        const { profile: loadedProfile, permissions: loadedPerms } = await loadUserDataSafe(data.user);
+        const { profile: loadedProfile, organization: loadedOrg, permissions: loadedPerms } = await loadUserDataSafe(data.user);
+        if (!loadedProfile || loadedProfile.is_blocked || !loadedOrg || loadedOrg.id !== loadedProfile.organization_id) {
+          await supabase.auth.signOut();
+          setUser(null);
+          setSession(null);
+          setProfile(null);
+          setOrganization(null);
+          setPermissions([]);
+          return { error: new Error('Acesso bloqueado: perfil ou organização inválidos. Solicite ao administrador a regularização da conta.') };
+        }
         return { error: null, defaultRoute: getDefaultRouteForUser(loadedProfile, loadedPerms) };
       }
-      return { error: null, defaultRoute: '/app/dashboard' };
+      return { error: new Error('Falha na autenticação: o servidor não retornou um usuário válido.') };
     } catch (err: any) {
       logAuthError('signIn:catch', err);
       return { error: err };
@@ -440,11 +512,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error: configError };
     }
 
+    if (!password || password.length < 8) {
+      return { error: new Error('Informe uma senha com pelo menos 8 caracteres para criar sua conta.') };
+    }
+
     try {
       const sanitizedOrgId = (organizationId && isValidUUID(organizationId)) ? organizationId : null;
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
-        password: password || '123456',
+        password,
         options: {
           data: {
             name: name.trim(),
@@ -477,12 +553,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             p_campaign_type: 'DEPUTADO_FEDERAL',
             p_profile_name: name.trim(),
           });
-          if (rpcErr) console.error('[NEXUS PROVISION] Erro na RPC provision_new_user no signUp:', rpcErr);
-          else console.log('[NEXUS PROVISION] RPC provision_new_user bem-sucedida no signUp:', { rpcOrgId });
+          if (rpcErr) {
+            console.error('[NEXUS PROVISION] Erro na RPC provision_new_user no signUp:', rpcErr);
+            return { error: new Error('Conta criada, mas não foi possível configurar a organização. Tente entrar novamente ou contate o suporte.'), user: data.user };
+          }
+          console.log('[NEXUS PROVISION] RPC provision_new_user bem-sucedida no signUp:', { rpcOrgId });
         } catch (rpcEx) {
           console.error('[NEXUS PROVISION] Exceção na RPC provision_new_user no signUp:', rpcEx);
+          return { error: new Error('Conta criada, mas houve uma falha ao configurar a organização. Tente entrar novamente ou contate o suporte.'), user: data.user };
         }
-        await loadUserData(data.user);
+        const loaded = await loadUserDataSafe(data.user);
+        if (!loaded.profile || !loaded.organization) {
+          return { error: new Error('Conta criada, mas o perfil ou a organização não está disponível. Tente entrar novamente ou contate o suporte.'), user: data.user };
+        }
       }
       return { error: null, requiresConfirmation: false, user: data.user };
     } catch (err: any) {
@@ -493,6 +576,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     isSigningInRef.current = false;
+    invalidateUserData();
     try {
       const { error } = await supabase.auth.signOut();
       setUser(null);
@@ -591,3 +675,4 @@ export const useAuth = () => {
   if (!context) throw new Error('useAuth deve ser usado dentro de AuthProvider');
   return context;
 };
+

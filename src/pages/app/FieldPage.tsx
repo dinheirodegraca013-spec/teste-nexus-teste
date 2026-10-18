@@ -14,6 +14,12 @@ interface FieldPageProps {
   onNavigate?: (path: string) => void;
 }
 
+const definedGoal = (goal: number | null | undefined): number | null =>
+  typeof goal === 'number' && Number.isFinite(goal) && goal > 0 ? goal : null;
+
+const goalPercent = (reached: number, target: number | null): number | null =>
+  target === null ? null : Math.min(100, Math.max(0, Math.round((reached / target) * 100)));
+
 export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
   const { organization, profile } = useAuth();
   const { success, error: toastError } = useToast();
@@ -29,12 +35,11 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
   const [houseStickers, setHouseStickers] = useState<HouseSticker[]>([]);
   const [presenceLogs, setPresenceLogs] = useState<FieldPresence[]>([]);
 
-  // Find leader profile if logged in as leader or matching name/email
-  const currentLeader = leaders.find(
-    l => l.email?.toLowerCase() === profile?.email?.toLowerCase() ||
-         l.name.toLowerCase() === profile?.full_name?.toLowerCase() ||
-         l.id === profile?.id
-  ) || leaders[0];
+  // Never infer a leadership identity from matching names/emails or the first
+  // available team member. RLS limits leader accounts to their assigned row.
+  const currentLeader = profile?.role === 'leader' && leaders.length === 1
+    ? leaders[0]
+    : undefined;
 
   // Contact fast form
   const [contactName, setContactName] = useState('');
@@ -87,6 +92,10 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
         presenceService.getLogs(orgId),
       ]);
 
+      const failed = [leadsRes, contactsRes, carsRes, housesRes, presenceRes]
+        .find((result) => result.error);
+      if (failed?.error) throw failed.error;
+
       const loadedLeaders = leadsRes.data || [];
       setLeaders(loadedLeaders);
       setRecentContacts(contactsRes.data || []);
@@ -94,15 +103,20 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
       setHouseStickers(housesRes.data || []);
       setPresenceLogs(presenceRes.data || []);
 
-      if (loadedLeaders.length > 0) {
-        const found = loadedLeaders.find(
-          l => l.email?.toLowerCase() === profile?.email?.toLowerCase() ||
-               l.name.toLowerCase() === profile?.full_name?.toLowerCase()
-        ) || loadedLeaders[0];
+      // Never retain a stale team assignment if the leader list changes or
+      // becomes empty. Only a single RLS-scoped leader is auto-selected.
+      if (profile?.role === 'leader' && loadedLeaders.length === 1) {
+        const found = loadedLeaders[0];
         setContactNeighborhood(found.neighborhood || found.territory || '');
         setCarTerritory(found.territory || 'Central');
         setHouseTerritory(found.territory || 'Central');
         setContactLeader(found.id);
+      } else {
+        // Administrators may select a leader explicitly. Preserve it on
+        // refresh only while this account can still see that leader via RLS.
+        setContactLeader((previous) =>
+          loadedLeaders.some((leader) => leader.id === previous) ? previous : ''
+        );
       }
     } catch (err: any) {
       toastError('Erro ao carregar dados do modo de campo: ' + err.message);
@@ -116,21 +130,21 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
   }, [loadData]);
 
   // Target metrics calculation (4 Goals: Apoiador, Carros, Casas, Presença)
-  const contactsGoal = currentLeader?.goal_target || 10;
+  const contactsGoal = definedGoal(currentLeader?.goal_target);
   const contactsReached = recentContacts.filter(c => !currentLeader?.id || c.leader_id === currentLeader.id).length;
-  const contactsPercent = Math.min(100, Math.round(((contactsReached || 0) / (contactsGoal || 1)) * 100));
+  const contactsPercent = goalPercent(contactsReached, contactsGoal);
 
-  const carsGoal = currentLeader?.goal_cars || 50;
+  const carsGoal = definedGoal(currentLeader?.goal_cars);
   const carsReached = carStickers.length;
-  const carsPercent = Math.min(100, Math.round(((carsReached || 0) / (carsGoal || 1)) * 100));
+  const carsPercent = goalPercent(carsReached, carsGoal);
 
-  const housesGoal = currentLeader?.goal_houses || 30;
+  const housesGoal = definedGoal(currentLeader?.goal_houses);
   const housesReached = houseStickers.length;
-  const housesPercent = Math.min(100, Math.round(((housesReached || 0) / (housesGoal || 1)) * 100));
+  const housesPercent = goalPercent(housesReached, housesGoal);
 
-  const presenceGoal = currentLeader?.goal_presence || 20;
+  const presenceGoal = definedGoal(currentLeader?.goal_presence);
   const presenceReached = presenceLogs.length;
-  const presencePercent = Math.min(100, Math.round(((presenceReached || 0) / (presenceGoal || 1)) * 100));
+  const presencePercent = goalPercent(presenceReached, presenceGoal);
 
   const handleSaveContact = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,8 +153,12 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
       return;
     }
 
+    const assignedLeader = leaders.find((leader) => leader.id === contactLeader);
+    if (!assignedLeader) {
+      toastError('Selecione uma liderança autorizada antes de cadastrar o contato.');
+      return;
+    }
     setIsSubmittingContact(true);
-    const assignedLeader = leaders.find(l => l.id === contactLeader) || currentLeader;
 
     const fieldTags = [
       'campo',
@@ -151,7 +169,7 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
     try {
       const { error: crmErr } = await crmService.create({
         organization_id: orgId,
-        leader_id: assignedLeader?.id,
+        leader_id: assignedLeader.id,
         name: contactName.trim(),
         whatsapp: contactPhone.trim(),
         city: contactNeighborhood.trim() || assignedLeader?.territory || 'Campo',
@@ -165,22 +183,13 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
         return;
       }
 
-      if (wantsSticker) {
-        await stickersService.createCarSticker({
-          organization_id: orgId,
-          owner_name: contactName.trim(),
-          owner_phone: contactPhone.trim(),
-          territory: contactNeighborhood.trim() || assignedLeader?.territory || 'Campo',
-          status: 'applied',
-        });
-      }
+      // "Autorizou adesivo" is a CRM interest/authorization tag, not evidence
+      // of a car sticker actually applied. Only the dedicated vehicle form
+      // may create an applied sticker record with its own confirmation.
 
-      // Update leader progress if assigned
-      if (assignedLeader) {
-        await leadersService.update(assignedLeader.id, {
-          goal_reached: (assignedLeader.goal_reached || 0) + 1,
-        });
-      }
+      // No client-side read-modify-write of goal_reached: concurrent
+      // registrations would overwrite each other's increments. Progress
+      // in this screen is derived from saved CRM rows after reload.
 
       setContactName('');
       setContactPhone('');
@@ -354,12 +363,12 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
             </div>
             <div className="mt-1 flex items-baseline gap-1">
               <span className="font-mono text-base font-bold text-slate-900">{contactsReached}</span>
-              <span className="text-[10px] text-slate-500 font-medium">/ {contactsGoal}</span>
+              <span className="text-[10px] text-slate-500 font-medium">/ {contactsGoal ?? '—'}</span>
             </div>
             <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mt-1.5">
-              <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${contactsPercent}%` }} />
+              <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${contactsPercent ?? 0}%` }} />
             </div>
-            <div className="text-[10px] font-bold text-emerald-700 mt-1">{contactsPercent}%</div>
+            <div className="text-[10px] font-bold text-emerald-700 mt-1">{contactsPercent === null ? 'Sem meta' : contactsPercent + '%'}</div>
           </div>
 
           {/* 2. Carros Adesivados */}
@@ -369,12 +378,12 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
             </div>
             <div className="mt-1 flex items-baseline gap-1">
               <span className="font-mono text-base font-bold text-emerald-950">{carsReached}</span>
-              <span className="text-[10px] text-emerald-700 font-medium">/ {carsGoal}</span>
+              <span className="text-[10px] text-emerald-700 font-medium">/ {carsGoal ?? '—'}</span>
             </div>
             <div className="w-full bg-emerald-200 h-1.5 rounded-full overflow-hidden mt-1.5">
-              <div className="h-full bg-emerald-600 rounded-full transition-all duration-500" style={{ width: `${carsPercent}%` }} />
+              <div className="h-full bg-emerald-600 rounded-full transition-all duration-500" style={{ width: `${carsPercent ?? 0}%` }} />
             </div>
-            <div className="text-[10px] font-bold text-emerald-800 mt-1">{carsPercent}%</div>
+            <div className="text-[10px] font-bold text-emerald-800 mt-1">{carsPercent === null ? 'Sem meta' : carsPercent + '%'}</div>
           </div>
 
           {/* 3. Casas Adesivadas */}
@@ -384,12 +393,12 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
             </div>
             <div className="mt-1 flex items-baseline gap-1">
               <span className="font-mono text-base font-bold text-amber-950">{housesReached}</span>
-              <span className="text-[10px] text-amber-700 font-medium">/ {housesGoal}</span>
+              <span className="text-[10px] text-amber-700 font-medium">/ {housesGoal ?? '—'}</span>
             </div>
             <div className="w-full bg-amber-200 h-1.5 rounded-full overflow-hidden mt-1.5">
-              <div className="h-full bg-amber-600 rounded-full transition-all duration-500" style={{ width: `${housesPercent}%` }} />
+              <div className="h-full bg-amber-600 rounded-full transition-all duration-500" style={{ width: `${housesPercent ?? 0}%` }} />
             </div>
-            <div className="text-[10px] font-bold text-amber-800 mt-1">{housesPercent}%</div>
+            <div className="text-[10px] font-bold text-amber-800 mt-1">{housesPercent === null ? 'Sem meta' : housesPercent + '%'}</div>
           </div>
 
           {/* 4. Presença em Eventos */}
@@ -399,12 +408,12 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
             </div>
             <div className="mt-1 flex items-baseline gap-1">
               <span className="font-mono text-base font-bold text-indigo-950">{presenceReached}</span>
-              <span className="text-[10px] text-indigo-700 font-medium">/ {presenceGoal}</span>
+              <span className="text-[10px] text-indigo-700 font-medium">/ {presenceGoal ?? '—'}</span>
             </div>
             <div className="w-full bg-indigo-200 h-1.5 rounded-full overflow-hidden mt-1.5">
-              <div className="h-full bg-indigo-600 rounded-full transition-all duration-500" style={{ width: `${presencePercent}%` }} />
+              <div className="h-full bg-indigo-600 rounded-full transition-all duration-500" style={{ width: `${presencePercent ?? 0}%` }} />
             </div>
-            <div className="text-[10px] font-bold text-indigo-800 mt-1">{presencePercent}%</div>
+            <div className="text-[10px] font-bold text-indigo-800 mt-1">{presencePercent === null ? 'Sem meta' : presencePercent + '%'}</div>
           </div>
         </div>
       </div>
@@ -478,6 +487,30 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
           </div>
 
           <form onSubmit={handleSaveContact} className="space-y-3.5">
+            <Select
+              label="Liderança responsável"
+              value={contactLeader}
+              onChange={(e) => setContactLeader(e.target.value)}
+              options={[
+                {
+                  value: '',
+                  label: leaders.length === 0
+                    ? 'Nenhuma liderança autorizada disponível'
+                    : 'Selecione a liderança responsável',
+                },
+                ...leaders.map((leader) => ({
+                  value: leader.id,
+                  label: leader.name + (leader.territory ? ` — ${leader.territory}` : ''),
+                })),
+              ]}
+              disabled={isLoading || leaders.length === 0 || profile?.role === 'leader'}
+              required
+              helperText={
+                profile?.role === 'leader'
+                  ? 'A liderança é definida pelo vínculo da sua conta.'
+                  : 'Selecione somente entre as lideranças autorizadas para sua organização.'
+              }
+            />
             <Input
               label="Nome do Apoiador / Eleitor"
               value={contactName}
@@ -522,7 +555,7 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
                   onChange={(e) => setWantsSticker(e.target.checked)}
                   className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
                 />
-                <span className="font-semibold text-emerald-700">Autorizou Adesivo / Material</span>
+                <span className="font-semibold text-emerald-700">Autorizou Adesivo / Material (não registra aplicação)</span>
               </label>
             </div>
 
@@ -598,6 +631,7 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
                 <span>Foto de Comprovação da Adesivagem</span>
               </label>
               <FileUpload
+              disabled
                 accept="image/*"
                 maxSizeMB={8}
                 onFileSelected={(file, dataUrl) => {
@@ -677,6 +711,7 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
                 <span>Foto da Fachada / Portão com Placa ou Adesivo</span>
               </label>
               <FileUpload
+              disabled
                 accept="image/*"
                 maxSizeMB={8}
                 onFileSelected={(file, dataUrl) => {
@@ -759,6 +794,7 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
               </p>
               
               <FileUpload
+              disabled
                 accept="image/*"
                 maxSizeMB={10}
                 onFileSelected={(file, dataUrl) => {

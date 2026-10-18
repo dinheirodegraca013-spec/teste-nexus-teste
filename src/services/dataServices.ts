@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { validatePhotoReference } from './photoEvidenceGuard';
 import { 
   Coordinator, 
   Leader, 
@@ -13,6 +14,42 @@ import {
   HouseSticker, 
   PopularDemand 
 } from '../types';
+
+// A PostgREST DELETE can return error=null even when RLS deleted zero rows.
+// Require the deleted row id before telling the operator the action succeeded.
+function confirmUpdatedRow<T>(
+  data: T | null,
+  error: { message: string; code?: string } | null,
+): { data: T | null; error: { message: string; code?: string } | null } {
+  if (error) return { data: null, error };
+  if (!data) {
+    return {
+      data: null,
+      error: {
+        code: 'UPDATE_NOT_APPLIED',
+        message: 'A atualização não foi confirmada. O registro pode não existir ou você pode não ter permissão.',
+      },
+    };
+  }
+  return { data, error: null };
+}
+
+// All update methods must confirm a returned row: RLS can silently affect zero rows.
+function confirmDeletedRow(
+  data: { id: string } | null,
+  error: { message: string; code?: string } | null,
+) {
+  if (error) return { error };
+  if (!data?.id) {
+    return {
+      error: {
+        code: 'DELETE_NOT_APPLIED',
+        message: 'A exclusão não foi confirmada. O registro pode não existir ou você pode não ter permissão.',
+      },
+    };
+  }
+  return { error: null };
+}
 
 // Coordinators Service
 export const coordinatorsService = {
@@ -31,7 +68,17 @@ export const coordinatorsService = {
       .insert([coordinator])
       .select()
       .maybeSingle();
-    return { data: data as Coordinator | null, error };
+    if (error) return { data: null, error };
+    if (!data) {
+      return {
+        data: null,
+        error: {
+          code: 'COORDINATOR_CREATE_NOT_CONFIRMED',
+          message: 'Não foi possível confirmar o cadastro do coordenador. Verifique a lista antes de tentar novamente.',
+        },
+      };
+    }
+    return { data: data as Coordinator, error: null };
   },
 
   async update(id: string, updates: Partial<Coordinator>) {
@@ -41,15 +88,17 @@ export const coordinatorsService = {
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as Coordinator | null, error };
+    return confirmUpdatedRow(data as Coordinator | null, error);
   },
 
   async delete(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('coordinators')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
 
@@ -79,7 +128,17 @@ export const leadersService = {
       .insert([leader])
       .select()
       .maybeSingle();
-    return { data: data as Leader | null, error };
+    if (error) return { data: null, error };
+    if (!data) {
+      return {
+        data: null,
+        error: {
+          code: 'LEADER_CREATE_NOT_CONFIRMED',
+          message: 'Não foi possível confirmar o cadastro da liderança. Verifique a lista antes de tentar novamente.',
+        },
+      };
+    }
+    return { data: data as Leader, error: null };
   },
 
   async update(id: string, updates: Partial<Leader>) {
@@ -89,15 +148,17 @@ export const leadersService = {
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as Leader | null, error };
+    return confirmUpdatedRow(data as Leader | null, error);
   },
 
   async delete(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('leaders')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
 
@@ -170,7 +231,8 @@ export const crmService = {
     // Filtra e mapeia EXCLUSIVAMENTE para as colunas físicas reais de crm_contacts
     const dbPayload: Record<string, any> = {};
 
-    if (updates.organization_id !== undefined) dbPayload.organization_id = updates.organization_id;
+    // organization_id is immutable: tenant reassignment must never be attempted by the client.
+    // The database RLS remains the authoritative authorization boundary.
     if (updates.leader_id !== undefined) dbPayload.leader_id = updates.leader_id || null;
     if (updates.name !== undefined || updates.full_name !== undefined) {
       dbPayload.name = (updates.name || updates.full_name || '').trim();
@@ -196,15 +258,17 @@ export const crmService = {
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data ? mapCrmContactRow(data) : null, error };
+    return confirmUpdatedRow(data ? mapCrmContactRow(data) : null, error);
   },
 
   async delete(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('crm_contacts')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
 
@@ -235,15 +299,17 @@ export const goalsService = {
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as Goal | null, error };
+    return confirmUpdatedRow(data as Goal | null, error);
   },
 
   async delete(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('goals')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
 
@@ -274,15 +340,17 @@ export const eventsService = {
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as CampaignEvent | null, error };
+    return confirmUpdatedRow(data as CampaignEvent | null, error);
   },
 
   async delete(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('campaign_events')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
 
@@ -313,15 +381,17 @@ export const meetingsService = {
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as Meeting | null, error };
+    return confirmUpdatedRow(data as Meeting | null, error);
   },
 
   async delete(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('meetings')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
 
@@ -341,6 +411,8 @@ export const presenceService = {
   },
 
   async create(presence: Partial<FieldPresence>) {
+    const photoError = validatePhotoReference(presence);
+    if (photoError) return { data: null, error: photoError };
     const { data, error } = await supabase
       .from('field_presences')
       .insert([presence])
@@ -354,21 +426,25 @@ export const presenceService = {
   },
 
   async update(id: string, updates: Partial<FieldPresence>) {
+    const photoError = validatePhotoReference(updates);
+    if (photoError) return { data: null, error: photoError };
     const { data, error } = await supabase
       .from('field_presences')
       .update(updates)
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as FieldPresence | null, error };
+    return confirmUpdatedRow(data as FieldPresence | null, error);
   },
 
   async delete(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('field_presences')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   },
 
   async deleteLog(id: string) {
@@ -416,7 +492,7 @@ export const materialsService = {
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as MaterialInventory | null, error };
+    return confirmUpdatedRow(data as MaterialInventory | null, error);
   },
 
   async createDistribution(dist: Partial<MaterialDistribution>) {
@@ -429,11 +505,13 @@ export const materialsService = {
   },
 
   async deleteItem(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('materials_inventory')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
 
@@ -449,6 +527,8 @@ export const stickersService = {
   },
 
   async createCarSticker(sticker: Partial<CarSticker>) {
+    const photoError = validatePhotoReference(sticker);
+    if (photoError) return { data: null, error: photoError };
     const { data, error } = await supabase
       .from('car_stickers')
       .insert([sticker])
@@ -458,21 +538,25 @@ export const stickersService = {
   },
 
   async updateCarSticker(id: string, updates: Partial<CarSticker>) {
+    const photoError = validatePhotoReference(updates);
+    if (photoError) return { data: null, error: photoError };
     const { data, error } = await supabase
       .from('car_stickers')
       .update(updates)
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as CarSticker | null, error };
+    return confirmUpdatedRow(data as CarSticker | null, error);
   },
 
   async deleteCarSticker(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('car_stickers')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   },
 
   async getHouseStickers(organizationId: string) {
@@ -485,6 +569,8 @@ export const stickersService = {
   },
 
   async createHouseSticker(sticker: Partial<HouseSticker>) {
+    const photoError = validatePhotoReference(sticker);
+    if (photoError) return { data: null, error: photoError };
     const { data, error } = await supabase
       .from('house_stickers')
       .insert([sticker])
@@ -494,21 +580,25 @@ export const stickersService = {
   },
 
   async updateHouseSticker(id: string, updates: Partial<HouseSticker>) {
+    const photoError = validatePhotoReference(updates);
+    if (photoError) return { data: null, error: photoError };
     const { data, error } = await supabase
       .from('house_stickers')
       .update(updates)
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as HouseSticker | null, error };
+    return confirmUpdatedRow(data as HouseSticker | null, error);
   },
 
   async deleteHouseSticker(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('house_stickers')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
 
@@ -539,15 +629,17 @@ export const intelligenceService = {
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as PopularDemand | null, error };
+    return confirmUpdatedRow(data as PopularDemand | null, error);
   },
 
   async deleteDemand(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('popular_demands')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
 

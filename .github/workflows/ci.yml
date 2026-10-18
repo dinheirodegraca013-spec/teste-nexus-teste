@@ -1,0 +1,65 @@
+name: NEXUS CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches:
+      - main
+      - fix/persist-rbac-permissions
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nexus-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Typecheck and production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: TypeScript typecheck
+        run: npm run lint
+
+      - name: Auth regression tests
+        run: npm test
+
+      - name: Production build
+        run: npm run build
+
+  edge-function:
+    name: Validate Supabase Edge Functions
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Node dependencies for Deno npm resolution
+        run: npm install --no-audit --no-fund
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Typecheck invitation function
+        run: deno check --node-modules-dir=auto supabase/functions/invite-organization-member/index.ts
+
+      - name: Typecheck proposed revocation function (not deployed)
+        run: deno check --node-modules-dir=auto docs/proposed-edge-functions/revoke-member/index.ts
