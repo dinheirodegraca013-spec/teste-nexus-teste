@@ -75,3 +75,4 @@
 - 2026-10-18: revisão read-only das 3 funções `SECURITY DEFINER` alertadas pelo advisor confirmou `search_path=''` e validação de tenant/admin em todas; nenhuma exploração comprovada e nenhuma revogação automática aplicada.
 - 2026-10-18: E2E read-only ampliado para listar caminhos próprios e estrangeiros do bucket privado `nexus-evidence-private`; novo teste de contrato aprovado. Suíte: 201/201, lint e build aprovados. Execução autenticada real segue pendente por `auth.users=0`.
 - 2026-10-18: diagnóstico do erro na captura confirmado no domínio principal `teste-nexus-teste.vercel.app`: o bundle de produção ainda aponta para o projeto Supabase antigo `wrovg...`; o Preview da branch usa `qwvbvqlzcyfkuszxrlgv`. Não alterei produção sem homologação E2E.
+- 2026-10-18: Preview mais recente (`f888dda`) respondeu HTTP 200 em `/cadastro`; a divergência permanece exclusiva do domínio principal/Production.
