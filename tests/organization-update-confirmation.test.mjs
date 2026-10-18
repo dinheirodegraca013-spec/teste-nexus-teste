@@ -84,3 +84,9 @@ test('organization update preserves Supabase errors', async () => {
   const result = await organizationsService.update(id, { name: 'Atualizada' });
   assert.equal(result.error, err);
 });
+
+test('organization update envia somente campos editáveis', async () => {
+  const state = setup({ data: { id, name: 'Nova' }, error: null });
+  await organizationsService.update(id, { name: 'Nova', plan: 'enterprise', id: 'other' });
+  assert.deepEqual(state.calls[1], ['update', { name: 'Nova' }]);
+});

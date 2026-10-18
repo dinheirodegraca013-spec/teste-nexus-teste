@@ -1020,3 +1020,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **CORRIGIDO:** o cliente agora exige que `provision_new_user` retorne um UUID de organização válido antes de continuar; retorno vazio não gera falso sucesso.
 - **VERIFICADO:** 222/222 testes, lint e build aprovados localmente.
+
+## Ciclo autônomo — 2026-10-18: proteção de atualização da organização
+
+- **CORRIGIDO:** `organizationsService.update` agora filtra o payload para os únicos campos editáveis pela interface (`name` e `settings`) e falha quando nenhum campo é informado.
+- **VERIFICADO:** 223/223 testes, lint e build aprovados localmente. A policy SQL de atualização permanece pendente de aprovação específica.

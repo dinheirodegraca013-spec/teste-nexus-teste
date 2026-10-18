@@ -26,9 +26,22 @@ export const organizationsService = {
   },
 
   async update(id: string, updates: Partial<Organization>) {
+    const dbUpdates: Partial<Pick<Organization, 'name' | 'settings'>> = {};
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.settings !== undefined) dbUpdates.settings = updates.settings;
+    if (Object.keys(dbUpdates).length === 0) {
+      return {
+        data: null,
+        error: {
+          name: 'ValidationError',
+          code: 'NO_ORGANIZATION_CHANGES',
+          message: 'Nenhum campo editável da organização foi informado.',
+        },
+      };
+    }
     const { data, error } = await supabase
       .from('organizations')
-      .update(updates)
+      .update(dbUpdates)
       .eq('id', id)
       .select()
       .maybeSingle();
