@@ -135,3 +135,4 @@
 - 2026-10-18: Vercel confirmou preview READY para `0ac01d5` (`dpl_7KwtxBWJStDS38ZCcPMRRSM9B2V7`); produção não foi promovida.
 - 2026-10-18: Vercel revalidou o head atual `d0b8d2c` da branch como `READY` (`dpl_7JFu9igKuPAfuev4QBzE7B3EUeUY`); nenhuma promoção foi executada.
 - 2026-10-18: rota pública `/cadastro` do preview atual respondeu HTTP 200 e conteúdo NEXUS; teste somente leitura, sem autenticação ou escrita.
+- 2026-10-18: SQL somente leitura no DEV confirmou 2 usuários Auth, 2 organizações, 2 perfis, bucket privado presente e RPC transacional presente; nenhum dado foi alterado.
