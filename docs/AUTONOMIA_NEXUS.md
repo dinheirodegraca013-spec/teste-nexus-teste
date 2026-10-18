@@ -2,6 +2,8 @@
 
 **PERÍMETRO ATUAL:** repository `dinheirodegraca013-spec/teste-nexus-teste`, branch `fix/persist-rbac-permissions`; Supabase DEV autorizado `qwvbvqlzcyfkuszxrlgv`. As referências a `qidstqsbxwkbkwowhpab` abaixo são histórico de auditorias anteriores.
 
+> **Fonte de verdade operacional:** desde a inicialização do novo ambiente, use exclusivamente o Supabase DEV `qwvbvqlzcyfkuszxrlgv`. Blocos abaixo que citam `qidstqsbxwkbkwowhpab` preservam evidências históricas e não autorizam novas consultas, SQL ou alterações.
+
 ### DEL-02 — Oito exclusões adicionais protegidas (TDD RED/GREEN)
 
 - **Causa raiz:** `delete().eq('id',id)` sem `.select('id')` pode retornar `error=null` mesmo se nenhuma linha foi apagada por RLS/ID inexistente. O frontend poderia mostrar confirmação falsa.
@@ -39,7 +41,7 @@
 
 ## CICLOS OBRAMAXAUTO + SUPERPOWERS — 16/10/2026 — TESTES EXECUTADOS
 
-**Branch exclusiva:** `fix/persist-rbac-permissions`. **Supabase DEV autorizado:** `qidstqsbxwkbkwowhpab`. Sem merge, deploy em produção, execução de SQL, alteração de dados reais ou ampliação RLS nestes ciclos.
+**Registro histórico:** este ciclo ocorreu antes da migração para o ambiente DEV atual `qwvbvqlzcyfkuszxrlgv`. O Supabase `qidstqsbxwkbkwowhpab` citado neste bloco é somente histórico; não executar novas operações nele.
 
 ### FIELD-01 — Escolha explícita de liderança no cadastro de contato
 
@@ -140,7 +142,7 @@
 
 ---
 
-# ESTADO OPERACIONAL ATUAL — LEITURA OBRIGATÓRIA (16/10/2026)
+# ESTADO OPERACIONAL HISTÓRICO — NÃO USAR COMO PERÍMETRO ATUAL (16/10/2026)
 
 > **PERÍMETRO OBRIGATÓRIO:** o ÚNICO Supabase autorizado para o NEXUS em desenvolvimento é `qidstqsbxwkbkwowhpab`. Os projetos `wrovgjhpyacmmetejiqk`, `qesiqjcpphkwryjvpzmq` e o Gestio `fbvcapoydkodpifkwjwg` são históricos/outros e NÃO PODEM SER ALTERADOS. As referências abaixo a projetos antigos são histórico, não instruções de execução.
 >
@@ -164,7 +166,7 @@
 
 ---
 
-# NEXUS — Estado de desenvolvimento autônomo
+# NEXUS — Estado de desenvolvimento autônomo (registro histórico)
 
 Última atualização: 2026-10-16
 
@@ -175,7 +177,7 @@
 - Repositório: `dinheirodegraca013-spec/teste-nexus-teste`
 - Branch de trabalho: `fix/persist-rbac-permissions`
 - PR principal: #1 — https://github.com/dinheirodegraca013-spec/teste-nexus-teste/pull/1
-- Supabase **ATUAL**: `qidstqsbxwkbkwowhpab`; `wrovgjhpyacmmetejiqk` aparece somente no histórico e está fora de escopo.
+- Supabase citado neste registro: `qidstqsbxwkbkwowhpab` (histórico); o ambiente DEV atual é `qwvbvqlzcyfkuszxrlgv`, conforme o perímetro no topo deste documento.
 - Vercel: projeto `prj_d1Xv2bMB8u5Iaztw2KhhMjZxgVnd`
 
 ## Trabalho confirmado
