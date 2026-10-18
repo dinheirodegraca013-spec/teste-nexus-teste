@@ -29,7 +29,7 @@ Fazer verificações reais de build, lint, tipos, testes unitários, integraçã
 
 
 ## Regras específicas do NEXUS
-- Projeto Supabase de desenvolvimento autorizado: `qidstqsbxwkbkwowhpab`. Não tocar em nenhum projeto antigo, Gestio ou produção.
+- Projeto Supabase de desenvolvimento autorizado: `qwvbvqlzcyfkuszxrlgv`. Não tocar em nenhum projeto antigo, Gestio ou produção.
 - Branch de implementação: `fix/persist-rbac-permissions`; PR #1 precisa permanecer sem merge até homologação.
 - Antes de agir, consultar `docs/AUTONOMIA_NEXUS.md` e `docs/NEXUS_FULL_AUDIT_20261016.md`.
 - Conforme `AGENTS.md` do NEXUS, SQL estrutural, RLS e funções privilegiadas exigem apresentação do script e aprovação específica.

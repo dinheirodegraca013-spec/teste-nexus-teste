@@ -2,7 +2,7 @@
 
 - Responder em português, de forma curta e direta.
 - Continuar tarefas autorizadas sem confirmações rotineiras.
-- Supabase autorizado: `qidstqsbxwkbkwowhpab`; não modificar histórico ou PGE-SAAS.
+- Supabase DEV autorizado: `qwvbvqlzcyfkuszxrlgv`; não modificar histórico, produção ou PGE-SAAS.
 - SQL estrutural, RLS e funções privilegiadas exigem apresentação do script e aprovação específica.
 - Trabalhar na branch de desenvolvimento; produção e merge dependem de homologação.
 - Priorizar logs, autenticação, isolamento de tenants e dados reais.

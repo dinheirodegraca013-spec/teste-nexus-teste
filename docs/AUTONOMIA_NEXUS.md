@@ -1,6 +1,6 @@
 ## OBRAMAXAUTO + SUPERPOWERS — 16/10/2026: CONFIABILIDADE DE EXCLUSÕES, PERFIS E ATUALIZAÇÕES
 
-**PERÍMETRO:** repository `dinheirodegraca013-spec/teste-nexus-teste`, branch `fix/persist-rbac-permissions`; Supabase autorizado `qidstqsbxwkbkwowhpab`. Este ciclo foi realizado **exclusivamente em arquivos GitHub**: nenhum SQL, dado real, chamada de exclusão, deploy de produção ou merge.
+**PERÍMETRO ATUAL:** repository `dinheirodegraca013-spec/teste-nexus-teste`, branch `fix/persist-rbac-permissions`; Supabase DEV autorizado `qwvbvqlzcyfkuszxrlgv`. As referências a `qidstqsbxwkbkwowhpab` abaixo são histórico de auditorias anteriores.
 
 ### DEL-02 — Oito exclusões adicionais protegidas (TDD RED/GREEN)
 
@@ -967,3 +967,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **VERIFICADO:** 16 tabelas públicas, todas com RLS; bucket privado `nexus-evidence-private` com limite de 5 MiB e MIME restrito; policies SELECT/INSERT/DELETE, sem UPDATE.
 - **ATUALIZADO:** o script E2E agora exige o projeto `qwvbvqlzcyfkuszxrlgv`.
 - **PENDENTE:** o novo projeto ainda não possui usuários Auth; é necessário criar duas contas sintéticas em organizações distintas antes da homologação E2E.
+
+## Ciclo autônomo — 2026-10-18: Preview reconectado ao Supabase atual
+
+- **CORRIGIDO:** as variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` do Preview da branch `fix/persist-rbac-permissions` foram atualizadas para `qwvbvqlzcyfkuszxrlgv`.
+- **VERIFICADO:** novo deployment Vercel READY no commit `eac6acc`; o bundle publicado contém a URL nova e não contém a URL antiga.
+- **LIMITE:** produção não foi alterada; homologação E2E continua pendente até existirem duas contas Auth sintéticas no novo DEV.
