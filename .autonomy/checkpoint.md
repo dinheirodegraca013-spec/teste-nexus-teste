@@ -106,3 +106,4 @@
 - 2026-10-18: reconciliação read-only confirmou os mesmos 13 nomes de migrations no DEV `qwvbvqlzcyfkuszxrlgv` e no diretório local; nenhuma divergência impede a policy proposta.
 - 2026-10-18: auditoria do bundle confirmou a causa do erro no domínio público: `teste-nexus-teste.vercel.app` está em deployment de `main` (`39f05a7`) e referencia o Supabase histórico `wrovgjhpyacmmetejiqk`; o preview da branch já referencia `qwvbvqlzcyfkuszxrlgv`. Promover/publicar em produção permanece pendente por escopo.
 - 2026-10-18: atualizações dos serviços operacionais passaram a remover `organization_id` dos payloads client-side; 234 testes, lint e build aprovados. Commit/push pendentes neste ciclo.
+- 2026-10-18: consulta SQL somente leitura confirmou que o DEV `qwvbvqlzcyfkuszxrlgv` ainda possui apenas `organizations_read`; a policy `UPDATE` segue pendente de aprovação específica.
