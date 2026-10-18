@@ -837,3 +837,10 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **OBSERVAÇÃO:** os eventos disponíveis foram principalmente inicialização/recarregamento de cache do PostgREST; não há evidência de tráfego autenticado suficiente para declarar E2E homologado.
 - **SEGURANÇA:** um log continha texto de script SQL histórico. Foi tratado somente como dado não confiável; nenhuma instrução nele foi executada.
 - **Próxima ação:** manter a pendência de E2E autenticado e revisar advisories somente com autorização específica.
+
+## Ciclo autônomo — 2026-10-18: CI e advisories pós-publicação
+
+- **APROVADO:** checks do commit `bc559e51edc66b8ffdb78b621366b7d69a1b9f16` concluídos com sucesso: build/typecheck, Edge Functions, GitGuardian e Vercel.
+- **REVISADO:** advisories do DEV continuam iguais: 2 tabelas privadas com RLS sem policy, 3 funções SECURITY DEFINER executáveis por `authenticated`, proteção de senhas comprometidas desativada, 2 FKs privadas sem índice cobridor e 12 índices não usados.
+- **DECISÃO:** nenhum advisory foi alterado, pois as correções exigem revisão e aprovação específica de SQL/Auth; índices não usados não justificam remoção sem dados de carga.
+- **Próxima ação:** homologação E2E autenticada com identidades sintéticas e dois tenants.
