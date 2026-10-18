@@ -1347,3 +1347,7 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **PREPARADO:** criada `docs/proposed-migrations/FIX_PRIVATE_STORAGE_POLICY_REGEX_QWVB.sql`, já apontando para `qwvbvqlzcyfkuszxrlgv` e corrigindo somente as três policies privadas de evidências.
 - **TESTES:** `npm test` 271/271, `npm run lint` e `npm run build` aprovados.
 - **PENDÊNCIA:** a migration não foi executada; requer aprovação específica para o projeto DEV atual, conforme a regra de SQL estrutural/RLS.
+## Ciclo autônomo — 2026-10-18: revisão da PR
+
+- **REVISADO:** PR #1 continua aberta, DRAFT, mergeable e sem merge; a descrição foi atualizada para refletir 271 testes e as policies DEV aplicadas.
+- **VALIDAÇÃO:** `npm test` 271/271, `npm run lint` e `npm run build` aprovados nesta rodada.
