@@ -1057,3 +1057,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **CONFIRMADO:** consulta read-only no DEV `qwvbvqlzcyfkuszxrlgv` retornou somente `organizations_read` em `public.organizations`; a policy `UPDATE` continua ausente.
 - **PENDENTE:** executar `docs/proposed-migrations/ADD_ORGANIZATIONS_UPDATE_POLICY.sql` somente após aprovação específica.
+
+## Ciclo autônomo — 2026-10-18: escrita operacional bloqueada por RLS
+
+- **CONFIRMADO:** consulta read-only no DEV mostrou que as 12 tabelas operacionais possuem somente policies `SELECT`; não há `INSERT`, `UPDATE` ou `DELETE`.
+- **PREPARADO:** `docs/proposed-migrations/ADD_OPERATIONAL_ADMIN_WRITE_POLICIES.sql` cria policies tenant-scoped admin-only para as três operações, sem alterar dados nem executar SQL.
+- **PENDENTE:** aprovação específica antes de qualquer aplicação estrutural.
