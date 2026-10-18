@@ -169,4 +169,5 @@
 - 2026-10-18: Vercel recebeu `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` do Supabase DEV somente no alvo preview; próximo deploy deve validar o erro de conexão do cadastro.
 - 2026-10-18: deployment `dpl_AxXAaVnRYAQkwK4ymAvyVb1UXwZ9` concluiu READY para `2c97164`; listagem confirmou as duas variáveis VITE no alvo preview.
 - 2026-10-18: GitHub Actions `NEXUS CI` #532 (`39171043911`) concluiu success para `8c0c283`; preview segue com check Vercel success.
+- 2026-10-18: `AuthContext.signUp` passou a falhar fechado quando o Auth não retorna usuário; regressão adicionada. `npm test` 267/267, lint e build aprovados; sem alteração de Auth remoto ou produção.
 - 2026-10-18: CI #522 (`39170125281`) passou e preview Vercel `dpl_AnkUkQSBDKrPQq8FMPKHQqaeRz8n` ficou READY para `53f23cf`; sem merge/promoção.

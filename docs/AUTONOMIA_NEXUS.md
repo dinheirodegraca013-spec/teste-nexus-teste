@@ -1207,6 +1207,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **VERIFICAÇÃO:** deployment `dpl_AxXAaVnRYAQkwK4ymAvyVb1UXwZ9` para `2c97164` concluiu `READY`; a listagem do Vercel confirmou ambas as variáveis no alvo `preview`.
 - **CI:** GitHub Actions `NEXUS CI` run `39171043911` (#532) concluiu `success` para `8c0c283`.
 
+## Ciclo autônomo — 2026-10-18: cadastro sem confirmação do Auth
+
+- **CORRIGIDO:** `AuthContext.signUp` agora rejeita respostas sem `data.user`, mesmo quando o Supabase retorna `error: null`, evitando anunciar conta criada sem confirmação do Auth.
+- **TESTES:** contrato de regressão adicionado; `npm test` 267/267, `npm run lint` e `npm run build` aprovados.
+- **ESCOPO:** somente autenticação/frontend/teste; nenhuma policy, função, schema, produção, `main` ou dado real alterado.
+
 ## Ciclo autônomo — 2026-10-18: revisão de acessibilidade e advisors
 
 - **CONFIRMADO:** `Modal.tsx` já expõe `role="dialog"`, nome acessível, `aria-modal`, foco inicial, captura de Tab/Escape e restauração de foco; os testes de acessibilidade estão verdes dentro da suíte atual.

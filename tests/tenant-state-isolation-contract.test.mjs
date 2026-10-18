@@ -113,3 +113,10 @@ test('shared auth status does not claim verified Supabase connectivity', async (
   assert.doesNotMatch(header, /Supabase Conectado|Supabase Desconectado/);
   assert.doesNotMatch(login, /RLS ativo/);
 });
+
+test('signUp fails closed when Supabase does not return a user', async () => {
+  const source = await readFile(new URL('../src/contexts/AuthContext.tsx', import.meta.url), 'utf8');
+  assert.match(source, /if \(!data\?\.user\)/);
+  assert.match(source, /signUp:unconfirmed/);
+  assert.match(source, /O servidor não confirmou a criação da conta/);
+});
