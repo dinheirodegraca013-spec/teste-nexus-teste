@@ -985,3 +985,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **CORRIGIDO:** `DashboardPage` agora descarta respostas de consultas paralelas iniciadas para uma organização anterior e limpa os dados ao perder a organização selecionada.
 - **VERIFICADO:** 217/217 testes, lint, build local e checks da PR (typecheck/build, Edge Functions, Vercel e GitGuardian) aprovados. Commit `a53fdcf` publicado na branch de desenvolvimento.
+
+## Ciclo autônomo — 2026-10-18: isolamento da tela de organizações
+
+- **CORRIGIDO:** `OrganizationsPage` agora descarta respostas de uma carga iniciada antes da troca de organização e não altera loading/erros com respostas obsoletas.
+- **VERIFICADO:** 218/218 testes, lint e build aprovados localmente; publicação segue somente na branch de desenvolvimento.

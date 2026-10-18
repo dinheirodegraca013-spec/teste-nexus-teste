@@ -93,3 +93,4 @@
 - 2026-10-18: protegidas também as cargas de `MaterialsPage`, `MeetingsPage` e `StickersPage` contra respostas de organização anterior. Contrato ampliado para sete telas; suíte 214/214, lint e build aprovados.
 - 2026-10-18: protegidas as cargas de `UsersPage` e `ReportsPage` contra respostas obsoletas entre organizações. Contrato ampliado para nove telas; suíte 216/216, lint e build aprovados.
 - 2026-10-18: protegida a carga paralela da `DashboardPage` contra respostas obsoletas entre organizações; ao perder a organização, os dados anteriores também são limpos. Contrato ampliado para dez telas; suíte 217/217, lint e build aprovados.
+- 2026-10-18: protegida a carga de `OrganizationsPage` contra respostas obsoletas após troca de organização; contrato ampliado para onze telas. Suíte 218/218, lint e build aprovados.

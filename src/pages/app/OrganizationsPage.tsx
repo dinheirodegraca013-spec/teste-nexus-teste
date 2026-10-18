@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Building2, CheckCircle2, ShieldCheck, Loader2, LockKeyhole } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -11,21 +11,26 @@ export const OrganizationsPage: React.FC = () => {
   const { error: toastError } = useToast();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const loadGenerationRef = useRef(0);
 
   const loadData = useCallback(async () => {
+    const loadGeneration = ++loadGenerationRef.current;
+    const isCurrentLoad = () => loadGeneration === loadGenerationRef.current;
     setIsLoading(true);
     try {
       const { data, error } = await organizationsService.getAll();
+      if (!isCurrentLoad()) return;
       if (error) throw error;
       // Do not present unrelated tenants as selectable. The backend currently
       // provisions one tenant per user; there is no authorized tenant switch RPC.
       const active = (data || []).filter((org) => org.id === organization?.id);
       setOrganizations(active);
     } catch (err: any) {
+      if (!isCurrentLoad()) return;
       setOrganizations([]);
       toastError('Erro ao carregar organizações: ' + (err?.message || 'Falha desconhecida.'));
     } finally {
-      setIsLoading(false);
+      if (isCurrentLoad()) setIsLoading(false);
     }
   }, [organization?.id, toastError]);
 
