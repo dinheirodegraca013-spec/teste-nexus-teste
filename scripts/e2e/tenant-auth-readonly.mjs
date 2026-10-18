@@ -83,6 +83,18 @@ try {
       .select('id,organization_id').eq('organization_id',foreign.organization_id).limit(5);
     if(crmError) throw crmError;
     assert.equal(foreignCRM?.length,0,`SECURITY: account ${label} read cross-tenant CRM`);
+
+    const {error:ownStorageError}=await instance.storage
+      .from('nexus-evidence-private').list(own.organization_id + '/presences',{limit:1});
+    if(ownStorageError) {
+      throw new Error(`Read own private Storage path ${label} failed: ${ownStorageError.message}`);
+    }
+    const {data:foreignStorage,error:foreignStorageError}=await instance.storage
+      .from('nexus-evidence-private').list(foreign.organization_id + '/presences',{limit:1});
+    if(!foreignStorageError) {
+      assert.equal(foreignStorage?.length,0,`SECURITY: account ${label} listed cross-tenant Storage`);
+    }
+    console.log(`PASS: private Storage isolation for test account ${label}`);
     console.log(`PASS: tenant separation for test account ${label}`);
   }
   console.log('PASS: two signed-in accounts isolated by RLS; READ-ONLY DEV smoke.');
