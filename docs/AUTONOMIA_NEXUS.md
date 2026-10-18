@@ -1342,3 +1342,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CONFIRMADO:** as 37 policies administrativas aplicadas no DEV continuam presentes.
 - **PENDENTE:** as três policies `nexus_private_evidence_*` ainda usam a expressão de extensão com barra duplicada. O script existente aponta para o projeto antigo `qidstqsbxwkbkwowhpab`; não foi executado no projeto atual `qwvbvqlzcyfkuszxrlgv` sem uma autorização específica para esse destino.
 - **ADVISORS:** permanecem 2 tabelas privadas sem policies, 5 funções `SECURITY DEFINER` executáveis por `authenticated`, proteção contra senhas vazadas desativada, 12 índices sem uso e 2 pares de policies permissivas. Nenhuma dessas alterações foi executada.
+## Ciclo autônomo — 2026-10-18: preparação da correção de Storage DEV
+
+- **PREPARADO:** criada `docs/proposed-migrations/FIX_PRIVATE_STORAGE_POLICY_REGEX_QWVB.sql`, já apontando para `qwvbvqlzcyfkuszxrlgv` e corrigindo somente as três policies privadas de evidências.
+- **TESTES:** `npm test` 271/271, `npm run lint` e `npm run build` aprovados.
+- **PENDÊNCIA:** a migration não foi executada; requer aprovação específica para o projeto DEV atual, conforme a regra de SQL estrutural/RLS.
