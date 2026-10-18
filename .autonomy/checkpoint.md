@@ -44,3 +44,4 @@
 - 2026-10-18: revisão de nomes de políticas RLS locais encontrou políticas estáticas distintas; as ocorrências dinâmicas usam DROP/CREATE intencionalmente. Nenhuma alteração necessária.
 - 2026-10-18: marcadores `NotImplementedError` encontrados apenas em exclusão de perfil e revogação de membro; ambos são bloqueios fail-closed documentados e exigem fluxo privilegiado seguro, não correção client-side.
 - 2026-10-18: correção de acessibilidade do Modal validada com 257/257 testes; lint/build aprovados. SQL `nexus_private_storage_reviewed` aplicado e verificado no Supabase DEV: bucket privado e políticas SELECT/INSERT/DELETE confirmados.
+- 2026-10-18: commit local `05b0376` criado após validar correção do Modal e SQL DEV. `git push` recusado por 403: remoto autentica como `Cabanas01`, sem permissão no repositório. Não repetido nem contornado.
