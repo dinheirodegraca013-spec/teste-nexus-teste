@@ -760,7 +760,10 @@ export const auditService = {
     details?: any;
   }) {
     try {
-      await supabase.from('audit_logs').insert([entry]);
+      const { error } = await supabase.from('audit_logs').insert([entry]);
+      if (error) {
+        console.warn('[Audit] Erro ao registrar log de auditoria:', error);
+      }
     } catch (err) {
       console.warn('[Audit] Erro ao registrar log de auditoria:', err);
     }
