@@ -1214,6 +1214,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **ESCOPO:** somente autenticação/frontend/teste; nenhuma policy, função, schema, produção, `main` ou dado real alterado.
 - **CI/PREVIEW:** `NEXUS CI` run `39171464246` (#536) concluiu `success`; preview Vercel `dpl_6ajoaZ8Z35pztNSD46yU74uNYMuo` ficou `READY` para `ca50c6c`.
 
+## Ciclo autônomo — 2026-10-18: mensagem de senha consistente
+
+- **CORRIGIDO:** a mensagem de erro do cadastro agora informa o mesmo mínimo de 8 caracteres já aplicado pela validação e pelo campo do formulário.
+- **TESTES:** contrato de cadastro atualizado; `npm test` 267/267, `npm run lint` e `npm run build` aprovados.
+- **ESCOPO:** somente frontend/teste; nenhum Auth, SQL, produção, `main` ou dado real alterado.
+
 ## Ciclo autônomo — 2026-10-18: revisão de acessibilidade e advisors
 
 - **CONFIRMADO:** `Modal.tsx` já expõe `role="dialog"`, nome acessível, `aria-modal`, foco inicial, captura de Tab/Escape e restauração de foco; os testes de acessibilidade estão verdes dentro da suíte atual.

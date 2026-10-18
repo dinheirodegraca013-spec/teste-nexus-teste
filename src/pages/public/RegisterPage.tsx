@@ -159,7 +159,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
       } else if (error.message?.includes('User already registered') || (error as any)?.code === 'user_already_exists') {
         friendlyMessage = 'Este e-mail já está cadastrado no sistema. Tente fazer login ou recuperar sua senha.';
       } else if (error.message?.includes('Password should be at least')) {
-        friendlyMessage = 'A senha deve ter pelo menos 6 caracteres.';
+        friendlyMessage = 'A senha deve ter pelo menos 8 caracteres.';
       }
 
       setErrorMessage(friendlyMessage);
