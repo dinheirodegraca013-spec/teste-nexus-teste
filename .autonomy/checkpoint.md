@@ -174,6 +174,7 @@
 - 2026-10-18: mensagem de senha do cadastro alinhada ao mínimo real de 8 caracteres; `npm test` 267/267, lint e build aprovados; sem alteração remota.
 - 2026-10-18: `ResetPasswordPage` alinhada ao mínimo de 8 caracteres; regressão adicionada. `npm test` 268/268, lint e build aprovados; sem alteração remota.
 - 2026-10-18: `AuthContext.updatePassword` passou a rejeitar senha curta antes do Supabase; regressão adicionada. `npm test` 269/269, lint e build aprovados; sem alteração remota.
+- 2026-10-18: CI #548 (`39172360883`) passou e preview Vercel `dpl_Azhz6TPiUQArTGnJwBtYVJ2gWMhP` ficou READY para `5503f97`; sem merge/promoção.
 - 2026-10-18: CI #544 (`39172014734`) passou e preview Vercel `dpl_BEepfpjoQV8QMhWEgTisQe9N7FFN` ficou READY para `f0e1341`; sem merge/promoção.
 - 2026-10-18: CI #540 (`39171750214`) passou e preview Vercel `dpl_6k5sM7Lv9gjd3ivim7Q9FUUpCc6v` ficou READY para `e4faea7`; sem merge/promoção.
 - 2026-10-18: CI #522 (`39170125281`) passou e preview Vercel `dpl_AnkUkQSBDKrPQq8FMPKHQqaeRz8n` ficou READY para `53f23cf`; sem merge/promoção.
