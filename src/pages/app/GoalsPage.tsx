@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Target, Plus, TrendingUp, Calendar, CheckCircle2, Clock, AlertTriangle, Edit2, Trash2, Users, Car, Home, UserCheck, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -20,6 +20,7 @@ export const GoalsPage: React.FC = () => {
   const [coordinators, setCoordinators] = useState<Coordinator[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const loadGenerationRef = useRef(0);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
@@ -38,7 +39,10 @@ export const GoalsPage: React.FC = () => {
   });
 
   const loadData = useCallback(async () => {
+    const loadGeneration = ++loadGenerationRef.current;
+    const isCurrentLoad = () => loadGeneration === loadGenerationRef.current;
     if (!orgId) {
+      if (!isCurrentLoad()) return;
       setGoals([]);
       setCoordinators([]);
       setIsLoading(false);
@@ -52,12 +56,13 @@ export const GoalsPage: React.FC = () => {
       ]);
       if (goalsRes.error) throw goalsRes.error;
       if (coordsRes.error) throw coordsRes.error;
+      if (!isCurrentLoad()) return;
       setGoals(goalsRes.data || []);
       setCoordinators(coordsRes.data || []);
     } catch (err: any) {
-      toastError('Erro ao carregar metas: ' + err.message);
+      if (isCurrentLoad()) toastError('Erro ao carregar metas: ' + err.message);
     } finally {
-      setIsLoading(false);
+      if (isCurrentLoad()) setIsLoading(false);
     }
   }, [orgId, toastError]);
 

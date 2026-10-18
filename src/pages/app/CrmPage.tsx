@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Contact, Plus, Phone, Mail, MapPin, Tag, Edit2, Trash2, Eye, UserCheck, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -23,6 +23,7 @@ export const CrmPage: React.FC = () => {
   const [leaders, setLeaders] = useState<Leader[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const loadGenerationRef = useRef(0);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -45,7 +46,10 @@ export const CrmPage: React.FC = () => {
   });
 
   const loadData = useCallback(async () => {
+    const loadGeneration = ++loadGenerationRef.current;
+    const isCurrentLoad = () => loadGeneration === loadGenerationRef.current;
     if (!orgId) {
+      if (!isCurrentLoad()) return;
       setContacts([]);
       setLeaders([]);
       setIsLoading(false);
@@ -59,12 +63,13 @@ export const CrmPage: React.FC = () => {
       ]);
       if (contactsRes.error) throw contactsRes.error;
       if (leadersRes.error) throw leadersRes.error;
+      if (!isCurrentLoad()) return;
       setContacts(contactsRes.data || []);
       setLeaders(leadersRes.data || []);
     } catch (err: any) {
-      toastError('Erro ao carregar contatos do CRM: ' + err.message);
+      if (isCurrentLoad()) toastError('Erro ao carregar contatos do CRM: ' + err.message);
     } finally {
-      setIsLoading(false);
+      if (isCurrentLoad()) setIsLoading(false);
     }
   }, [orgId, toastError]);
 
