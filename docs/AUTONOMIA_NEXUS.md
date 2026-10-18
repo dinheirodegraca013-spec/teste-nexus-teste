@@ -1063,3 +1063,7 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CONFIRMADO:** consulta read-only no DEV mostrou que as 12 tabelas operacionais possuem somente policies `SELECT`; não há `INSERT`, `UPDATE` ou `DELETE`.
 - **PREPARADO:** `docs/proposed-migrations/ADD_OPERATIONAL_ADMIN_WRITE_POLICIES.sql` cria policies tenant-scoped admin-only para as três operações, sem alterar dados nem executar SQL.
 - **PENDENTE:** aprovação específica antes de qualquer aplicação estrutural.
+
+## Ciclo autônomo — 2026-10-18: contrato da migration operacional
+
+- **MELHORADO:** adicionado `tests/operational-write-policy-contract.test.mjs`, garantindo que a proposta mantenha tenant ativo, papel administrativo e as três operações protegidas para todas as 12 tabelas.

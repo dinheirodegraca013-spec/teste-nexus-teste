@@ -108,3 +108,4 @@
 - 2026-10-18: atualizações dos serviços operacionais passaram a remover `organization_id` dos payloads client-side; 234 testes, lint e build aprovados. Commit/push pendentes neste ciclo.
 - 2026-10-18: consulta SQL somente leitura confirmou que o DEV `qwvbvqlzcyfkuszxrlgv` ainda possui apenas `organizations_read`; a policy `UPDATE` segue pendente de aprovação específica.
 - 2026-10-18: consulta read-only confirmou ausência de INSERT/UPDATE/DELETE nas 12 tabelas operacionais; preparado SQL admin-only em `docs/proposed-migrations/ADD_OPERATIONAL_ADMIN_WRITE_POLICIES.sql`, sem execução, aguardando aprovação específica.
+- 2026-10-18: adicionado contrato automatizado para validar a migration operacional proposta antes de qualquer execução estrutural.
