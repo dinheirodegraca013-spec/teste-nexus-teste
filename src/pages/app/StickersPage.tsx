@@ -64,6 +64,11 @@ export const StickersPage: React.FC = () => {
       setIsLoading(false);
       return;
     }
+    if (isCurrentLoad()) {
+      // Nunca exibe registros da organização anterior enquanto o novo tenant carrega.
+      setCarStickers([]);
+      setHouseStickers([]);
+    }
     setIsLoading(true);
     try {
       const [carsRes, housesRes] = await Promise.all([
@@ -85,6 +90,12 @@ export const StickersPage: React.FC = () => {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    setIsCarModalOpen(false);
+    setIsHouseModalOpen(false);
+    setPreviewImage(null);
+  }, [orgId]);
 
   const handleSaveCar = async (e: React.FormEvent) => {
     e.preventDefault();

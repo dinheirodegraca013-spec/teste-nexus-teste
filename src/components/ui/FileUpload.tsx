@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { UploadCloud, Image, X, FileText, Camera, CheckCircle2 } from 'lucide-react';
 
 interface FileUploadProps {
@@ -25,8 +25,13 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   className = '',
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const processGenerationRef = useRef(0);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => () => {
+    processGenerationRef.current += 1;
+  }, []);
 
   const compressImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -90,6 +95,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
   const handleProcessFile = async (file: File) => {
     if (disabled) return;
+    const processGeneration = ++processGenerationRef.current;
     setError(null);
 
     if (file.size > maxSizeMB * 1024 * 1024) {
@@ -99,12 +105,14 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
     try {
       const result = await compressImage(file);
+      if (processGeneration !== processGenerationRef.current) return;
       onChange(result, {
         name: file.name,
         size: Math.round(result.length * 0.75), // approximate compressed size
         type: file.type.startsWith('image/') ? 'image/jpeg' : file.type,
       });
     } catch {
+      if (processGeneration !== processGenerationRef.current) return;
       setError('Erro ao processar imagem. Tente novamente.');
     }
   };
@@ -141,6 +149,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
   const handleRemove = (e: React.MouseEvent) => {
     e.stopPropagation();
+    processGenerationRef.current += 1;
     if (inputRef.current) {
       inputRef.current.value = '';
     }

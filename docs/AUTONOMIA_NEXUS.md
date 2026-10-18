@@ -1160,6 +1160,13 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **2026-10-18 — RLS DEV APLICADO:** após autorização explícita, executei somente no Supabase DEV `qwvbvqlzcyfkuszxrlgv` as migrations `ADD_ORGANIZATIONS_UPDATE_POLICY.sql` e `ADD_OPERATIONAL_ADMIN_WRITE_POLICIES.sql`. Consulta read-only confirmou `organizations_update` e as 36 policies admin (12 tabelas × INSERT/UPDATE/DELETE). E2E read-only aprovou isolamento de duas organizações, perfis, CRM e Storage privado. Suíte atual: 250 testes, lint e build aprovados. Produção, `main` e dados reais não foram alterados.
 - **ADVISORS PÓS-RLS:** permanecem somente os achados previamente conhecidos: 2 tabelas privadas sem policies, 4 funções `SECURITY DEFINER` acessíveis a `authenticated`, proteção contra senhas vazadas desativada, 12 índices não usados e 2 pares de policies permissivas. Nenhum desses itens foi alterado sem nova aprovação.
 
+## Ciclo autônomo — 2026-10-18: isolamento visual e concorrência de uploads
+
+- **CORRIGIDO:** `GoalsPage` e `StickersPage` agora limpam imediatamente os registros do tenant anterior e fecham modais/preview ao trocar de organização.
+- **CORRIGIDO:** `FileUpload` invalida processamentos assíncronos anteriores após substituição, remoção ou desmontagem, impedindo que uma imagem antiga sobrescreva a seleção atual.
+- **TESTES:** adicionados três contratos de regressão; `npm test` 253/253, `npm run lint` e `npm run build` aprovados.
+- **ESCOPO:** somente código e testes na branch `fix/persist-rbac-permissions`; nenhum SQL, Auth, produção, `main` ou dado real alterado.
+
 ## Ciclo autônomo — 2026-10-18: confirmação segura da recuperação de senha
 
 - **Escopo único:** corrigir falso sucesso em `src/pages/public/ForgotPasswordPage.tsx`. Branch `fix/persist-rbac-permissions`, status e diff iniciais limpos. Skills consultadas: `bug-hunter` e `qa-automation`; documentos operacionais da raiz citados no OBRAMAXAUTO não existem neste checkout.

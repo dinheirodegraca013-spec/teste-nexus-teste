@@ -48,6 +48,11 @@ export const GoalsPage: React.FC = () => {
       setIsLoading(false);
       return;
     }
+    if (isCurrentLoad()) {
+      // Evita que a organização anterior permaneça visível durante a troca de tenant.
+      setGoals([]);
+      setCoordinators([]);
+    }
     setIsLoading(true);
     try {
       const [goalsRes, coordsRes] = await Promise.all([
@@ -69,6 +74,11 @@ export const GoalsPage: React.FC = () => {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    setIsModalOpen(false);
+    setSelectedGoal(null);
+  }, [orgId]);
 
   const handleOpenModal = (goal?: Goal, presetCategory?: typeof formData.category) => {
     if (goal) {
