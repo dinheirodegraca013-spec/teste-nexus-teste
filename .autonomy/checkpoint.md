@@ -111,3 +111,4 @@
 - 2026-10-18: adicionado contrato automatizado para validar a migration operacional proposta antes de qualquer execução estrutural.
 - 2026-10-18: auditoria read-only dos logs DEV refinou o resultado de erros: 6 `ERROR` e 4 `FATAL` são eventos históricos de bootstrap/infraestrutura (FK inválida `42830`, consultas a tabelas internas ausentes `42P01` e reinícios controlados `57P01`); nenhuma evidência de falha atual da aplicação. Advisors permanecem sem mudança; nenhum SQL aplicado.
 - 2026-10-18: corrigido export CSV em `ReportsPage`/`csv.ts`: Blob revogável, proteção de fórmulas após espaços iniciais e sem data URL. Suíte integrada 243/243, lint e build aprovados.
+- 2026-10-18: commits remotos foram integrados sem reescrever histórico; commit `c3d6ec9` publicado na branch. CI remoto confirmou Vercel, typecheck/build e Edge Functions como sucesso; GitGuardian ficou `neutral` por limite de tamanho, sem indicação de segredo.
