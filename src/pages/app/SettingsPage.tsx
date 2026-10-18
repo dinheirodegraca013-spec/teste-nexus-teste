@@ -8,7 +8,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 
-export const SettingsPage: React.FC = () => {
+const SettingsPageContent: React.FC = () => {
   const { organization } = useAuth();
   const { success, error: toastError } = useToast();
 
@@ -124,4 +124,12 @@ export const SettingsPage: React.FC = () => {
       </div>
     </div>
   );
+};
+
+
+// A tenant switch must remount the form, discarding unsaved fields from the
+// previous organization before the new organization's settings are rendered.
+export const SettingsPage: React.FC = () => {
+  const { organization } = useAuth();
+  return <SettingsPageContent key={organization?.id ?? 'no-organization'} />;
 };
