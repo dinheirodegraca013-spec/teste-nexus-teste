@@ -1111,3 +1111,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **PUBLICAÇÃO:** novo deployment `dpl_A6iKK2Pv7UJZniJtwYQMBZhZQE1N` READY e associado ao domínio público.
 - **VERIFICAÇÃO:** `/cadastro` e bundle retornaram HTTP 200; bundle contém o projeto `qwvbvqlzcyfkuszxrlgv` e não contém o projeto antigo `wrovgjhpyacmmetejiqk`.
 - **VALIDAÇÃO LOCAL:** `npm test` 243/243, `npm run lint` e `npm run build` aprovados após o diagnóstico.
+
+## Ciclo autônomo — 2026-10-18: auditoria DEV pós-publicação
+
+- **VERIFICADO:** `auth.users=0` e `organizations=0` no DEV `qwvbvqlzcyfkuszxrlgv`.
+- **VERIFICADO:** bucket privado `nexus-evidence-private` presente e não público; as três policies de Storage estão presentes e sem regex com barra duplicada.
+- **PENDENTE REAL:** criar duas contas sintéticas em organizações distintas para executar o E2E multitenant; nenhuma conta ou dado real foi criado pelo agente.
