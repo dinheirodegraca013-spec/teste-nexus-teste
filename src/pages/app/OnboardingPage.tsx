@@ -24,6 +24,10 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleFinish = async () => {
+    if (!orgName.trim()) {
+      toastError('Informe o nome da organização.');
+      return;
+    }
     setIsSubmitting(true);
     try {
       if (!organization?.id) {

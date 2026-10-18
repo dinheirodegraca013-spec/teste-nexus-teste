@@ -161,3 +161,4 @@
 - 2026-10-18: stream de logs DEV respondeu com contagens por fonte; filtros por timestamp/nível ainda falham no backend. Sem evidência suficiente para intervenção e sem alterações externas.
 - 2026-10-18: `RegisterPage` passou a falhar fechado para convites incompletos antes do `signUp`; regressão adicionada. `npm test` 263/263, lint e build aprovados; Auth/banco/produção intactos.
 - 2026-10-18: CI #514 (`39169738113`) passou e preview Vercel `dpl_4FKYvgxG12uuyq8E29xb15XyL8cA` ficou READY para `43e96d1`; sem merge/promoção.
+- 2026-10-18: `OnboardingPage` passou a rejeitar nome de organização vazio antes do UPDATE; regressão adicionada. `npm test` 264/264, lint e build aprovados; banco/Auth/produção intactos.

@@ -1237,6 +1237,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO:** `RegisterPage` agora bloqueia convites sem organização ou identificador compatível de liderança/coordenação antes de chamar `signUp`, evitando cair no provisionamento de uma organização própria por URL malformada.
 - **TESTES:** contrato de regressão adicionado; `npm test` 263/263, `npm run lint` e `npm run build` aprovados.
 - **ESCOPO:** somente frontend/teste; nenhum Auth, SQL, produção, `main` ou dado real alterado.
+
+## Ciclo autônomo — 2026-10-18: validação do onboarding
+
+- **CORRIGIDO:** `OnboardingPage` agora bloqueia o salvamento quando o nome da organização está vazio ou contém apenas espaços.
+- **TESTES:** contrato de regressão adicionado; `npm test` 264/264, `npm run lint` e `npm run build` aprovados.
+- **ESCOPO:** somente frontend/teste; nenhum Auth, SQL, produção, `main` ou dado real alterado.
 - **CI/PREVIEW:** `NEXUS CI` run `39169738113` (#514) concluiu `success`; preview Vercel `dpl_4FKYvgxG12uuyq8E29xb15XyL8cA` ficou `READY` para `43e96d1`.
 - **CI/PREVIEW:** `NEXUS CI` run `39169229167` (#506) concluiu `success`; preview Vercel `dpl_HzqhjNVoSyvH4iQy2tJcxLpasiqS` ficou `READY` para `0d0d5eb`.
 

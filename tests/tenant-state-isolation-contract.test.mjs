@@ -90,3 +90,10 @@ test('RegisterPage fails closed for incomplete invitations', async () => {
   assert.match(source, /inviteType === 'coordenador' && !inviteCoordId/);
   assert.match(source, /convite está incompleto ou expirado/);
 });
+
+test('OnboardingPage rejects an empty organization name before saving', async () => {
+  const source = await readFile(new URL('../src/pages/app/OnboardingPage.tsx', import.meta.url), 'utf8');
+  assert.match(source, /if \(!orgName\.trim\(\)\)/);
+  assert.match(source, /Informe o nome da organização/);
+  assert.match(source, /setIsSubmitting\(true\)/);
+});
