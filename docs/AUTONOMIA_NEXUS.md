@@ -1207,6 +1207,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **ESCOPO:** sem alteração de código, banco, Auth, produção ou `main` nesta revisão.
 - **CI:** GitHub Actions `NEXUS CI` run `39168452621` (#498) para o commit `a44950d` concluiu `success`.
 
+## Ciclo autônomo — 2026-10-18: acessibilidade do Drawer
+
+- **CORRIGIDO:** `Drawer` agora possui semântica de diálogo, título/descrição associados, botão de fechamento nomeado, foco inicial, contenção de Tab/Escape e restauração do foco ao fechar.
+- **TESTES:** adicionados dois contratos de acessibilidade; `npm test` 262/262, `npm run lint` e `npm run build` aprovados.
+- **ESCOPO:** somente frontend/testes; nenhum SQL, Auth, produção, `main` ou dado real alterado.
+
 ## Ciclo autônomo — 2026-10-18: confirmação de cadastros
 
 - **CORRIGIDO:** `LeadersPage` e `CoordinatorsPage` agora exibem erro explícito quando a criação não retorna registro confirmado, evitando silêncio após uma tentativa inconclusiva.
