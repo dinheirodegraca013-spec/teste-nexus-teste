@@ -1146,6 +1146,7 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **VERIFICAÇÃO READ-ONLY:** função presente com `SECURITY DEFINER`; ACL limita execução a `authenticated` e `service_role`, sem concessão a `PUBLIC` ou `anon`.
 - **TESTES:** suíte 247/247, TypeScript/lint e build aprovados.
 - **PREVIEW:** Vercel READY para o commit `2bdcc16`; produção/domínio público permaneceram sem alteração.
+- **E2E pós-RPC:** repetição aprovada para as duas contas sintéticas; isolamento de tenant e Storage privado permanecem íntegros.
 
 ## Ciclo autônomo — 2026-10-18: advisories do DEV
 
