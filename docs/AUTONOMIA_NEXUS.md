@@ -1219,6 +1219,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO:** `CrmPage` agora informa erro explícito quando o cadastro não retorna um contato confirmado, em vez de permanecer silenciosa.
 - **TESTES:** contrato de regressão ampliado; `npm test` 262/262, `npm run lint` e `npm run build` aprovados.
 - **ESCOPO:** somente frontend/teste; nenhum SQL, Auth, produção, `main` ou dado real alterado.
+
+## Ciclo autônomo — 2026-10-18: revisão de performance do banco
+
+- **READ-ONLY DEV:** Performance Advisor reportou 12 índices sem uso observado e dois pares de policies permissivas (`profiles` UPDATE e `user_module_permissions` SELECT).
+- **DECISÃO:** não remover índices nem consolidar policies com base apenas no contador; são mudanças estruturais que exigem planos de consulta, medição de carga, script revisado e aprovação específica.
+- **ESCOPO:** nenhum banco, RLS, código ou produção alterado nesta revisão.
 - **CI/PREVIEW:** `NEXUS CI` run `39169229167` (#506) concluiu `success`; preview Vercel `dpl_HzqhjNVoSyvH4iQy2tJcxLpasiqS` ficou `READY` para `0d0d5eb`.
 
 ## Ciclo autônomo — 2026-10-18: confirmação de cadastros
