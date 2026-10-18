@@ -1123,6 +1123,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **VERIFICADO:** o DEV agora possui uma conta Auth, uma organização e um perfil.
 - **PENDENTE:** falta uma segunda conta em outra organização para validar isolamento entre tenants; nenhum teste E2E foi declarado como aprovado antes dessa condição.
 
+## Ciclo autônomo — 2026-10-18: E2E bloqueado por identidade divergente
+
+- **RESULTADO:** o E2E somente leitura foi iniciado, mas falhou na autenticação da conta A antes de consultar qualquer tenant.
+- **CONFIRMAÇÃO:** a conta informada como A (`guicabanas13@gmail.com`) não existe no Auth DEV; a conta B existe e está confirmada. Não foram exibidos nem armazenados segredos.
+- **PENDENTE:** informar/criar a conta sintética A correta no DEV; nenhum resultado de isolamento foi declarado.
+
 ## Ciclo autônomo — 2026-10-18: advisories do DEV
 
 - **SEGURANÇA:** dois objetos privados com RLS sem policies e três funções `SECURITY DEFINER` acessíveis a `authenticated` foram reportados. As funções validam tenant/admin internamente e são chamadas pelo frontend; revogação exigiria mudança estrutural e revisão de fluxo.
