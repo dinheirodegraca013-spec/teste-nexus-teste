@@ -4,7 +4,7 @@ import { build } from 'esbuild';
 
 const bundle = await build({
   stdin: {
-    contents: "export { checkUserPermission, getDefaultRouteForUser } from './src/contexts/AuthContext';",
+    contents: "export { checkUserPermission, getDefaultRouteForUser, canAccessPrivilegedRoute } from './src/contexts/AuthContext';",
     resolveDir: process.cwd(),
   },
   bundle: true,
@@ -17,7 +17,7 @@ const bundle = await build({
 const esm = bundle.outputFiles[0].text.replace(
   /from "([^./][^"]*)"/g, (_, pkg) => `from ${JSON.stringify(import.meta.resolve(pkg))}`
 );
-const { checkUserPermission, getDefaultRouteForUser } = await import(
+const { checkUserPermission, getDefaultRouteForUser, canAccessPrivilegedRoute } = await import(
   `data:text/javascript;base64,${Buffer.from(esm).toString('base64')}`
 );
 
@@ -66,4 +66,22 @@ test('non-admin cannot write server-admin-only operational tables even with stor
       assert.equal(checkUserPermission(profile, p, 'goals', action), false);
     }
   }
+});
+
+test('onboarding and plans are restricted to administrators', () => {
+  for (const role of ['leader', 'coordinator', 'controller', 'viewer']) {
+    const profile = { role, is_blocked: false };
+    assert.equal(canAccessPrivilegedRoute(profile, '/app/onboarding'), false);
+    assert.equal(canAccessPrivilegedRoute(profile, '/app/planos'), false);
+  }
+  for (const role of ['admin', 'superadmin']) {
+    const profile = { role, is_blocked: false };
+    assert.equal(canAccessPrivilegedRoute(profile, '/app/onboarding'), true);
+    assert.equal(canAccessPrivilegedRoute(profile, '/app/planos'), true);
+  }
+});
+
+test('ordinary private routes remain available to their module gate', () => {
+  const profile = { role: 'viewer', is_blocked: false };
+  assert.equal(canAccessPrivilegedRoute(profile, '/app/perfil'), true);
 });

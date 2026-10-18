@@ -37,6 +37,7 @@ interface NavGroup {
     path: string;
     icon: React.ElementType;
     module?: AppModule;
+    adminOnly?: boolean;
     highlight?: boolean;
   }[];
 }
@@ -112,7 +113,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       items: [
         { name: 'Equipe & Permissões', path: '/app/usuarios', icon: Shield, module: 'users' },
         { name: 'Organizações', path: '/app/organizacoes', icon: Building2, module: 'organizations' },
-        { name: 'Planos & Assinatura', path: '/app/planos', icon: CreditCard },
+        { name: 'Planos & Assinatura', path: '/app/planos', icon: CreditCard, adminOnly: true },
         { name: 'Configurações', path: '/app/configuracoes', icon: Settings, module: 'settings' },
       ]
     }
@@ -171,6 +172,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex-1 overflow-y-auto p-3 space-y-5 custom-scrollbar text-left">
           {navGroups.map((group) => {
             const filteredItems = group.items.filter(item => {
+              if (item.adminOnly && !['admin', 'superadmin'].includes(normalizeRole(profile?.role))) return false;
               if (!item.module) return true;
               return hasPermission(item.module, 'view');
             });

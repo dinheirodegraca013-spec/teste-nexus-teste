@@ -941,3 +941,22 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **MELHORIA:** workflows CI e E2E passaram de `npm install` para `npm ci`, usando o `package-lock.json` existente.
 - **VALIDADO:** `npm ci --dry-run --ignore-scripts --no-audit --no-fund` concluiu com sucesso localmente.
+
+## Ciclo autônomo — 2026-10-18: correção pendente no Storage DEV
+
+- **REPROVADO:** auditoria horária confirmou que as policies `nexus_private_evidence_select`, `nexus_private_evidence_insert` e `nexus_private_evidence_delete` usam regex com barra duplicada antes da extensão e rejeitam caminhos JPG válidos.
+- **PREPARADO:** `docs/proposed-migrations/FIX_PRIVATE_STORAGE_POLICY_REGEX.sql` recria somente essas três policies com `\\.` correto, preservando bucket privado, isolamento por organização e ausência de UPDATE.
+- **BLOQUEADO:** não executei o script; DROP/CREATE de RLS exige aprovação específica. Nenhum dado, bucket ou produção foi alterado.
+
+## Ciclo autônomo — 2026-10-18: Storage DEV corrigido após autorização
+
+- **APLICADO:** `fix_private_storage_policy_regex` exclusivamente no Supabase DEV `qidstqsbxwkbkwowhpab`, recriando as três policies autorizadas.
+- **VERIFICADO:** regex corrigida aceita JPG sintético válido; regex legada rejeita. As policies mantêm SELECT/INSERT/DELETE tenant-scoped e não criam UPDATE.
+- **LIMITE:** nenhuma alteração em produção, dados ou outras policies; homologação E2E ainda pendente.
+
+## Ciclo autônomo — 2026-10-18: rotas administrativas sem gate explícito
+
+- **CORRIGIDO:** `/app/onboarding` e `/app/planos` agora exigem perfil `admin` ou `superadmin` antes da renderização; usuários bloqueados e demais papéis recebem a tela 403.
+- **TESTADO:** adicionados testes de regressão para os dois caminhos e para rotas privadas comuns. Suíte executada com **200/200**; `npm run lint` e `npm run build` concluídos com sucesso.
+- **LIMITE:** a proteção de rota é somente uma camada de interface; RLS continua sendo a barreira definitiva. Storage/RLS e E2E autenticado permanecem pendentes.
+- **MELHORIA:** o Sidebar também oculta “Planos & Assinatura” de perfis que não sejam `admin`/`superadmin`, evitando anunciar uma rota sem autorização.

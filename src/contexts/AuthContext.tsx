@@ -104,6 +104,19 @@ export function checkUserPermission(
   return scoped ? scoped.includes(module) : true;
 }
 
+const adminOnlyRoutes = new Set(['/app/onboarding', '/app/planos']);
+
+/**
+ * Routes that do not map to a persisted module still need an explicit
+ * authorization decision. Database RLS remains the final enforcement layer.
+ */
+export function canAccessPrivilegedRoute(userProfile: Profile | null, route: string): boolean {
+  if (!adminOnlyRoutes.has(route)) return true;
+  if (!userProfile || userProfile.is_blocked) return false;
+  const role = normalizeRole(userProfile.role);
+  return role === 'admin' || role === 'superadmin';
+}
+
 export function getDefaultRouteForUser(userProfile: Profile | null, perms: UserModulePermission[]): string {
   if (userProfile?.is_blocked) return '/403';
   if (!userProfile) return '/app/dashboard';

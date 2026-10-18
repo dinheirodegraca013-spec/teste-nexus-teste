@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ToastProvider } from './contexts/ToastContext';
-import { AuthProvider, useAuth, getDefaultRouteForUser } from './contexts/AuthContext';
+import { AuthProvider, useAuth, getDefaultRouteForUser, canAccessPrivilegedRoute } from './contexts/AuthContext';
 import { PublicLayout } from './components/layout/PublicLayout';
 import { AppLayout } from './components/layout/AppLayout';
 import { LoadingState } from './components/ui/LoadingState';
@@ -324,6 +324,14 @@ function MainRouter() {
             }
           }}
         />
+      </AppLayout>
+    );
+  }
+
+  if (!canAccessPrivilegedRoute(profile, currentPath)) {
+    return (
+      <AppLayout currentPath={currentPath} onNavigate={navigate}>
+        <ForbiddenPage onNavigate={(path) => navigate(path === '/app/dashboard' ? getDefaultRoute() : path)} />
       </AppLayout>
     );
   }
