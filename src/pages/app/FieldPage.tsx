@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Smartphone, Check, UserPlus, Tag, MapPin, CheckCircle2, UserCheck, Flame, Radio, Car, Home, Target, TrendingUp, Phone, Users, Image as ImageIcon, Eye, X, Camera, UploadCloud, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -34,6 +34,7 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
   const [carStickers, setCarStickers] = useState<CarSticker[]>([]);
   const [houseStickers, setHouseStickers] = useState<HouseSticker[]>([]);
   const [presenceLogs, setPresenceLogs] = useState<FieldPresence[]>([]);
+  const loadGenerationRef = useRef(0);
 
   // Never infer a leadership identity from matching names/emails or the first
   // available team member. RLS limits leader accounts to their assigned row.
@@ -81,7 +82,10 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
   const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
 
   const loadData = useCallback(async () => {
+    const loadGeneration = ++loadGenerationRef.current;
+    const isCurrentLoad = () => loadGeneration === loadGenerationRef.current;
     if (!orgId) {
+      if (!isCurrentLoad()) return;
       setLeaders([]);
       setRecentContacts([]);
       setCarStickers([]);
@@ -99,6 +103,8 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
         stickersService.getHouseStickers(orgId),
         presenceService.getLogs(orgId),
       ]);
+
+      if (!isCurrentLoad()) return;
 
       const failed = [leadsRes, contactsRes, carsRes, housesRes, presenceRes]
         .find((result) => result.error);
@@ -127,9 +133,9 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
         );
       }
     } catch (err: any) {
-      toastError('Erro ao carregar dados do modo de campo: ' + err.message);
+      if (isCurrentLoad()) toastError('Erro ao carregar dados do modo de campo: ' + err.message);
     } finally {
-      setIsLoading(false);
+      if (isCurrentLoad()) setIsLoading(false);
     }
   }, [orgId, profile, toastError]);
 

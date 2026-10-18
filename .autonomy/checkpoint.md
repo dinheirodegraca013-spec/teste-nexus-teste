@@ -94,3 +94,4 @@
 - 2026-10-18: protegidas as cargas de `UsersPage` e `ReportsPage` contra respostas obsoletas entre organizações. Contrato ampliado para nove telas; suíte 216/216, lint e build aprovados.
 - 2026-10-18: protegida a carga paralela da `DashboardPage` contra respostas obsoletas entre organizações; ao perder a organização, os dados anteriores também são limpos. Contrato ampliado para dez telas; suíte 217/217, lint e build aprovados.
 - 2026-10-18: protegida a carga de `OrganizationsPage` contra respostas obsoletas após troca de organização; contrato ampliado para onze telas. Suíte 218/218, lint e build aprovados.
+- 2026-10-18: protegida a carga paralela do `FieldPage` contra respostas obsoletas entre organizações; erros, loading, líderes e registros antigos não são publicados após troca de tenant. Contrato ampliado para doze telas; suíte 219/219, lint e build aprovados.

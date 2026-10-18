@@ -990,3 +990,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **CORRIGIDO:** `OrganizationsPage` agora descarta respostas de uma carga iniciada antes da troca de organização e não altera loading/erros com respostas obsoletas.
 - **VERIFICADO:** 218/218 testes, lint e build aprovados localmente; publicação segue somente na branch de desenvolvimento.
+
+## Ciclo autônomo — 2026-10-18: isolamento do modo de campo
+
+- **CORRIGIDO:** `FieldPage` agora descarta respostas e erros de consultas paralelas iniciadas para uma organização anterior, protegendo também o estado de carregamento e as seleções de liderança.
+- **VERIFICADO:** 219/219 testes, lint e build aprovados localmente; produção e `main` não foram alterados.
