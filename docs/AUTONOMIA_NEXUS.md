@@ -960,3 +960,10 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **TESTADO:** adicionados testes de regressão para os dois caminhos e para rotas privadas comuns. Suíte executada com **200/200**; `npm run lint` e `npm run build` concluídos com sucesso.
 - **LIMITE:** a proteção de rota é somente uma camada de interface; RLS continua sendo a barreira definitiva. Storage/RLS e E2E autenticado permanecem pendentes.
 - **MELHORIA:** o Sidebar também oculta “Planos & Assinatura” de perfis que não sejam `admin`/`superadmin`, evitando anunciar uma rota sem autorização.
+
+## Ciclo autônomo — 2026-10-18: bootstrap do novo Supabase DEV
+
+- **APLICADO:** o projeto DEV `qwvbvqlzcyfkuszxrlgv` recebeu o schema NEXUS, funções auxiliares, RLS, hierarquia e policies de Storage privado, sem copiar dados reais.
+- **VERIFICADO:** 16 tabelas públicas, todas com RLS; bucket privado `nexus-evidence-private` com limite de 5 MiB e MIME restrito; policies SELECT/INSERT/DELETE, sem UPDATE.
+- **ATUALIZADO:** o script E2E agora exige o projeto `qwvbvqlzcyfkuszxrlgv`.
+- **PENDENTE:** o novo projeto ainda não possui usuários Auth; é necessário criar duas contas sintéticas em organizações distintas antes da homologação E2E.

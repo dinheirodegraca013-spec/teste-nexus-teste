@@ -4,7 +4,7 @@
  *
  * Required in manual, DEV-only workflow:
  *   NEXUS_E2E_APPROVED=true
- *   NEXUS_E2E_SUPABASE_URL=https://qidstqsbxwkbkwowhpab.supabase.co
+ *   NEXUS_E2E_SUPABASE_URL=https://qwvbvqlzcyfkuszxrlgv.supabase.co
  *   NEXUS_E2E_ANON_KEY=<public anon/publishable key>
  *   NEXUS_E2E_A_EMAIL / NEXUS_E2E_A_PASSWORD
  *   NEXUS_E2E_B_EMAIL / NEXUS_E2E_B_PASSWORD
@@ -14,7 +14,7 @@
 import assert from 'node:assert/strict';
 import { createClient } from '@supabase/supabase-js';
 
-const EXPECTED_DEV_PROJECT='qidstqsbxwkbkwowhpab';
+const EXPECTED_DEV_PROJECT='qwvbvqlzcyfkuszxrlgv';
 const values={
   approved:process.env.NEXUS_E2E_APPROVED,
   url:process.env.NEXUS_E2E_SUPABASE_URL,
