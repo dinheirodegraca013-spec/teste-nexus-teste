@@ -26,10 +26,10 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
   const handleFinish = async () => {
     setIsSubmitting(true);
     try {
-      if (!organization?.id) throw new Error('Organização não identificada.');
-      if (firstCoordinator.trim() && !firstTerritory.trim()) {
-        throw new Error('Informe o território de atuação do coordenador.');
+      if (!organization?.id) {
+        throw new Error('Organização indisponível. Recarregue a página e tente novamente.');
       }
+
       const { error: organizationError } = await organizationsService.update(organization.id, {
         name: orgName,
         settings: {
@@ -37,6 +37,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
           territory_type: territoryType,
         },
       });
+
       if (organizationError) throw organizationError;
 
       if (firstCoordinator.trim()) {
@@ -44,7 +45,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
           organization_id: organization.id,
           name: firstCoordinator.trim(),
           phone: firstPhone.trim() || undefined,
-          territory: firstTerritory.trim(),
+          territory: firstTerritory.trim() || 'Região Central',
           status: 'active',
         });
         if (coordinatorError) throw coordinatorError;
@@ -140,7 +141,6 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
               value={firstTerritory}
               onChange={(e) => setFirstTerritory(e.target.value)}
               placeholder="Ex.: Zona Central / Bairro Gonzaga"
-              helperText="Obrigatório ao cadastrar um coordenador."
               leftIcon={<MapPin className="w-4 h-4" />}
             />
 

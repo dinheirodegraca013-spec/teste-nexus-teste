@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Lightbulb, MapPin, Plus, TrendingUp, AlertCircle, CheckCircle2, Filter, Trash2, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -11,6 +11,7 @@ import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { ErrorState } from '../../components/ui/ErrorState';
 
 export const IntelligencePage: React.FC = () => {
   const { organization } = useAuth();
@@ -21,6 +22,8 @@ export const IntelligencePage: React.FC = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [leaders, setLeaders] = useState<Leader[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const loadRequestId = useRef(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [selectedTerritory, setSelectedTerritory] = useState('all');
@@ -36,35 +39,45 @@ export const IntelligencePage: React.FC = () => {
   });
 
   const loadData = useCallback(async () => {
+    const requestId = ++loadRequestId.current;
+    setIsLoading(true);
+    setLoadError(null);
+    // Never retain data from a previous organization while loading a new one.
+    setDemands([]);
+    setContacts([]);
+    setLeaders([]);
+
     if (!orgId) {
-      setDemands([]);
-      setContacts([]);
-      setLeaders([]);
+      setLoadError('Nenhuma organização selecionada.');
       setIsLoading(false);
       return;
     }
-    setIsLoading(true);
+
     try {
       const [demandsRes, contactsRes, leadersRes] = await Promise.all([
         intelligenceService.getDemands(orgId),
         crmService.getAll(orgId),
         leadersService.getAll(orgId),
       ]);
-      if (demandsRes.error) throw demandsRes.error;
-      if (contactsRes.error) throw contactsRes.error;
-      if (leadersRes.error) throw leadersRes.error;
+      if (requestId !== loadRequestId.current) return;
+      const failure = demandsRes.error || contactsRes.error || leadersRes.error;
+      if (failure) throw new Error(failure.message || 'Consulta não concluída.');
       setDemands(demandsRes.data || []);
       setContacts(contactsRes.data || []);
       setLeaders(leadersRes.data || []);
     } catch (err: any) {
-      toastError('Erro ao carregar inteligência: ' + err.message);
+      if (requestId !== loadRequestId.current) return;
+      const message = err instanceof Error ? err.message : 'Erro inesperado.';
+      setLoadError(message);
+      toastError('Erro ao carregar inteligência: ' + message);
     } finally {
-      setIsLoading(false);
+      if (requestId === loadRequestId.current) setIsLoading(false);
     }
   }, [orgId, toastError]);
 
   useEffect(() => {
     loadData();
+    return () => { loadRequestId.current += 1; };
   }, [loadData]);
 
   const handleSave = async (e: React.FormEvent) => {
@@ -186,6 +199,8 @@ export const IntelligencePage: React.FC = () => {
           <Loader2 className="w-7 h-7 animate-spin text-slate-600" />
           <span className="text-xs font-medium">Carregando inteligência do Supabase...</span>
         </div>
+      ) : loadError ? (
+        <ErrorState message={loadError} onRetry={loadData} />
       ) : (
         <>
           {/* Territories Overview */}

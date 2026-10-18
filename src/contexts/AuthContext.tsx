@@ -26,6 +26,7 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   organization: Organization | null;
+  organizations: Organization[];
   permissions: UserModulePermission[];
   isLoading: boolean;
   isConfigured: boolean;
@@ -37,6 +38,7 @@ interface AuthContextType {
   resetPassword: (email: string) => Promise<{ error: AuthError | Error | null }>;
   updatePassword: (password: string) => Promise<{ error: AuthError | Error | null }>;
   updateProfile: (data: Partial<Profile>) => Promise<{ error: Error | null }>;
+  switchOrganization: (orgId: string) => Promise<void>;
   hasPermission: (module: AppModule, action?: 'view' | 'create' | 'edit' | 'delete') => boolean;
   getDefaultRoute: () => string;
   refreshUserData: () => Promise<void>;
@@ -141,11 +143,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const isSigningInRef = useRef<boolean>(false);
-  const signOutGenerationRef = useRef(0);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [organization, setOrganization] = useState<Organization | null>(null);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [permissions, setPermissions] = useState<UserModulePermission[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [profileError, setProfileError] = useState<string | null>(null);
@@ -258,6 +260,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       setOrganization(loadedOrg);
 
+      try {
+        const { data: allOrgs } = await withTimeout(
+          organizationsService.getAll(),
+          5000,
+          'Tempo limite ao listar organizações'
+        );
+        if (!isCurrent()) return empty;
+        setOrganizations(allOrgs || (loadedOrg ? [loadedOrg] : []));
+      } catch {
+        if (!isCurrent()) return empty;
+        setOrganizations(loadedOrg ? [loadedOrg] : []);
+      }
+
       let loadedPerms: UserModulePermission[] = [];
       if (activeProfile?.id) {
         try {
@@ -282,6 +297,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Clear cached access and never provision a tenant on this path.
       setProfile(null);
       setOrganization(null);
+      setOrganizations([]);
       setPermissions([]);
       setProfileError(err?.message || 'Erro inesperado ao carregar perfil.');
       setInitializationError(err?.message || 'Erro inesperado ao carregar sessão.');
@@ -300,6 +316,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     inFlightPromiseRef.current = null;
     setProfile(null);
     setOrganization(null);
+    setOrganizations([]);
     setPermissions([]);
   };
 
@@ -317,7 +334,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     let isMounted = true;
-    let authEventGeneration = 0;
+    let hasNewAuthEvent = false;
     const watchdog = setTimeout(() => {
       if (isMounted) {
         setIsLoading((currentLoading) => currentLoading ? false : false);
@@ -326,7 +343,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, 10000);
 
     async function initAuth() {
-      const generation = authEventGeneration;
       if (!isSupabaseConfigured) {
         clearTimeout(watchdog);
         if (isMounted) setIsLoading(false);
@@ -334,7 +350,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       try {
         const { data, error } = await withTimeout(supabase.auth.getSession(), 7000, 'Tempo limite excedido ao recuperar sessão do Supabase');
-        if (!isMounted || generation !== authEventGeneration) return;
+        // A newer auth event is authoritative over this initial snapshot.
+        if (!isMounted || hasNewAuthEvent) return;
         if (error) setInitializationError(error.message);
         if (isMounted) {
           const currentSession = data?.session || null;
@@ -343,10 +360,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (currentSession?.user) await loadUserDataSafe(currentSession.user);
         }
       } catch (err: any) {
-        if (isMounted && generation === authEventGeneration) setInitializationError(err?.message || 'Falha ao inicializar a autenticação.');
+        if (isMounted && !hasNewAuthEvent) setInitializationError(err?.message || 'Falha ao inicializar a autenticação.');
       } finally {
         clearTimeout(watchdog);
-        if (isMounted && generation === authEventGeneration) setIsLoading(false);
+        if (isMounted && !hasNewAuthEvent) setIsLoading(false);
       }
     }
 
@@ -354,12 +371,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (!isMounted) return;
       if (event !== 'INITIAL_SESSION') {
-        authEventGeneration++;
+        hasNewAuthEvent = true;
         clearTimeout(watchdog);
       }
-      if (event === 'INITIAL_SESSION' && authEventGeneration !== 0) return;
-      if (event === 'SIGNED_OUT') signOutGenerationRef.current++;
-      if (isSigningInRef.current && event !== 'SIGNED_OUT') {
+      if (isSigningInRef.current) {
         if (newSession?.user) {
           setUser(newSession.user);
           setSession(newSession);
@@ -401,38 +416,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [loadUserDataSafe]);
 
   const refreshUserData = async () => {
+    let generation = loadGenerationRef.current;
+    const isCurrent = () => generation === loadGenerationRef.current;
     setIsLoading(true);
     setInitializationError(null);
     setProfileError(null);
     try {
       if (user) {
-        await loadUserDataSafe(user);
+        const loading = loadUserDataSafe(user);
+        generation = loadGenerationRef.current;
+        await loading;
       } else {
-        const generation = loadGenerationRef.current;
-        const { data } = await withTimeout(supabase.auth.getSession(), 7000, 'Tempo limite ao recuperar sessão');
-        if (generation !== loadGenerationRef.current) return;
+        const { data, error } = await withTimeout(supabase.auth.getSession(), 7000, 'Tempo limite ao recuperar sessão');
+        if (!isCurrent()) return;
+        if (error) throw error;
         if (data?.session?.user) {
           setUser(data.session.user);
           setSession(data.session);
-          await loadUserDataSafe(data.session.user);
+          const loading = loadUserDataSafe(data.session.user);
+          generation = loadGenerationRef.current;
+          await loading;
         }
       }
     } catch (err: any) {
-      setInitializationError(err?.message || 'Falha ao recarregar dados do usuário.');
+      if (isCurrent()) setInitializationError(err?.message || 'Falha ao recarregar dados do usuário.');
     } finally {
-      setIsLoading(false);
+      if (isCurrent()) setIsLoading(false);
     }
   };
 
   const signIn = async (email: string, password: string): Promise<{ error: AuthError | Error | null; defaultRoute?: string }> => {
-    const signOutGeneration = signOutGenerationRef.current;
     isSigningInRef.current = true;
     setIsLoading(true);
     setInitializationError(null);
     setProfileError(null);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-      if (signOutGeneration !== signOutGenerationRef.current) return { error: new Error('Login cancelado porque a sessão foi encerrada.') };
       if (error) {
         logAuthError('signIn', error);
         return { error };
@@ -441,7 +460,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(data.user);
         setSession(data.session);
         const { profile: loadedProfile, organization: loadedOrg, permissions: loadedPerms } = await loadUserDataSafe(data.user);
-        if (signOutGeneration !== signOutGenerationRef.current) return { error: new Error('Login cancelado porque a sessão foi encerrada.') };
         if (!loadedProfile || loadedProfile.is_blocked || !loadedOrg || loadedOrg.id !== loadedProfile.organization_id) {
           await supabase.auth.signOut();
           setUser(null);
@@ -557,7 +575,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    signOutGenerationRef.current++;
     isSigningInRef.current = false;
     invalidateUserData();
     try {
@@ -607,6 +624,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const switchOrganization = async (orgId: string) => {
+    if (!user || !isValidUUID(orgId)) return;
+    try {
+      const { error } = await profilesService.update(user.id, { organization_id: orgId });
+      if (error) throw error;
+      await refreshUserData();
+    } catch (err: any) {
+      setProfileError(err?.message || 'Falha ao alterar organização.');
+    }
+  };
+
   const hasPermission = (module: AppModule, action: 'view' | 'create' | 'edit' | 'delete' = 'view') =>
     checkUserPermission(profile, permissions, module, action);
 
@@ -619,6 +647,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         session,
         profile,
         organization,
+        organizations,
         permissions,
         isLoading,
         isConfigured: isSupabaseConfigured,
@@ -630,6 +659,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         resetPassword,
         updatePassword,
         updateProfile,
+        switchOrganization,
         hasPermission,
         getDefaultRoute,
         refreshUserData,
@@ -639,10 +669,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     </AuthContext.Provider>
   );
 };
-
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) throw new Error('useAuth deve ser usado dentro de AuthProvider');
   return context;
 };
+
 

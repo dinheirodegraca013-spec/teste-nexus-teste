@@ -30,12 +30,12 @@ export const Modal: React.FC<ModalProps> = ({
     const focusableSelector = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
     const dialog = dialogRef.current;
     const focusFirst = () => {
-      const firstFocusable = dialog?.querySelector<HTMLElement>(focusableSelector);
-      (firstFocusable || dialog)?.focus();
+      dialog?.focus();
     };
-    const focusTimer = window.setTimeout(focusFirst, 0);
+    focusFirst();
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        e.preventDefault();
         onClose();
         return;
       }
@@ -48,17 +48,16 @@ export const Modal: React.FC<ModalProps> = ({
       }
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
+      if (e.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
         e.preventDefault();
         last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
+      } else if (!e.shiftKey && (document.activeElement === last || document.activeElement === dialog)) {
         e.preventDefault();
         first.focus();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => {
-      window.clearTimeout(focusTimer);
       window.removeEventListener('keydown', handleKeyDown);
       restoreFocusRef.current?.focus();
       restoreFocusRef.current = null;
@@ -91,7 +90,7 @@ export const Modal: React.FC<ModalProps> = ({
             transition={{ duration: 0.15 }}
             className={`relative w-full ${maxWidthClass} bg-white border border-slate-200 rounded-2xl shadow-2xl p-6 z-10 overflow-hidden text-left text-slate-900`}
             role="dialog"
-            aria-modal="true"
+            aria-modal={true}
             aria-labelledby={titleId}
             aria-describedby={description ? descriptionId : undefined}
             tabIndex={-1}
