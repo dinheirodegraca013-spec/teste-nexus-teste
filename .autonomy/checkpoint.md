@@ -101,3 +101,4 @@
 - 2026-10-18: a Edge Function de convite agora remove o usuário Auth criado quando a inserção do perfil falha; se a limpeza também falhar, o incidente fica registrado para intervenção técnica. Suíte 222/222, lint e build aprovados.
 - 2026-10-18: o provisionamento via RPC agora exige retorno de organização UUID válido; respostas vazias ou inválidas não são tratadas como sucesso. Suíte 222/222, lint e build aprovados.
 - 2026-10-18: `organizationsService.update` passou a enviar somente `name` e `settings`, rejeitando payload vazio e impedindo alterações client-side de `id`, `plan` ou outros campos protegidos. Suíte 223/223, lint e build aprovados.
+- 2026-10-18: auditoria read-only confirmou que `organizations` ainda não possui policy `UPDATE`; script seguro foi preparado em `docs/proposed-migrations/ADD_ORGANIZATIONS_UPDATE_POLICY.sql` e aguarda aprovação específica, sem execução.

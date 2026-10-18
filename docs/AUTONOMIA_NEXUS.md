@@ -1025,3 +1025,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **CORRIGIDO:** `organizationsService.update` agora filtra o payload para os únicos campos editáveis pela interface (`name` e `settings`) e falha quando nenhum campo é informado.
 - **VERIFICADO:** 223/223 testes, lint e build aprovados localmente. A policy SQL de atualização permanece pendente de aprovação específica.
+
+## Ciclo autônomo — 2026-10-18: policy de atualização de organizações
+
+- **CONFIRMADO:** auditoria read-only do DEV confirmou ausência de policy `UPDATE` em `public.organizations`, embora a interface use essa operação em Configurações e Onboarding.
+- **PREPARADO:** script restrito a administradores do próprio tenant em `docs/proposed-migrations/ADD_ORGANIZATIONS_UPDATE_POLICY.sql`.
+- **PENDENTE:** execução somente após aprovação específica; nenhum SQL foi aplicado.
