@@ -1916,3 +1916,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **MELHORIA:** removido o gatilho `push` exclusivo da branch `fix/persist-rbac-permissions`; a validação continua automática no `pull_request` para `main`, no `push` de `main` e manualmente.
 - **VALIDAÇÃO:** `npm test` 301/301, lint, build e diff-check aprovados. No head `2ab2f10`, Vercel Preview, typecheck/build, Edge Functions, GitGuardian e feedback do preview passaram; Supabase Preview foi `skipped` por ausência de branch associada.
 - **OBJETIVO:** evitar duas execuções para o mesmo commit e reduzir consumo de CI sem retirar cobertura do PR.
+
+## Ciclo autônomo — 2026-10-19: perímetro documental do Supabase
+
+- **CORRIGIDO:** oito documentos históricos que citavam o projeto antigo agora estão marcados explicitamente como não operacionais e apontam o DEV atual `qwvbvqlzcyfkuszxrlgv`.
+- **VALIDAÇÃO:** busca direcionada confirmou que código, scripts E2E, migrations atuais e contratos usam o identificador autorizado; referências antigas restantes estão contextualizadas como histórico/proposta.

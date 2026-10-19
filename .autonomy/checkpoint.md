@@ -305,4 +305,5 @@
 - 2026-10-19: validações de entrada e parsing de convite deixaram de registrar valores fornecidos; suíte 301/301, lint/build/diff-check aprovados; CI do head `6e2bd0d` verde.
 - 2026-10-19: `SettingsPage` deixou de declarar RLS validado sem prova; suíte 301/301, lint/build/diff-check aprovados; CI do head `487ffe8` verde, Vercel segue rate-limited.
 - 2026-10-19: removido push duplicado da branch de desenvolvimento; PR/main/manual continuam cobertos; head `2ab2f10` passou CI e Vercel Preview.
+- 2026-10-19: referências antigas do Supabase foram marcadas como históricas; código e testes seguem no DEV `qwvbvqlzcyfkuszxrlgv`; diff-check aprovado.
 - 2026-10-19: auditoria de dependências e busca direcionada por segredos/TODOs sem achados acionáveis; `npm audit --omit=dev --audit-level=moderate` reportou 0 vulnerabilidades; árvore limpa.
