@@ -173,7 +173,7 @@ export const profilesService = {
         message: `organization_id inválido ou ausente: "${String(profile.organization_id)}". Um UUID válido é estritamente obrigatório para criar o perfil.`,
         code: 'INVALID_ORGANIZATION_UUID',
       };
-      console.error('[NEXUS PROFILE] INSERT_BLOCKED_INVALID_ORG_UUID', uuidErr);
+      console.error('[NEXUS PROFILE] INSERT_BLOCKED_INVALID_ORG_UUID', { code: uuidErr.code });
       return { data: null, error: uuidErr as any };
     }
 
@@ -184,7 +184,7 @@ export const profilesService = {
         message: `id de usuário inválido: "${profile.id || ''}". Um UUID válido é estritamente obrigatório para criar o perfil.`,
         code: 'INVALID_USER_UUID',
       };
-      console.error('[NEXUS PROFILE] INSERT_BLOCKED_INVALID_USER_UUID', uuidErr);
+      console.error('[NEXUS PROFILE] INSERT_BLOCKED_INVALID_USER_UUID', { code: uuidErr.code });
       return { data: null, error: uuidErr as any };
     }
 
@@ -401,7 +401,7 @@ export const membersService = {
         message: `organization_id inválido para convite: "${String(params.organization_id)}". Um UUID válido é obrigatório.`,
         code: 'INVALID_ORGANIZATION_UUID',
       };
-      console.error('[NEXUS MEMBERS] INVITE_BLOCKED_INVALID_ORG_UUID', validationError);
+      console.error('[NEXUS MEMBERS] INVITE_BLOCKED_INVALID_ORG_UUID', { code: validationError.code });
       return { data: null, error: validationError as any };
     }
 

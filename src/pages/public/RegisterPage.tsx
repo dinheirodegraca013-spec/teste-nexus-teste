@@ -90,7 +90,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
           }
         }
       } catch (e) {
-        console.error('Error parsing invite params', e);
+        console.error('Error parsing invite params');
       } finally {
         setInviteDetailsReady(true);
       }
