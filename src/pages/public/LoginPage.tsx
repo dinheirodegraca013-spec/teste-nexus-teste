@@ -34,7 +34,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
       setErrorMessage(result.error.message || 'Credenciais inválidas. Verifique seu e-mail e senha.');
       toastError(result.error.message || 'Erro ao autenticar: Credenciais inválidas.');
     } else {
-      console.log('[NEXUS FLOW] LOGIN_SUCCESS', { email: email.trim().replace(/(.{2})(.*)(@.*)/, '$1***$3') });
+      console.log('[NEXUS FLOW] LOGIN_SUCCESS');
       success('Sessão iniciada com sucesso!');
       const targetRoute = result.defaultRoute || getDefaultRoute();
       const safeTarget = targetRoute && targetRoute !== '/login' ? targetRoute : '/app/dashboard';

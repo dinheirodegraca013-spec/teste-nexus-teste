@@ -1962,3 +1962,14 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - `nexus_bootstrap_schema` e `nexus_private_storage` estão aplicados no banco com versões de registro diferentes dos nomes locais, embora correspondam aos arquivos versionados.
 - `20261019000000_add_atomic_goal_increment` existe localmente e ainda não consta no banco; permanece como migration pendente/proposta.
 - **LIMITE:** não alterei o histórico do Supabase nem apliquei a migration pendente.
+
+## Ciclo autônomo — 2026-10-19: privacidade do log de login
+
+- **Escopo único:** corrigir exposição de e-mail no evento `LOGIN_SUCCESS`, na branch atual `fix/persist-rbac-permissions` (HEAD inicial `481a2ad`; árvore inicialmente limpa).
+- **CONFIRMADO:** a máscara preservava o domínio em todos os casos e não mascarava endereços com um único caractere antes de `@`. Reprodução executando o componente real com fronteiras mockadas e endereços sintéticos `*.invalid`, sem rede nem dados reais.
+- **CORRIGIDO:** `src/pages/public/LoginPage.tsx` registra somente o evento de sucesso, sem e-mail. `tests/login-log-privacy.test.mjs` verifica ausência de domínio, campo de e-mail e senha nos logs, além de sucesso, término do carregamento e navegação para a rota autenticada.
+- **REPROVADO antes da correção (esperado):** `node tests/login-log-privacy.test.mjs` falhou nos dois cenários por `Email domain must not appear in logs`. A primeira tentativa de montar o teste teve erro de aspas no mock, corrigido antes da reprodução funcional.
+- **APROVADO após a correção:** `node tests/login-log-privacy.test.mjs` (2/2 cenários); `node --test tests/login-log-privacy.test.mjs`; `npm test` (44 arquivos reportados pelo executor, zero falhas); `npm run lint`; `npm run build`; `git diff --check`.
+- **NÃO VERIFICADO:** E2E autenticado no navegador, CI remoto e preview; os mocks não comprovam autenticação ou RLS no servidor. Nenhum acesso ao banco, migration, deploy, merge, workflow, segredo ou arquivo de ambiente foi realizado/alterado.
+- **Documentação:** `ESCOPO.md`, `BACKLOG.md`, `ESTADO.md`, `TESTES.md` e `AUDITORIA.md` não existem na raiz; evidências concentradas neste registro persistente, preservando o histórico.
+- **Próxima ação:** executar homologação de login/convite e isolamento com contas sintéticas de teste em ambiente autorizado; depende de credenciais e ambiente de teste disponíveis. Não inferir homologação completa a partir destes testes locais.
