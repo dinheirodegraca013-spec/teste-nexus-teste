@@ -1533,3 +1533,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **APROVADO:** PR checks confirmaram Vercel, preview comments, typecheck/build, Edge Functions e GitGuardian como `success`.
 - **NÃO APLICÁVEL:** Supabase Preview permaneceu `skipped` por ausência de Supabase Branch associada.
+
+## Ciclo autônomo — 2026-10-19: validação local do marco
+
+- **APROVADO:** `npm test` passou com 277/277 testes; `npm run lint`, `npm run build` e `git diff --check` também passaram.
+- **OBSERVAÇÃO:** os testes locais exibem apenas o aviso esperado quando as variáveis Vite não existem no ambiente do executor; o preview Vercel possui essas variáveis configuradas.
