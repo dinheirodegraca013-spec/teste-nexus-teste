@@ -1618,6 +1618,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **NÃO APLICÁVEL:** Supabase Preview foi ignorado porque a branch não está associada a uma branch Supabase.
 - **PENDÊNCIA EXTERNA:** Vercel permanece `failure` por limite temporário de deploy; nenhum deploy foi forçado.
 
+## Ciclo autônomo — 2026-10-19: auditoria de navegação externa
+
+- **APROVADO:** aberturas externas de WhatsApp usam URL fixa, `encodeURIComponent` e `noopener,noreferrer`; não foram encontrados redirects controlados por entrada nem `target="_blank"` desprotegido.
+- **CORRIGIDO:** botões nativos restantes sem `type` receberam `type="button"`.
+- **TESTE:** `npm test` passou 290/290; lint, build e `git diff --check` aprovados.
+
 ## Ciclo autônomo — 2026-10-19: revisão CI do head `3cc0b20`
 
 - **APROVADO:** Typecheck/build de produção, Edge Functions e GitGuardian concluíram com sucesso; nenhum segredo foi detectado.
