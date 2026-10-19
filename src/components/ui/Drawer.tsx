@@ -103,6 +103,7 @@ export const Drawer: React.FC<DrawerProps> = ({
                   {description && <p id={descriptionId} className="text-xs text-slate-500 mt-1">{description}</p>}
                 </div>
                 <button
+                  type="button"
                   onClick={onClose}
                   aria-label="Fechar painel"
                   className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"

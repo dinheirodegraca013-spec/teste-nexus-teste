@@ -254,3 +254,4 @@
 - 2026-10-19: corrigidos marca e perfil clicáveis da `Sidebar`; contrato e suíte 284/284, lint/build/diff-check aprovados. Vercel segue rate-limited.
 - 2026-10-19: revisão externa do head `ca6d8cf` aprovou Vercel, build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped` sem branch associada.
 - 2026-10-19: auditoria estática não encontrou injeção HTML, eval ou URLs externas inseguras; WhatsApp usa encoding e noopener. `npm audit --omit=dev` encontrou 0 vulnerabilidades.
+- 2026-10-19: botões compartilhados passaram a declarar `type="button"` por padrão; suíte 285/285, lint/build/diff-check aprovados.

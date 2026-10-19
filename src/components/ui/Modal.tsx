@@ -107,6 +107,7 @@ export const Modal: React.FC<ModalProps> = ({
                 {description && <p id={descriptionId} className="text-xs text-slate-500 mt-0.5">{description}</p>}
               </div>
               <button
+                type="button"
                 onClick={onClose}
                 aria-label="Fechar janela"
                 className="text-slate-400 hover:text-slate-700 transition-colors p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer"

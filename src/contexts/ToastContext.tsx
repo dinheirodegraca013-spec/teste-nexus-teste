@@ -66,6 +66,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 {toast.message}
               </div>
               <button
+                type="button"
                 onClick={() => removeToast(toast.id)}
                 className="text-slate-400 hover:text-slate-600 transition-colors p-0.5 cursor-pointer"
               >
