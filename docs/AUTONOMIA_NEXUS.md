@@ -1903,3 +1903,10 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **TESTE:** contrato de regressão adicionado; `npm test` passou 301/301, com lint, build e diff-check aprovados.
 - **CI:** typecheck/build, Edge Functions e GitGuardian passaram no head `6e2bd0d`; nenhum segredo foi detectado. Supabase Preview foi `skipped` por ausência de branch associada.
 - **PENDÊNCIA EXTERNA:** Vercel segue rate-limited; não houve deploy manual, merge ou alteração de produção.
+
+## Ciclo autônomo — 2026-10-19: correção da mensagem de RLS
+
+- **CORRIGIDO:** `SettingsPage` não afirma mais que o RLS foi validado apenas porque o frontend está configurado; a tela agora explica que a confirmação depende de políticas e testes no banco.
+- **TESTE:** contrato de isolamento atualizado; `npm test` passou 301/301, com lint, build e diff-check aprovados.
+- **CI:** typecheck/build, Edge Functions e GitGuardian passaram no head `487ffe8`; nenhum segredo foi detectado. Supabase Preview foi `skipped` por ausência de branch associada.
+- **PENDÊNCIA EXTERNA:** Vercel permanece rate-limited; não houve merge, deploy manual ou alteração de produção.
