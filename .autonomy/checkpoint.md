@@ -280,6 +280,7 @@
 - 2026-10-19: CI do head `e2c258c` aprovou build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel segue rate-limited.
 - 2026-10-19: auditoria de `textarea`, `select` e `<img>` sem achados; nenhuma alteração adicional necessária.
 - 2026-10-19: `Input` passou a usar IDs únicos via `useId`; suíte 293/293, lint/build/diff-check aprovados.
+- 2026-10-19: `Select` passou a usar IDs únicos via `useId`; suíte 294/294, lint/build/diff-check aprovados.
 - 2026-10-19: CI do head `e98ba61` aprovou build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel segue rate-limited.
 - 2026-10-19: CI do head `d4c9905` aprovou build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel segue rate-limited.
 - 2026-10-19: revisão do head `c45e6a1` aprovou Vercel Preview, build/typecheck, Edge Functions, GitGuardian e feedback sem pendências; produção inalterada.

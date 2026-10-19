@@ -1652,6 +1652,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **MELHORIA:** contrato de regressão adicionado para garantir associações únicas entre label e campo.
 - **TESTE:** `npm test` passou 293/293; lint, build e `git diff --check` aprovados.
 
+## Ciclo autônomo — 2026-10-19: IDs únicos no Select compartilhado
+
+- **CORRIGIDO:** `Select.tsx` agora usa `useId` para evitar colisões de IDs quando labels se repetem.
+- **MELHORIA:** contrato de regressão adicionado para preservar a associação label/select.
+- **TESTE:** `npm test` passou 294/294; lint, build e `git diff --check` aprovados.
+
 ## Ciclo autônomo — 2026-10-19: revisão CI do head `e98ba61`
 
 - **APROVADO:** typecheck/build, Edge Functions e GitGuardian concluíram com sucesso; nenhum segredo foi detectado.

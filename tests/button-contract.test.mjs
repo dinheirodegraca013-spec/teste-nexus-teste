@@ -69,3 +69,9 @@ test('shared Input generates unique label associations', async () => {
   assert.match(source, /useId/);
   assert.match(source, /generatedId\.replace/);
 });
+
+test('shared Select generates unique label associations', async () => {
+  const source = await readFile(new URL('../src/components/ui/Select.tsx', import.meta.url), 'utf8');
+  assert.match(source, /useId/);
+  assert.match(source, /generatedId\.replace/);
+});
