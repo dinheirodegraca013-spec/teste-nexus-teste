@@ -32,6 +32,13 @@ test('FileUpload dropzone is keyboard accessible', async () => {
   assert.match(source, /onKeyDown=\{handleDropzoneKeyDown\}/);
 });
 
+test('FileUpload label is associated with its hidden input', async () => {
+  const source = await readFile(new URL('../src/components/ui/FileUpload.tsx', import.meta.url), 'utf8');
+  assert.match(source, /useId/);
+  assert.match(source, /<label htmlFor=\{inputId\}/);
+  assert.match(source, /<input[\s\S]*id=\{inputId\}/);
+});
+
 test('EventsPage validates non-negative and consistent attendance values before saving', async () => {
   const source = await readFile(new URL('../src/pages/app/EventsPage.tsx', import.meta.url), 'utf8');
   assert.match(source, /nonNegativeQuantity/);

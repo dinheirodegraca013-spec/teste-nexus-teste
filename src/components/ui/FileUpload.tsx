@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import { UploadCloud, Image, X, FileText, Camera, CheckCircle2 } from 'lucide-react';
 
 interface FileUploadProps {
@@ -25,6 +25,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   className = '',
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const inputId = useId();
   const processGenerationRef = useRef(0);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -168,13 +169,14 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   return (
     <div className={`space-y-1.5 ${className}`}>
       {label && (
-        <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300">
+        <label htmlFor={inputId} className="block text-xs font-semibold text-slate-700 dark:text-zinc-300">
           {label}
         </label>
       )}
 
       <input
         ref={inputRef}
+        id={inputId}
         type="file"
         disabled={disabled}
         accept={accept}
