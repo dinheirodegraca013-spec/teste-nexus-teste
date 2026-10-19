@@ -1910,3 +1910,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **TESTE:** contrato de isolamento atualizado; `npm test` passou 301/301, com lint, build e diff-check aprovados.
 - **CI:** typecheck/build, Edge Functions e GitGuardian passaram no head `487ffe8`; nenhum segredo foi detectado. Supabase Preview foi `skipped` por ausência de branch associada.
 - **PENDÊNCIA EXTERNA:** Vercel permanece rate-limited; não houve merge, deploy manual ou alteração de produção.
+
+## Ciclo autônomo — 2026-10-19: redução de CI redundante
+
+- **MELHORIA:** removido o gatilho `push` exclusivo da branch `fix/persist-rbac-permissions`; a validação continua automática no `pull_request` para `main`, no `push` de `main` e manualmente.
+- **VALIDAÇÃO:** `npm test` 301/301, lint, build e diff-check aprovados. No head `2ab2f10`, Vercel Preview, typecheck/build, Edge Functions, GitGuardian e feedback do preview passaram; Supabase Preview foi `skipped` por ausência de branch associada.
+- **OBJETIVO:** evitar duas execuções para o mesmo commit e reduzir consumo de CI sem retirar cobertura do PR.
