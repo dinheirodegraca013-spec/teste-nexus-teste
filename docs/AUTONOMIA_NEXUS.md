@@ -1450,3 +1450,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **VERIFICADO:** bucket `nexus-evidence-private` permanece privado; SELECT/INSERT/DELETE usam caminho tenant-scoped e extensões `jpg|png|webp`.
 - **ADVISORS:** o achado específico de Storage não reaparece; permanecem somente os avisos já conhecidos de tabelas privadas, funções `SECURITY DEFINER` e leaked-password protection.
 - **TESTES:** `npm test` 274/274, lint e build aprovados; migration versionada no repositório.
+
+## Ciclo autônomo — 2026-10-19: revisão externa do head publicado
+
+- **APROVADO:** no head `2c7d0a8`, Vercel, typecheck/build, Edge Functions e GitGuardian concluíram com `success`.
+- **PENDÊNCIA CONTROLADA:** Supabase Preview ficou `skipped` porque a branch não está associada a um Supabase Branch; o DEV principal já foi verificado separadamente.
+- **ESCOPO:** somente leitura de checks; nenhum deploy, merge, produção ou banco foi alterado.
