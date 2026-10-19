@@ -2009,3 +2009,4 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Banco DEV:** aplicada a migration versionada `fix_private_storage_policy_regex_qwvb` somente no projeto `qwvbvqlzcyfkuszxrlgv`; apenas as três policies `nexus_private_evidence_select/insert/delete` foram recriadas. Bucket continua privado, 5 MiB e MIME JPG/PNG/WebP.
 - **Verificação read-only:** caminho sintético JPG aceito pela regex corrigida e rejeitado pela regex antiga; nenhuma produção/main/dado real alterado.
 - **Validação local:** `npm test` 310/310, `npm run lint`, `npm run build` e `git diff --check` aprovados.
+- **Preview Vercel:** deployment `nexusteste-27nml6cm0-dinheirodegraca013-specs-projects.vercel.app` ficou `READY` no commit `be4b18e`; o endpoint público respondeu HTTP 200. Nenhum alias de produção foi promovido.
