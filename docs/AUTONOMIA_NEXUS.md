@@ -1484,3 +1484,14 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **LOGS:** auditoria estática não encontrou senha, token, segredo ou chave sendo enviados a `console.*`; o único e-mail logado está mascarado.
 
 - **CI DO HEAD `815ba0f`:** typecheck/build, Edge Functions e GitGuardian passaram; o check Vercel reportou apenas rate limit temporário de deployment (`retry in 24 hours`). Nenhum retry ou deploy manual foi feito.
+
+## Ciclo autônomo — 2026-10-19: destino explícito da recuperação de senha
+
+- **TAREFA ÚNICA CONCLUÍDA:** corrigir o destino solicitado ao Auth na recuperação de senha. Checkout inicialmente limpo, branch `fix/persist-rbac-permissions`; nenhuma alteração humana sobrescrita.
+- **DIAGNÓSTICO:** `resetPasswordForEmail` recebia somente o e-mail, ficando dependente do Site URL configurado no servidor em vez da rota existente `/redefinir-senha`. Isso podia levar o usuário à página inicial ou a outra origem após abrir o link.
+- **CORRIGIDO:** `src/contexts/AuthContext.tsx` envia `redirectTo` com a origem atual e `/redefinir-senha`. `tests/auth-profile-loading.test.mjs` executa o método real do contexto com a fronteira Auth mockada, verificando destino e normalização do e-mail sintético.
+- **REPROVADO (RED observado):** `node tests/auth-profile-loading.test.mjs`: 25 aprovados, 1 falho; a chamada recebida não continha `redirectTo`. As tentativas com `node --test` também falharam, mas exibiram apenas o resultado agregado do arquivo neste executor.
+- **APROVADO (GREEN observado):** `node tests/auth-profile-loading.test.mjs`: 26/26; `npm test`: 37 arquivos aprovados, zero falhas no resultado agregado do executor; `npm run lint`; `npm run build`; `git diff --check`.
+- **NÃO VERIFICADO:** entrega de e-mail, allowlist de URLs no Supabase e navegação de recuperação em navegador real. O teste local não comprova esses contratos externos.
+- **PRÓXIMA AÇÃO:** validar o fluxo completo em DEV com conta sintética e confirmar que a allowlist aceita a URL de recuperação da origem de teste. Sem essa evidência, não declarar recuperação E2E homologada.
+- **ESCOPO:** nenhum acesso remoto, SQL, migration aplicada, deploy, merge, workflow, segredo ou arquivo de ambiente alterado. Os arquivos ESCOPO.md, BACKLOG.md, ESTADO.md, TESTES.md e AUDITORIA.md não existem na raiz; evidências preservadas neste registro operacional existente.

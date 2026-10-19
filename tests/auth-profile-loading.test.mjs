@@ -24,7 +24,7 @@ const result = await build({
         };
         export default { useRef, createElement: (_type, props) => { if (props.value) globalThis.__authContext = props.value; return null; } };
       ` : args.path.endsWith('/supabase') ? `
-        export const supabase = { auth: { signOut: async () => ({ error: null }), getSession: () => globalThis.__authProfileTest.session(), onAuthStateChange: callback => { globalThis.__authProfileTest.onChange = callback; return { data: { subscription: { unsubscribe() {} } } }; } }, rpc: (...args) => globalThis.__authProfileTest.rpc(...args) };
+        export const supabase = { auth: { resetPasswordForEmail: (...args) => globalThis.__authProfileTest.resetPassword(...args), signOut: async () => ({ error: null }), getSession: () => globalThis.__authProfileTest.session(), onAuthStateChange: callback => { globalThis.__authProfileTest.onChange = callback; return { data: { subscription: { unsubscribe() {} } } }; } }, rpc: (...args) => globalThis.__authProfileTest.rpc(...args) };
         export const isSupabaseConfigured = true, supabaseUrl = '';
       ` : `
         export const profilesService = { getById: (...args) => globalThis.__authProfileTest.lookup(...args) };
@@ -306,3 +306,25 @@ for (const hasSession of [false, true]) {
   });
 }
 
+
+test('password recovery targets the existing reset page on the current origin', async () => {
+  const previousWindow = globalThis.window;
+  globalThis.window = { location: { origin: 'https://nexus-test.invalid' } };
+  let received;
+  globalThis.__authProfileTest = {
+    resetPassword: async (...args) => { received = args; return { error: null }; },
+  };
+  callbacks.length = states.length = effects.length = 0;
+  AuthProvider({ children: null });
+  try {
+    assert.deepEqual(await globalThis.__authContext.resetPassword(' test@example.invalid '), { error: null });
+    assert.deepEqual(received, ['test@example.invalid', {
+      redirectTo: 'https://nexus-test.invalid/redefinir-senha',
+    }]);
+  } finally {
+    if (previousWindow === undefined) delete globalThis.window;
+    else globalThis.window = previousWindow;
+    delete globalThis.__authProfileTest;
+    delete globalThis.__authContext;
+  }
+});
