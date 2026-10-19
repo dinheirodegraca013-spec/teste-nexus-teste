@@ -1936,3 +1936,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **BLOQUEADO POR AUTORIZAÇÃO:** não apliquei SQL/RLS nem alterei a configuração de Auth. É necessário apresentar scripts específicos e obter aprovação antes de qualquer intervenção privilegiada.
 - **FALHA TRANSITÓRIA:** consulta agregada de logs retornou erro de backend; nenhum retry automático foi feito.
 - **CI:** o head `eae2835` passou Vercel Preview, typecheck/build, Edge Functions e GitGuardian; Supabase Preview ficou `skipped` por ausência de branch associada.
+
+### Disposição técnica dos advisors
+
+- As duas tabelas `private.*_scopes` estão deliberadamente sem policies e sem privilégios para `authenticated`; o contrato SQL exige acesso apenas pelos RPCs privilegiados. Criar policies genéricas reduziria o isolamento.
+- Os cinco RPCs `SECURITY DEFINER` foram desenhados para uso autenticado, mas validam tenant, papel e usuário ativo; o contrato SQL confirma `EXECUTE` para `authenticated` e nega para `anon`. Revogar esses grants sem substituir o fluxo quebraria operações administrativas.
+- A única pendência operacional direta é habilitar **Leaked password protection** no painel de Auth do Supabase DEV. Não há ferramenta de configuração disponível nesta sessão e nenhuma alteração foi simulada.
