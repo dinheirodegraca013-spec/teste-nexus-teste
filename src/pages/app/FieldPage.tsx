@@ -847,6 +847,7 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
               <button
                 type="button"
                 onClick={() => setPreviewImage(null)}
+                aria-label="Fechar visualização da imagem"
                 className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 cursor-pointer"
               >
                 <X className="w-4 h-4" />

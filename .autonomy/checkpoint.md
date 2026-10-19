@@ -259,3 +259,4 @@
 - 2026-10-19: contrato E2E confirmou DEV `qwvb...`, aprovação explícita, duas contas e ausência de logs de segredos; suíte 285/285, lint/build/diff-check aprovados.
 - 2026-10-19: auditoria dos logs frontend confirmou ausência de senha, token, chave e sessão; hostname e erros são os únicos dados de rede registrados.
 - 2026-10-19: menu móvel e limpar busca receberam `aria-label`; suíte 286/286, lint/build/diff-check aprovados.
+- 2026-10-19: fechamentos de previews de imagem receberam `aria-label`; suíte 287/287, lint/build/diff-check aprovados.

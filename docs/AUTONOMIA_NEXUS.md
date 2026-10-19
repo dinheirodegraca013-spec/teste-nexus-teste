@@ -1636,6 +1636,11 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO:** menu móvel e limpeza do campo de busca receberam nomes acessíveis (`aria-label`).
 - **TESTE:** contrato de botões atualizado; `npm test` passou 286/286, com lint, build e diff-check aprovados.
 
+## Ciclo autônomo — 2026-10-19: fechamento de previews de imagem
+
+- **CORRIGIDO:** os botões de fechar previews em `FieldPage`, `PresencePage` e `StickersPage` receberam nomes acessíveis.
+- **TESTE:** contrato de controles atualizado; `npm test` passou 287/287, com lint, build e diff-check aprovados.
+
 ## Ciclo autônomo — 2026-10-19: acessibilidade do upload de evidências
 
 - **CORRIGIDO:** o dropzone de `FileUpload.tsx` agora possui papel de botão, foco por teclado, ativação por Enter/Espaço e estado desabilitado anunciado.

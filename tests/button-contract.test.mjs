@@ -14,3 +14,10 @@ test('icon-only shared controls have accessible names', async () => {
   assert.match(header, /aria-label="Abrir menu de navegação"/);
   assert.match(search, /aria-label="Limpar busca"/);
 });
+
+test('image preview close controls have accessible names', async () => {
+  for (const file of ['FieldPage.tsx', 'StickersPage.tsx', 'PresencePage.tsx']) {
+    const source = await readFile(new URL(`../src/pages/app/${file}`, import.meta.url), 'utf8');
+    assert.match(source, /aria-label="Fechar visualização da imagem"/);
+  }
+});
