@@ -263,4 +263,5 @@
 - 2026-10-19: CI do head `e6e08b7` aprovou Vercel, preview comments, build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped`.
 - 2026-10-19: fechar toast e sair receberam nomes acessíveis; suíte 288/288, lint/build/diff-check aprovados.
 - 2026-10-19: campos nativos operacionais receberam `aria-label`; suíte 289/289, lint/build/diff-check aprovados.
+- 2026-10-19: CI do head `82eb38a` aprovou build/typecheck, Edge Functions e GitGuardian; Vercel rate-limited e Supabase Preview `skipped`.
 - 2026-10-19: CI do head `c34cb36` aprovou build/typecheck, Edge Functions e GitGuardian; Vercel rate-limited por 24h e Supabase Preview `skipped`.
