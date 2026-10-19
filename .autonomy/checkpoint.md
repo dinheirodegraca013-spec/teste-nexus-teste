@@ -277,3 +277,4 @@
 - 2026-10-19: auditoria de navegação externa sem achados; botões nativos restantes receberam `type="button"`; suíte 290/290, lint/build/diff-check aprovados.
 - 2026-10-19: adicionado contrato que exige `type` explícito em botões nativos; suíte 291/291, lint/build/diff-check aprovados.
 - 2026-10-19: revisão do head `c45e6a1` aprovou Vercel Preview, build/typecheck, Edge Functions, GitGuardian e feedback sem pendências; produção inalterada.
+- 2026-10-19: head `b4636d2` manteve build/typecheck, Edge Functions e GitGuardian aprovados; Vercel voltou a rate-limit após commit documental; preview `c45e6a1` segue aprovado.
