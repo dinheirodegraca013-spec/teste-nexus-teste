@@ -256,3 +256,4 @@
 - 2026-10-19: auditoria estática não encontrou injeção HTML, eval ou URLs externas inseguras; WhatsApp usa encoding e noopener. `npm audit --omit=dev` encontrou 0 vulnerabilidades.
 - 2026-10-19: botões compartilhados passaram a declarar `type="button"` por padrão; suíte 285/285, lint/build/diff-check aprovados.
 - 2026-10-19: CI do head `c778a92` aprovou build/typecheck, Edge Functions e GitGuardian; Vercel rate-limited por 24h, Supabase Preview `skipped`.
+- 2026-10-19: contrato E2E confirmou DEV `qwvb...`, aprovação explícita, duas contas e ausência de logs de segredos; suíte 285/285, lint/build/diff-check aprovados.

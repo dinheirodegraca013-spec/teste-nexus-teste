@@ -1621,6 +1621,11 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **BLOQUEIO EXTERNO:** Vercel retornou novamente limite de deployments por 24 horas; nenhum retry ou deploy manual foi realizado.
 - **NÃO APLICÁVEL:** Supabase Preview permaneceu `skipped` sem branch Supabase associada.
 
+## Ciclo autônomo — 2026-10-19: contrato do smoke E2E
+
+- **APROVADO:** o contrato automatizado confirma o projeto DEV atual `qwvbvqlzcyfkuszxrlgv`, exige aprovação explícita, duas contas distintas e não permite impressão de senhas, tokens ou chaves.
+- **TESTE:** contrato E2E e suíte completa passaram 285/285, com lint, build e diff-check aprovados. O smoke autenticado real continua condicionado às variáveis locais de teste.
+
 ## Ciclo autônomo — 2026-10-19: acessibilidade do upload de evidências
 
 - **CORRIGIDO:** o dropzone de `FileUpload.tsx` agora possui papel de botão, foco por teclado, ativação por Enter/Espaço e estado desabilitado anunciado.
