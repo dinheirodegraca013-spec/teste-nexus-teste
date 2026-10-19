@@ -13,9 +13,10 @@ import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { FileUpload } from '../../components/ui/FileUpload';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { uploadPrivateEvidenceDataUrl } from '../../services/privateEvidenceStorage';
 
 export const PresencePage: React.FC = () => {
-  const { organization } = useAuth();
+  const { organization, profile } = useAuth();
   const { success, error: toastError } = useToast();
   const orgId = organization?.id || '';
 
@@ -84,12 +85,19 @@ export const PresencePage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
+      const uploadedPhoto = formData.photo_url
+        ? await uploadPrivateEvidenceDataUrl(orgId, 'presences', formData.photo_url)
+        : { data: null, error: null };
+      if (formData.photo_url && (uploadedPhoto.error || !uploadedPhoto.data)) {
+        toastError(uploadedPhoto.error?.message || 'Não foi possível enviar a foto privada.');
+        return;
+      }
       const { error } = await presenceService.createLog({
         organization_id: orgId,
         name: formData.name.trim(),
         phone: formData.phone.trim() || undefined,
         reference_name: formData.reference_name,
-        photo_url: formData.photo_url || undefined,
+        photo_url: uploadedPhoto.data?.path || undefined,
         attachment_name: formData.attachment_name || undefined,
         status: formData.status,
       });
@@ -282,7 +290,8 @@ export const PresencePage: React.FC = () => {
               <span>Upload de Imagem: Foto da Presença / Lista Assinada</span>
             </label>
             <FileUpload
-              disabled
+              disabled={!['admin', 'superadmin'].includes(profile?.role || '')}
+              value={formData.photo_url}
               accept="image/*"
               maxSizeMB={10}
               onFileSelected={(file, dataUrl) => {

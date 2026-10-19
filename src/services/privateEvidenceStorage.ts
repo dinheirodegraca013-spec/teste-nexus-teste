@@ -111,6 +111,26 @@ export async function uploadPrivateEvidence(
   return { data: { path: key }, error: null };
 }
 
+/**
+ * Converts the local preview produced by FileUpload into a private Storage
+ * object. Data URLs never cross into Postgres; only the tenant-scoped object
+ * key is returned to the operational services.
+ */
+export async function uploadPrivateEvidenceDataUrl(
+  orgId: string, kind: EvidenceKind, dataUrl: string,
+): Promise<StorageResult<EvidenceObject>> {
+  if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/')) {
+    return fail('EVIDENCE_DATA_URL_INVALID', 'A foto selecionada não é uma imagem válida.');
+  }
+  try {
+    const response = await fetch(dataUrl);
+    const blob = await response.blob();
+    return uploadPrivateEvidence(orgId, kind, blob);
+  } catch {
+    return fail('EVIDENCE_PREPARE_FAILED', 'Não foi possível preparar a foto para o Storage privado.');
+  }
+}
+
 export async function getPrivateEvidenceUrl(
   orgId: string, path: string
 ): Promise<StorageResult<{ url: string }>> {

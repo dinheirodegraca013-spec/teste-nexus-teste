@@ -7,7 +7,11 @@ interface FileUploadProps {
   accept?: string;
   value?: string | null;
   fileName?: string | null;
-  onChange: (dataUrl: string | null, fileMeta?: { name: string; size: number; type: string } | null) => void;
+  onChange?: (dataUrl: string | null, fileMeta?: { name: string; size: number; type: string } | null) => void;
+  /** Compatibility callbacks used by the field and operational forms. */
+  onFileSelected?: (file: File, dataUrl: string) => void;
+  onFileRemoved?: () => void;
+  currentFileName?: string;
   maxSizeMB?: number;
   disabled?: boolean;
   className?: string;
@@ -20,6 +24,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   value,
   fileName,
   onChange,
+  onFileSelected,
+  onFileRemoved,
+  currentFileName,
   maxSizeMB = 10,
   disabled = false,
   className = '',
@@ -107,11 +114,13 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     try {
       const result = await compressImage(file);
       if (processGeneration !== processGenerationRef.current) return;
-      onChange(result, {
+      const metadata = {
         name: file.name,
         size: Math.round(result.length * 0.75), // approximate compressed size
         type: file.type.startsWith('image/') ? 'image/jpeg' : file.type,
-      });
+      };
+      onChange?.(result, metadata);
+      onFileSelected?.(file, result);
     } catch {
       if (processGeneration !== processGenerationRef.current) return;
       setError('Erro ao processar imagem. Tente novamente.');
@@ -161,10 +170,12 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       inputRef.current.value = '';
     }
     setError(null);
-    onChange(null, null);
+    onChange?.(null, null);
+    onFileRemoved?.();
   };
 
-  const isImage = value?.startsWith('data:image') || value?.includes('http') || (fileName && /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(fileName));
+  const displayedFileName = fileName || currentFileName;
+  const isImage = value?.startsWith('data:image') || value?.includes('http') || (displayedFileName && /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(displayedFileName));
 
   return (
     <div className={`space-y-1.5 ${className}`}>
@@ -204,7 +215,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-900 dark:text-zinc-100 truncate">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-              <span className="truncate">{fileName || 'Arquivo / Foto anexada'}</span>
+              <span className="truncate">{displayedFileName || 'Arquivo / Foto anexada'}</span>
             </div>
             <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">
               Pronto para envio

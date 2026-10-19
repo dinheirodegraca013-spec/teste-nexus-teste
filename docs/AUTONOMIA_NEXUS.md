@@ -2001,3 +2001,11 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Mobile:** menu lateral recebeu botão de fechamento, área de toque ampliada, fechamento por ESC, bloqueio do scroll do fundo e rolagem independente.
 - **Validação:** `npm test` 308/308, `npm run lint` e `npm run build` aprovados.
 - **Próxima evolução opcional:** adicionar coordenadas aproximadas por território, com revisão de privacidade e aprovação específica de schema/RLS antes de qualquer alteração no Supabase.
+
+## Correção de upload de evidências — 2026-10-19
+
+- **Causa confirmada:** os componentes das abas Campo, Presença e Adesivos estavam com `disabled` permanente; além disso, as policies do bucket privado no DEV ainda usavam regex que rejeitava extensões JPG válidas.
+- **Código corrigido:** `FileUpload` passou a suportar os callbacks usados pelas telas; administradores podem selecionar a foto, que é convertida e enviada ao bucket privado antes do CRUD. O banco recebe somente o caminho tenant-scoped, nunca base64.
+- **Banco DEV:** aplicada a migration versionada `fix_private_storage_policy_regex_qwvb` somente no projeto `qwvbvqlzcyfkuszxrlgv`; apenas as três policies `nexus_private_evidence_select/insert/delete` foram recriadas. Bucket continua privado, 5 MiB e MIME JPG/PNG/WebP.
+- **Verificação read-only:** caminho sintético JPG aceito pela regex corrigida e rejeitado pela regex antiga; nenhuma produção/main/dado real alterado.
+- **Validação local:** `npm test` 310/310, `npm run lint`, `npm run build` e `git diff --check` aprovados.

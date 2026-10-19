@@ -9,6 +9,7 @@ import { Badge } from '../../components/ui/Badge';
 import { FileUpload } from '../../components/ui/FileUpload';
 import { Leader, CarSticker, HouseSticker, CrmContact, FieldPresence } from '../../types';
 import { leadersService, crmService, stickersService, presenceService } from '../../services';
+import { uploadPrivateEvidenceDataUrl } from '../../services/privateEvidenceStorage';
 
 interface FieldPageProps {
   onNavigate?: (path: string) => void;
@@ -229,6 +230,13 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
 
     setIsSubmittingCar(true);
     try {
+      const uploadedPhoto = carPhoto
+        ? await uploadPrivateEvidenceDataUrl(orgId, 'cars', carPhoto)
+        : { data: null, error: null };
+      if (carPhoto && (uploadedPhoto.error || !uploadedPhoto.data)) {
+        toastError(uploadedPhoto.error?.message || 'Não foi possível enviar a foto privada.');
+        return;
+      }
       const { error } = await stickersService.createCarSticker({
         organization_id: orgId,
         plate: carPlate.trim().toUpperCase() || undefined,
@@ -236,7 +244,7 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
         owner_name: carOwnerName.trim(),
         owner_phone: carOwnerPhone.trim() || undefined,
         territory: carTerritory.trim() || currentLeader?.territory || 'Ação de Campo',
-        photo_url: carPhoto || undefined,
+        photo_url: uploadedPhoto.data?.path || undefined,
         attachment_name: carFileName || undefined,
         status: 'applied',
       });
@@ -271,6 +279,13 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
     try {
       const finalAddress = houseAddress.trim() || houseTerritory.trim() || 'Residência autorizada';
       const finalTerritory = houseTerritory.trim() || currentLeader?.territory || 'Bairro Residencial';
+      const uploadedPhoto = housePhoto
+        ? await uploadPrivateEvidenceDataUrl(orgId, 'houses', housePhoto)
+        : { data: null, error: null };
+      if (housePhoto && (uploadedPhoto.error || !uploadedPhoto.data)) {
+        toastError(uploadedPhoto.error?.message || 'Não foi possível enviar a foto privada.');
+        return;
+      }
 
       const { error } = await stickersService.createHouseSticker({
         organization_id: orgId,
@@ -278,7 +293,7 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
         phone: housePhone.trim() || undefined,
         address: finalAddress,
         territory: finalTerritory,
-        photo_url: housePhoto || undefined,
+        photo_url: uploadedPhoto.data?.path || undefined,
         attachment_name: houseFileName || undefined,
         status: 'applied',
       });
@@ -310,12 +325,19 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
 
     setIsSubmittingPresence(true);
     try {
+      const uploadedPhoto = presencePhoto
+        ? await uploadPrivateEvidenceDataUrl(orgId, 'presences', presencePhoto)
+        : { data: null, error: null };
+      if (presencePhoto && (uploadedPhoto.error || !uploadedPhoto.data)) {
+        toastError(uploadedPhoto.error?.message || 'Não foi possível enviar a foto privada.');
+        return;
+      }
       const { error } = await presenceService.createLog({
         organization_id: orgId,
         name: presenceName.trim(),
         phone: presencePhone.trim() || undefined,
         reference_name: activityName.trim() || 'Reunião / Ato Público',
-        photo_url: presencePhoto || undefined,
+        photo_url: uploadedPhoto.data?.path || undefined,
         attachment_name: presenceFileName || undefined,
         status: 'present',
       });
@@ -645,7 +667,8 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
                 <span>Foto de Comprovação da Adesivagem</span>
               </label>
               <FileUpload
-              disabled
+                disabled={!['admin', 'superadmin'].includes(profile?.role || '')}
+                value={carPhoto}
                 accept="image/*"
                 maxSizeMB={8}
                 onFileSelected={(file, dataUrl) => {
@@ -725,7 +748,8 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
                 <span>Foto da Fachada / Portão com Placa ou Adesivo</span>
               </label>
               <FileUpload
-              disabled
+                disabled={!['admin', 'superadmin'].includes(profile?.role || '')}
+                value={housePhoto}
                 accept="image/*"
                 maxSizeMB={8}
                 onFileSelected={(file, dataUrl) => {
@@ -808,7 +832,8 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
               </p>
               
               <FileUpload
-              disabled
+                disabled={!['admin', 'superadmin'].includes(profile?.role || '')}
+                value={presencePhoto}
                 accept="image/*"
                 maxSizeMB={10}
                 onFileSelected={(file, dataUrl) => {

@@ -13,9 +13,10 @@ import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { FileUpload } from '../../components/ui/FileUpload';
+import { uploadPrivateEvidenceDataUrl } from '../../services/privateEvidenceStorage';
 
 export const StickersPage: React.FC = () => {
-  const { organization } = useAuth();
+  const { organization, profile } = useAuth();
   const { success, error: toastError } = useToast();
   const orgId = organization?.id || '';
 
@@ -106,6 +107,13 @@ export const StickersPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
+      const uploadedPhoto = carForm.photo_url
+        ? await uploadPrivateEvidenceDataUrl(orgId, 'cars', carForm.photo_url)
+        : { data: null, error: null };
+      if (carForm.photo_url && (uploadedPhoto.error || !uploadedPhoto.data)) {
+        toastError(uploadedPhoto.error?.message || 'Não foi possível enviar a foto privada.');
+        return;
+      }
       const { error } = await stickersService.createCarSticker({
         organization_id: orgId,
         plate: carForm.plate.trim().toUpperCase() || undefined,
@@ -113,7 +121,7 @@ export const StickersPage: React.FC = () => {
         owner_name: carForm.owner_name.trim(),
         owner_phone: carForm.owner_phone.trim() || undefined,
         territory: carForm.territory.trim() || 'Geral',
-        photo_url: carForm.photo_url || undefined,
+        photo_url: uploadedPhoto.data?.path || undefined,
         attachment_name: carForm.attachment_name || undefined,
         status: carForm.status,
       });
@@ -143,6 +151,13 @@ export const StickersPage: React.FC = () => {
     try {
       const finalAddress = houseForm.address.trim() || houseForm.territory.trim() || 'Residência autorizada';
       const finalTerritory = houseForm.territory.trim() || 'Geral';
+      const uploadedPhoto = houseForm.photo_url
+        ? await uploadPrivateEvidenceDataUrl(orgId, 'houses', houseForm.photo_url)
+        : { data: null, error: null };
+      if (houseForm.photo_url && (uploadedPhoto.error || !uploadedPhoto.data)) {
+        toastError(uploadedPhoto.error?.message || 'Não foi possível enviar a foto privada.');
+        return;
+      }
 
       const { error } = await stickersService.createHouseSticker({
         organization_id: orgId,
@@ -150,7 +165,7 @@ export const StickersPage: React.FC = () => {
         phone: houseForm.phone.trim() || undefined,
         address: finalAddress,
         territory: finalTerritory,
-        photo_url: houseForm.photo_url || undefined,
+        photo_url: uploadedPhoto.data?.path || undefined,
         attachment_name: houseForm.attachment_name || undefined,
         status: houseForm.status,
       });
@@ -514,7 +529,8 @@ export const StickersPage: React.FC = () => {
               <span>Foto do Veículo Adesivado</span>
             </label>
             <FileUpload
-              disabled
+              disabled={!['admin', 'superadmin'].includes(profile?.role || '')}
+              value={carForm.photo_url}
               accept="image/*"
               maxSizeMB={8}
               onFileSelected={(file, dataUrl) => {
@@ -592,7 +608,8 @@ export const StickersPage: React.FC = () => {
               <span>Foto da Fachada com a Placa / Adesivo</span>
             </label>
             <FileUpload
-              disabled
+              disabled={!['admin', 'superadmin'].includes(profile?.role || '')}
+              value={houseForm.photo_url}
               accept="image/*"
               maxSizeMB={8}
               onFileSelected={(file, dataUrl) => {
