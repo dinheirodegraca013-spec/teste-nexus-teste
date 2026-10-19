@@ -24,7 +24,7 @@ const goalPercent = (reached: number, target: number | null): number | null =>
 export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
   const { organization, profile } = useAuth();
   const { success, error: toastError } = useToast();
-  const orgId = organization?.id || '';
+  const orgId = profile?.organization_id || '';
 
   const [leaders, setLeaders] = useState<Leader[]>([]);
   const [activeTab, setActiveTab] = useState<'contact' | 'cars' | 'houses' | 'presence'>('contact');
