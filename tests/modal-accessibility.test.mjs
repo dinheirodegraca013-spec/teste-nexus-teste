@@ -94,6 +94,9 @@ test('modal focuses on open, traps Tab, handles Escape and restores focus', () =
       keydown({ key: name, shiftKey, preventDefault() { prevented = true; } });
       return prevented;
     };
+    globalThis.document.activeElement = { focus() {} };
+    assert.equal(key('Tab'), true);
+    assert.equal(globalThis.document.activeElement, first);
     assert.equal(key('Tab', true), true);
     assert.equal(globalThis.document.activeElement, last);
     assert.equal(key('Tab'), true);

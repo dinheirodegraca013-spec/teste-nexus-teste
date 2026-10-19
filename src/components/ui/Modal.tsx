@@ -48,6 +48,11 @@ export const Modal: React.FC<ModalProps> = ({
       }
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
+      if (!dialog.contains(document.activeElement)) {
+        e.preventDefault();
+        (e.shiftKey ? last : first).focus();
+        return;
+      }
       if (e.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
         e.preventDefault();
         last.focus();
