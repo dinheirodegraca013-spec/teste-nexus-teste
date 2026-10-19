@@ -244,3 +244,4 @@
 - 2026-10-19: corrigido escape de foco no `Modal`; regressão e suíte 277/277, lint e build aprovados; commit `516e674` enviado.
 - 2026-10-19: corrigido escape de foco também no `Drawer`; suíte 277/277, lint e build aprovados; commit `dcb60f1` enviado.
 - 2026-10-19: checks do head `7c0ab8d` confirmaram build/typecheck, Edge e GitGuardian; Vercel segue rate-limited sem retry.
+- 2026-10-19: advisor de performance read-only reportou 11 índices sem uso e 2 pares de policies permissivas; nenhuma remoção/consolidação automática.

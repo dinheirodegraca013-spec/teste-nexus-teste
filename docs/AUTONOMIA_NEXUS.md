@@ -1565,3 +1565,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **APROVADO:** no head `7c0ab8d`, typecheck/build, Edge Functions e GitGuardian passaram; o job de build inicialmente em andamento também concluiu `success`.
 - **BLOQUEADO EXTERNO:** Vercel continua rate-limited por 24 horas; nenhum retry ou promoção foi realizado.
+
+## Ciclo autônomo — 2026-10-19: performance DEV
+
+- **READ-ONLY:** o advisor reportou 11 índices sem uso observado e 2 pares de policies permissivas (`profiles` UPDATE e `user_module_permissions` SELECT).
+- **DECISÃO:** não remover índices nem consolidar policies automaticamente; falta evidência de carga e qualquer ajuste seria SQL estrutural com risco de isolamento/performance. Itens permanecem para revisão específica.
