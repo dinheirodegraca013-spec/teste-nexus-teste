@@ -1587,3 +1587,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **APROVADO:** no head `0a49bc7`, Edge Functions, typecheck/build e GitGuardian concluíram `success`.
 - **NÃO APLICÁVEL:** Supabase Preview ficou `skipped` por ausência de branch Supabase associada.
 - **BLOQUEADO EXTERNO:** Vercel continua rate-limited; não houve retry nem promoção.
+
+## Ciclo autônomo — 2026-10-19: acessibilidade de login e cadastro
+
+- **CORRIGIDO:** os logotipos clicáveis de `LoginPage.tsx` e `RegisterPage.tsx` passaram de `div` para botões semânticos, com nome acessível e foco visível.
+- **TESTE:** contrato público atualizado; `npm test` passou 281/281, com lint, build e diff-check aprovados.
+- **PENDÊNCIA EXTERNA:** Vercel permanece temporariamente rate-limited; nenhuma promoção ou alteração remota foi feita.
