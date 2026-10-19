@@ -1473,4 +1473,6 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO:** falhas de provisionamento após `signUp` agora encerram a sessão Auth criada e limpam tenant, perfil e permissões antes de retornar erro.
 - **TESTE:** regressão adicionada; suíte `276/276`, lint, build e diff-check aprovados.
 
+- **CI CONFIRMADO:** o head `afe5aa5` concluiu typecheck/build, Edge Functions e GitGuardian com `success`; Supabase Preview permaneceu `skipped` sem branch associada. Vercel segue apenas com rate limit temporário.
+
 - **CI DO HEAD `815ba0f`:** typecheck/build, Edge Functions e GitGuardian passaram; o check Vercel reportou apenas rate limit temporário de deployment (`retry in 24 hours`). Nenhum retry ou deploy manual foi feito.

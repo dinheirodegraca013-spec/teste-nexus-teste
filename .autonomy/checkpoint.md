@@ -222,4 +222,5 @@
 - 2026-10-19: reconciliada localmente a RPC `nexus_increment_goal` ausente do histórico de migrations; contrato versionado sem execução remota. `npm test` 275/275, lint e build aprovados.
 - 2026-10-19: CI do head `815ba0f` aprovou build/typecheck, Edge Functions e GitGuardian; Vercel ficou rate-limited por 24h. Sem retry/deploy manual.
 - 2026-10-19: corrigido cadastro que mantinha sessão parcial quando provisionamento falhava; regressão adicionada. `npm test` 276/276, lint e build aprovados.
+- 2026-10-19: CI do head `afe5aa5` finalizou com build/typecheck, Edge Functions e GitGuardian aprovados; Supabase Preview skipped e Vercel rate-limited.
 - 2026-10-19: marcadas como legado/DO NOT EXECUTE quatro propostas SQL que apontavam ao projeto antigo `qidstqsbxwkbkwowhpab`; scripts atuais do DEV permanecem separados. Nenhum SQL remoto executado.
