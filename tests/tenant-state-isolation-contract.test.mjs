@@ -51,6 +51,15 @@ test('atomic goal increment migration is tenant-scoped and does not expose publi
   assert.match(source, /GRANT EXECUTE ON FUNCTION public\.nexus_increment_goal/);
 });
 
+test('versioned goal RPC keeps the privileged execution contract', async () => {
+  const source = await readFile(new URL('../supabase/migrations/20261019000000_add_atomic_goal_increment.sql', import.meta.url), 'utf8');
+  assert.match(source, /SECURITY DEFINER/);
+  assert.match(source, /SET search_path = ''/);
+  assert.match(source, /organization_id = v_org/);
+  assert.match(source, /REVOKE ALL ON FUNCTION public\.nexus_increment_goal\(uuid, integer\) FROM PUBLIC, anon/);
+  assert.match(source, /GRANT EXECUTE ON FUNCTION public\.nexus_increment_goal\(uuid, integer\) TO authenticated, service_role/);
+});
+
 test('WhatsApp invite windows cannot access the opener', async () => {
   for (const file of ['CoordinatorsPage.tsx', 'LeadersPage.tsx']) {
     const source = await readFile(new URL(`../src/pages/app/${file}`, import.meta.url), 'utf8');

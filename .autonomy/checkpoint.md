@@ -219,3 +219,4 @@
 - 2026-10-19: Code Review do head `2c7d0a8` confirmou Vercel, typecheck/build, Edge Functions e GitGuardian `success`; Supabase Preview `skipped` por ausência de branch associada. Nenhuma alteração remota.
 - 2026-10-19: corrigidos os cabeçalhos dos dois contratos SQL ativos em `supabase/tests` para apontar somente ao DEV `qwvbvqlzcyfkuszxrlgv`; `npm test` 274/274, lint, build e diff-check aprovados. Próximo foco: revisar os advisories estruturais sem executar SQL não aprovado.
 - 2026-10-19: Security Advisor read-only confirmou 2 tabelas privadas sem policies, 5 SECURITY DEFINER para authenticated e leaked-password protection desativada; Storage permanece resolvido. Nenhuma alteração estrutural executada.
+- 2026-10-19: reconciliada localmente a RPC `nexus_increment_goal` ausente do histórico de migrations; contrato versionado sem execução remota. `npm test` 275/275, lint e build aprovados.
