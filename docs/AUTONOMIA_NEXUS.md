@@ -1605,6 +1605,11 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **APROVADO:** no head `ca6d8cf`, Vercel, build/typecheck, Edge Functions e GitGuardian concluíram com sucesso; não foram encontrados segredos.
 - **NÃO APLICÁVEL:** Supabase Preview ficou `skipped` porque a branch não está associada a uma branch Supabase; nenhuma associação foi criada.
 
+## Ciclo autônomo — 2026-10-19: auditoria estática de URLs e injeção
+
+- **APROVADO:** não foram encontrados usos de `dangerouslySetInnerHTML`, `innerHTML`, `eval` ou redirecionamentos diretos; as três aberturas de WhatsApp usam domínio fixo, `encodeURIComponent` e `noopener,noreferrer`.
+- **AÇÃO:** nenhuma alteração de código necessária; dependências de produção permanecem sem vulnerabilidades moderadas ou superiores.
+
 ## Ciclo autônomo — 2026-10-19: acessibilidade do upload de evidências
 
 - **CORRIGIDO:** o dropzone de `FileUpload.tsx` agora possui papel de botão, foco por teclado, ativação por Enter/Espaço e estado desabilitado anunciado.
