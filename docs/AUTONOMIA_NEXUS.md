@@ -1501,3 +1501,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **NÃO VERIFICADO:** entrega de e-mail, allowlist de URLs no Supabase e navegação de recuperação em navegador real. O teste local não comprova esses contratos externos.
 - **PRÓXIMA AÇÃO:** validar o fluxo completo em DEV com conta sintética e confirmar que a allowlist aceita a URL de recuperação da origem de teste. Sem essa evidência, não declarar recuperação E2E homologada.
 - **ESCOPO:** nenhum acesso remoto, SQL, migration aplicada, deploy, merge, workflow, segredo ou arquivo de ambiente alterado. Os arquivos ESCOPO.md, BACKLOG.md, ESTADO.md, TESTES.md e AUDITORIA.md não existem na raiz; evidências preservadas neste registro operacional existente.
+
+## Ciclo autônomo — 2026-10-19: validação HTTP do preview público
+
+- **APROVADO:** leitura HTTP de `https://teste-nexus-teste.vercel.app/cadastro` retornou `200 OK` no deployment público, confirmando que a rota está sendo servida.
+- **ESCOPO:** validação somente leitura; não houve automação de navegador, alteração de variáveis, credenciais, banco, produção ou histórico Git.
