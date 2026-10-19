@@ -299,3 +299,4 @@
 - 2026-10-19: auditoria direcionada de logs do frontend sem exposição comprovada de credenciais; `details`/`hint` permanecem como pendência de endurecimento, sem alteração aplicada.
 - 2026-10-19: CI do head `19f5a83` aprovou typecheck/build, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel segue rate-limited.
 - 2026-10-19: `AuthContext` passou a resumir erros sem objetos brutos; suíte 298/298, lint/build/diff-check aprovados; CI do head `0b1dd1b` verde, Vercel segue rate-limited.
+- 2026-10-19: `coreServices` passou a limitar logs de criação de perfil a status/código/mensagem; suíte 299/299, lint/build/diff-check aprovados; CI do head `8e7f0e3` verde.
