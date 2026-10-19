@@ -60,7 +60,7 @@ export const UsersPage: React.FC = () => {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteName, setInviteName] = useState('');
   const [inviteRole, setInviteRole] = useState<UserRole>('operator');
-  const [invitePerms, setInvitePerms] = useState(createDefaultPermissions);
+  const [invitePerms, setInvitePerms] = useState<Record<string, { can_view: boolean; can_edit: boolean; can_delete: boolean }>>(createDefaultPermissions);
 
   // Permission editor state
   const [perms, setPerms] = useState(createDefaultPermissions);
