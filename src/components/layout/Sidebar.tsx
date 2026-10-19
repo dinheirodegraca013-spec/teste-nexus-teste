@@ -144,9 +144,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       >
         {/* Brand / Logo */}
         <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-          <div 
+          <button
+            type="button"
             onClick={() => handleItemClick('/app/dashboard')} 
-            className="flex items-center gap-2.5 cursor-pointer select-none"
+            aria-label="Ir para o dashboard do NEXUS"
+            className="flex items-center gap-2.5 cursor-pointer select-none text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 rounded-lg"
           >
             <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-black tracking-widest text-sm shadow-xs">
               N
@@ -155,7 +157,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="text-sm font-bold tracking-widest text-slate-950">NEXUS</div>
               <div className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">SaaS Operação</div>
             </div>
-          </div>
+          </button>
         </div>
 
         {/* Active organization. Membership changes are managed server-side. */}
@@ -215,9 +217,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* User profile & Logout */}
         <div className="p-3 border-t border-slate-100 bg-white">
           <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200/80">
-            <div 
+            <button
+              type="button"
               onClick={() => handleItemClick('/app/perfil')}
-              className="flex items-center gap-2.5 min-w-0 cursor-pointer flex-1"
+              aria-label="Abrir meu perfil"
+              className="flex items-center gap-2.5 min-w-0 cursor-pointer flex-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 rounded-lg"
             >
               <div className="w-7 h-7 rounded-lg bg-slate-200 text-slate-800 flex items-center justify-center text-xs font-semibold shrink-0 border border-slate-300">
                 {profile?.full_name?.charAt(0) || <User className="w-3.5 h-3.5" />}
@@ -226,7 +230,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <div className="text-xs font-semibold text-slate-900 truncate">{profile?.full_name || 'Usuário'}</div>
                 <div className="text-[10px] text-slate-400 capitalize font-medium">{profile?.role || 'admin'}</div>
               </div>
-            </div>
+            </button>
             <button
               onClick={() => signOut()}
               title="Sair do NEXUS"
