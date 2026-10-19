@@ -1868,3 +1868,10 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **APROVADO:** no head `19f5a83`, typecheck/build, Edge Functions e GitGuardian passaram; nenhum segredo foi detectado.
 - **NÃO APLICÁVEL:** Supabase Preview `skipped`, pois a branch não está associada a uma branch Supabase.
 - **BLOQUEIO EXTERNO:** Vercel continua rate-limited por 24 horas; não houve retry, deploy manual ou merge.
+
+## Ciclo autônomo — 2026-10-19: sanitização de erros de autenticação
+
+- **CORRIGIDO:** `AuthContext` deixou de registrar objetos brutos de falhas de perfil, permissões e provisionamento; os logs agora usam apenas nome, mensagem, código e status.
+- **TESTE:** criado contrato de regressão; `npm test` passou 298/298, com lint, build e diff-check aprovados.
+- **CI:** typecheck/build, Edge Functions e GitGuardian passaram no head `0b1dd1b`; nenhum segredo foi detectado. Supabase Preview foi `skipped` por ausência de branch associada.
+- **PENDÊNCIA EXTERNA:** Vercel permanece rate-limited; não houve deploy manual, merge ou alteração de produção.
