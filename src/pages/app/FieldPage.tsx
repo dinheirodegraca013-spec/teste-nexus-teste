@@ -223,6 +223,10 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
 
   const handleSaveCar = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!orgId) {
+      toastError('Organização não identificada. Recarregue a sessão e tente novamente.');
+      return;
+    }
     if (!carOwnerName.trim()) {
       toastError('Informe o nome do proprietário ou condutor.');
       return;
@@ -270,6 +274,10 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
 
   const handleSaveHouse = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!orgId) {
+      toastError('Organização não identificada. Recarregue a sessão e tente novamente.');
+      return;
+    }
     if (!houseResidentName.trim()) {
       toastError('Informe o nome do morador ou responsável.');
       return;
@@ -318,6 +326,10 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
 
   const handleSavePresence = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!orgId) {
+      toastError('Organização não identificada. Recarregue a sessão e tente novamente.');
+      return;
+    }
     if (!presenceName.trim()) {
       toastError('Informe o nome do participante.');
       return;
