@@ -24,6 +24,8 @@ USING (
 )
 WITH CHECK (
   (
+    private.nexus_is_admin()
+    AND
     organization_id = private.get_auth_org_id()
     AND lower(regexp_replace(coalesce(role, ''), '[[:space:]_-]+', '', 'g')) <> 'superadmin'
   )

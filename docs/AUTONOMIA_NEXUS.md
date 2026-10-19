@@ -1954,6 +1954,7 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **CONFIRMADO:** `profiles` possui duas policies permissivas de `UPDATE` e `user_module_permissions` possui duas de `SELECT` para `authenticated`.
 - **PREPARADO:** `docs/proposed-migrations/CONSOLIDATE_DUPLICATE_RLS_POLICIES.sql` une as regras de `profiles` e remove somente a policy duplicada de permissões, preservando o comportamento tenant-scoped.
+- **ENDURECIDO:** revisão externa apontou uma alternativa de `WITH CHECK` sem verificação administrativa explícita; o script agora exige `private.nexus_is_admin()` nessa alternativa e possui teste estático de regressão.
 - **BLOQUEADO POR AUTORIZAÇÃO:** o script é estrutural/RLS e não foi executado.
 
 ## Reconciliação de migrations — DEV
