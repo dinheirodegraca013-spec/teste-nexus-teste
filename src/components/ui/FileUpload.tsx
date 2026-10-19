@@ -147,6 +147,12 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     }
   };
 
+  const handleDropzoneKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (disabled || (e.key !== 'Enter' && e.key !== ' ')) return;
+    e.preventDefault();
+    inputRef.current?.click();
+  };
+
   const handleRemove = (e: React.MouseEvent) => {
     e.stopPropagation();
     processGenerationRef.current += 1;
@@ -223,10 +229,15 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         </div>
       ) : (
         <div
+          role="button"
+          tabIndex={disabled ? -1 : 0}
+          aria-label={disabled ? 'Upload temporariamente indisponível' : 'Enviar foto ou comprovante'}
+          aria-disabled={disabled}
           onDragOver={disabled ? undefined : handleDragOver}
           onDragLeave={disabled ? undefined : handleDragLeave}
           onDrop={disabled ? undefined : handleDrop}
-          onClick={() => inputRef.current?.click()}
+          onClick={() => { if (!disabled) inputRef.current?.click(); }}
+          onKeyDown={handleDropzoneKeyDown}
           className={`border-2 border-dashed rounded-xl p-4 transition-all text-center ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'} flex flex-col items-center justify-center gap-2 ${
             isDragging
               ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30'

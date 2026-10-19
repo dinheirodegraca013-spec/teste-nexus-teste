@@ -25,6 +25,13 @@ test('FileUpload ignores stale image processing results after replacement or rem
   assert.match(source, /processGenerationRef\.current \+= 1/);
 });
 
+test('FileUpload dropzone is keyboard accessible', async () => {
+  const source = await readFile(new URL('../src/components/ui/FileUpload.tsx', import.meta.url), 'utf8');
+  assert.match(source, /role="button"/);
+  assert.match(source, /tabIndex=\{disabled \? -1 : 0\}/);
+  assert.match(source, /onKeyDown=\{handleDropzoneKeyDown\}/);
+});
+
 test('EventsPage validates non-negative and consistent attendance values before saving', async () => {
   const source = await readFile(new URL('../src/pages/app/EventsPage.tsx', import.meta.url), 'utf8');
   assert.match(source, /nonNegativeQuantity/);

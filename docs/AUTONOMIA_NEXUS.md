@@ -1594,6 +1594,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **TESTE:** contrato público atualizado; `npm test` passou 281/281, com lint, build e diff-check aprovados.
 - **PENDÊNCIA EXTERNA:** Vercel permanece temporariamente rate-limited; nenhuma promoção ou alteração remota foi feita.
 
+## Ciclo autônomo — 2026-10-19: acessibilidade do upload de evidências
+
+- **CORRIGIDO:** o dropzone de `FileUpload.tsx` agora possui papel de botão, foco por teclado, ativação por Enter/Espaço e estado desabilitado anunciado.
+- **TESTE:** contrato de isolamento atualizado; `npm test` passou 283/283, com lint, build e diff-check aprovados.
+- **PENDÊNCIA EXTERNA:** Vercel permanece temporariamente rate-limited; nenhuma promoção ou alteração remota foi feita.
+
 ## Ciclo autônomo — 2026-10-19: acessibilidade do cabeçalho público
 
 - **CORRIGIDO:** o logotipo navegável de `PublicLayout.tsx` passou a ser um botão semântico, com nome acessível e foco visível.
