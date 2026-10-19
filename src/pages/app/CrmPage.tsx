@@ -344,6 +344,7 @@ export const CrmPage: React.FC = () => {
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1.5">
                     <button
+                      type="button"
                       onClick={() => {
                         setSelectedContact(contact);
                         setIsDrawerOpen(true);
@@ -355,6 +356,7 @@ export const CrmPage: React.FC = () => {
                       <Eye className="w-3.5 h-3.5" />
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleOpenModal(contact)}
                       aria-label="Editar"
                       title="Editar"
@@ -363,6 +365,7 @@ export const CrmPage: React.FC = () => {
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleDelete(contact.id)}
                       aria-label="Excluir"
                       title="Excluir"

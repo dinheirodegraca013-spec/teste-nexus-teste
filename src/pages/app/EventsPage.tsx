@@ -343,6 +343,7 @@ export const EventsPage: React.FC = () => {
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1.5">
                     <button
+                      type="button"
                       onClick={() => handleOpenModal(evt)}
                       aria-label="Editar"
                       className="p-1.5 rounded text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
@@ -351,6 +352,7 @@ export const EventsPage: React.FC = () => {
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleDelete(evt.id)}
                       aria-label="Excluir"
                       className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-slate-100 transition-colors cursor-pointer"

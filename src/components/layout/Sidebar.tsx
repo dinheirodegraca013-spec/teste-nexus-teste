@@ -191,6 +191,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   const isActive = currentPath === item.path || currentPath.startsWith(`${item.path}/`);
                   return (
                     <button
+                      type="button"
                       key={item.path}
                       onClick={() => handleItemClick(item.path)}
                       className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${

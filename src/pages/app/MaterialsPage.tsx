@@ -321,6 +321,7 @@ export const MaterialsPage: React.FC = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <button
+                        type="button"
                         onClick={() => handleDeleteItem(mat.id)}
                         aria-label="Excluir"
                         className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-slate-100 transition-colors cursor-pointer"

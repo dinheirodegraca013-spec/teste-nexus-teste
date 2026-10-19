@@ -347,6 +347,7 @@ export const GoalsPage: React.FC = () => {
 
                   <div className="flex items-center gap-1 shrink-0">
                     <button
+                      type="button"
                       onClick={() => handleOpenModal(goal)}
                       aria-label="Editar"
                       className="p-1.5 rounded text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
@@ -355,6 +356,7 @@ export const GoalsPage: React.FC = () => {
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleDelete(goal.id)}
                       aria-label="Excluir"
                       className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-slate-100 transition-colors cursor-pointer"

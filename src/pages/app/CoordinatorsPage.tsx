@@ -413,6 +413,7 @@ export const CoordinatorsPage: React.FC = () => {
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1.5">
                     <button
+                      type="button"
                       onClick={() => handleOpenCoordInvite(coord, 'coord_access')}
                       aria-label="Enviar link de cadastro ao coordenador"
                       title="Enviar link de cadastro ao coordenador"
@@ -421,6 +422,7 @@ export const CoordinatorsPage: React.FC = () => {
                       <Share2 className="w-3.5 h-3.5" />
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleViewDetails(coord)}
                       aria-label="Ver detalhes"
                       title="Ver detalhes"
@@ -429,6 +431,7 @@ export const CoordinatorsPage: React.FC = () => {
                       <Eye className="w-3.5 h-3.5" />
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleOpenCreate(coord)}
                       aria-label="Editar"
                       title="Editar"
@@ -437,6 +440,7 @@ export const CoordinatorsPage: React.FC = () => {
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleDelete(coord.id)}
                       aria-label="Excluir"
                       title="Excluir"

@@ -440,6 +440,7 @@ export const LeadersPage: React.FC = () => {
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1.5">
                       <button
+                        type="button"
                         onClick={() => handleOpenShare(lead)}
                         aria-label="Enviar convite"
                         title="Enviar convite"
@@ -448,6 +449,7 @@ export const LeadersPage: React.FC = () => {
                         <Share2 className="w-3.5 h-3.5" />
                       </button>
                       <button
+                        type="button"
                         onClick={() => {
                           setSelectedLeader(lead);
                           setIsDrawerOpen(true);
@@ -459,6 +461,7 @@ export const LeadersPage: React.FC = () => {
                         <Eye className="w-3.5 h-3.5" />
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleOpenModal(lead)}
                         aria-label="Editar"
                         title="Editar"
@@ -467,6 +470,7 @@ export const LeadersPage: React.FC = () => {
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleDelete(lead.id)}
                         aria-label="Excluir"
                         title="Excluir"

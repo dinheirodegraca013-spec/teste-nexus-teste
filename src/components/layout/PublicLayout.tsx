@@ -35,18 +35,21 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
 
           <nav className="hidden md:flex items-center gap-6 text-xs text-slate-500 font-medium">
             <button
+              type="button"
               onClick={() => onNavigate('/')}
               className={`hover:text-slate-900 transition-colors cursor-pointer ${currentPath === '/' ? 'text-slate-950 font-semibold' : ''}`}
             >
               Visão Geral
             </button>
             <button
+              type="button"
               onClick={() => onNavigate('/termos')}
               className={`hover:text-slate-900 transition-colors cursor-pointer ${currentPath === '/termos' ? 'text-slate-950 font-semibold' : ''}`}
             >
               Termos de Uso
             </button>
             <button
+              type="button"
               onClick={() => onNavigate('/privacidade')}
               className={`hover:text-slate-900 transition-colors cursor-pointer ${currentPath === '/privacidade' ? 'text-slate-950 font-semibold' : ''}`}
             >
@@ -92,10 +95,10 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
           </div>
 
           <div className="flex items-center gap-6">
-            <button onClick={() => onNavigate('/termos')} className="hover:text-slate-900 transition-colors cursor-pointer">
+              <button type="button" onClick={() => onNavigate('/termos')} className="hover:text-slate-900 transition-colors cursor-pointer">
               Termos
             </button>
-            <button onClick={() => onNavigate('/privacidade')} className="hover:text-slate-900 transition-colors cursor-pointer">
+              <button type="button" onClick={() => onNavigate('/privacidade')} className="hover:text-slate-900 transition-colors cursor-pointer">
               Privacidade
             </button>
             <div className="flex items-center gap-1.5 text-slate-600">

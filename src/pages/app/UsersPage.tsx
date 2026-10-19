@@ -343,6 +343,7 @@ export const UsersPage: React.FC = () => {
                   <div className="flex items-center justify-end gap-1.5">
                     {['leader', 'coordinator', 'controller'].includes(member.role) && (
                       <button
+                        type="button"
                         onClick={() => handleOpenScope(member)}
                         aria-label="Vincular liderança ou coordenação"
                         className="p-1.5 rounded text-slate-400 hover:text-indigo-700 hover:bg-indigo-50 transition-colors cursor-pointer"
@@ -352,6 +353,7 @@ export const UsersPage: React.FC = () => {
                       </button>
                     )}
                     <button
+                      type="button"
                       onClick={() => handleOpenPerms(member)}
                       aria-label="Configurar permissões granulares"
                       className="p-1.5 rounded text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"

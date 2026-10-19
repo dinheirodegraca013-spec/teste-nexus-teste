@@ -1606,6 +1606,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **TESTE:** `npm test` passou 290/290; lint, build e `git diff --check` aprovados.
 - **PENDÊNCIA EXTERNA:** Vercel segue rate-limited; nenhuma promoção ou alteração remota foi feita.
 
+## Ciclo autônomo — 2026-10-19: prevenção de submissão acidental
+
+- **CORRIGIDO:** botões nativos com ações de tabela e navegação receberam `type="button"`, evitando submissão involuntária de formulários.
+- **TESTE:** `npm test` passou 290/290; lint, build e `git diff --check` aprovados.
+- **PENDÊNCIA EXTERNA:** Vercel segue rate-limited; nenhuma promoção ou alteração remota foi feita.
+
 ## Ciclo autônomo — 2026-10-19: revisão CI do head `3cc0b20`
 
 - **APROVADO:** Typecheck/build de produção, Edge Functions e GitGuardian concluíram com sucesso; nenhum segredo foi detectado.

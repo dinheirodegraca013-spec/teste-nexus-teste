@@ -272,3 +272,4 @@
 - 2026-10-19: revisão externa do head `084440e` aprovou build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel segue rate-limited.
 - 2026-10-19: exclusões de Inteligência e Materiais receberam nomes acessíveis; suíte 290/290, lint/build/diff-check aprovados; Vercel segue rate-limited.
 - 2026-10-19: CI do head `3cc0b20` aprovou build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel segue rate-limited.
+- 2026-10-19: botões nativos de ações e navegação receberam `type="button"`; suíte 290/290, lint/build/diff-check aprovados; Vercel segue rate-limited.
