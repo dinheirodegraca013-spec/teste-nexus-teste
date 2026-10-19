@@ -245,3 +245,4 @@
 - 2026-10-19: corrigido escape de foco também no `Drawer`; suíte 277/277, lint e build aprovados; commit `dcb60f1` enviado.
 - 2026-10-19: checks do head `7c0ab8d` confirmaram build/typecheck, Edge e GitGuardian; Vercel segue rate-limited sem retry.
 - 2026-10-19: advisor de performance read-only reportou 11 índices sem uso e 2 pares de policies permissivas; nenhuma remoção/consolidação automática.
+- 2026-10-19: reconciliação read-only confirmou 17 migrations remotas e 18 locais; a migration da RPC de metas segue apenas como reconciliação, sem execução remota.

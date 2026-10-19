@@ -1570,3 +1570,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **READ-ONLY:** o advisor reportou 11 índices sem uso observado e 2 pares de policies permissivas (`profiles` UPDATE e `user_module_permissions` SELECT).
 - **DECISÃO:** não remover índices nem consolidar policies automaticamente; falta evidência de carga e qualquer ajuste seria SQL estrutural com risco de isolamento/performance. Itens permanecem para revisão específica.
+
+## Ciclo autônomo — 2026-10-19: reconciliação de migrations
+
+- **CONFIRMADO:** DEV lista 17 migrations aplicadas; o checkout contém 18 arquivos.
+- **DIVERGÊNCIA CONTROLADA:** `20261019000000_add_atomic_goal_increment.sql` permanece apenas como reconciliação local da RPC já existente, sem reexecução remota.
