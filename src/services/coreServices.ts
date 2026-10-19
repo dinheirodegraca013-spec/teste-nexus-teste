@@ -394,7 +394,7 @@ export const membersService = {
     };
   },
 
-  async invite(params: { organization_id: string; email: string; role: string; name?: string; full_name?: string }) {
+  async invite(params: { organization_id: string; email: string; role: string; name?: string; full_name?: string; permissions: string[] }) {
     if (!isValidUUID(params.organization_id)) {
       const validationError = {
         name: 'ValidationError',
@@ -412,6 +412,7 @@ export const membersService = {
         email: params.email,
         name: nameVal,
         role: params.role,
+        permissions: params.permissions,
       },
     });
 
