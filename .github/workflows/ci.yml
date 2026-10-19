@@ -6,7 +6,6 @@ on:
   push:
     branches:
       - main
-      - fix/persist-rbac-permissions
   workflow_dispatch:
 
 permissions:
