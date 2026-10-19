@@ -1641,6 +1641,11 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO:** os botões de fechar previews em `FieldPage`, `PresencePage` e `StickersPage` receberam nomes acessíveis.
 - **TESTE:** contrato de controles atualizado; `npm test` passou 287/287, com lint, build e diff-check aprovados.
 
+## Ciclo autônomo — 2026-10-19: revisão externa do head de previews
+
+- **APROVADO:** no head `e6e08b7`, Vercel, comentários de preview, build/typecheck, Edge Functions e GitGuardian concluíram com sucesso; nenhum segredo foi detectado.
+- **NÃO APLICÁVEL:** Supabase Preview ficou `skipped` sem branch Supabase associada.
+
 ## Ciclo autônomo — 2026-10-19: acessibilidade do upload de evidências
 
 - **CORRIGIDO:** o dropzone de `FileUpload.tsx` agora possui papel de botão, foco por teclado, ativação por Enter/Espaço e estado desabilitado anunciado.

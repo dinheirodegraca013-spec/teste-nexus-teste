@@ -260,3 +260,4 @@
 - 2026-10-19: auditoria dos logs frontend confirmou ausência de senha, token, chave e sessão; hostname e erros são os únicos dados de rede registrados.
 - 2026-10-19: menu móvel e limpar busca receberam `aria-label`; suíte 286/286, lint/build/diff-check aprovados.
 - 2026-10-19: fechamentos de previews de imagem receberam `aria-label`; suíte 287/287, lint/build/diff-check aprovados.
+- 2026-10-19: CI do head `e6e08b7` aprovou Vercel, preview comments, build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped`.
