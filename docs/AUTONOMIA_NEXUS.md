@@ -1715,6 +1715,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **APROVADO:** não há `fetch`, Axios ou `XMLHttpRequest` direto no frontend/scripts; o acesso remoto permanece centralizado no cliente Supabase e nos serviços existentes.
 - **RESULTADO:** nenhuma alteração adicional necessária; não houve mudança em produção ou Supabase.
 
+## Ciclo autônomo — 2026-10-19: revisão CI do head `c283b94`
+
+- **APROVADO:** typecheck/build, Edge Functions e GitGuardian concluíram com sucesso; nenhum segredo foi detectado.
+- **NÃO APLICÁVEL:** Supabase Preview `skipped` sem branch associada.
+- **PENDÊNCIA EXTERNA:** Vercel segue com limite temporário de deploy; produção permanece inalterada.
+
 ## Ciclo autônomo — 2026-10-19: auditoria de IDs estáticos
 
 - **APROVADO:** os únicos IDs HTML estáticos encontrados (`login-password` e `terms`) são únicos; demais controles usam IDs fornecidos ou gerados por `useId`.
