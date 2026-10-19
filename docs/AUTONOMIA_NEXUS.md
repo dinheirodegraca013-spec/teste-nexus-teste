@@ -1615,6 +1615,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO:** `Button` agora assume `type="button"` por padrão; `SearchInput`, toast, modal, drawer e menu móvel também declaram o tipo explicitamente. Formulários que precisam enviar continuam usando `type="submit"` explícito.
 - **TESTE:** contrato novo e suíte completa passaram 285/285, com lint, build e diff-check aprovados.
 
+## Ciclo autônomo — 2026-10-19: revisão externa do contrato de botões
+
+- **APROVADO:** no head `c778a92`, build/typecheck, Edge Functions e GitGuardian concluíram com sucesso; nenhum segredo foi detectado.
+- **BLOQUEIO EXTERNO:** Vercel retornou novamente limite de deployments por 24 horas; nenhum retry ou deploy manual foi realizado.
+- **NÃO APLICÁVEL:** Supabase Preview permaneceu `skipped` sem branch Supabase associada.
+
 ## Ciclo autônomo — 2026-10-19: acessibilidade do upload de evidências
 
 - **CORRIGIDO:** o dropzone de `FileUpload.tsx` agora possui papel de botão, foco por teclado, ativação por Enter/Espaço e estado desabilitado anunciado.
