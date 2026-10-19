@@ -234,3 +234,4 @@
 - 2026-10-19: quinta proposta SQL legada (`restrict_table_privileges`) também foi marcada como DO NOT EXECUTE; nenhum script ativo continua referenciando o projeto antigo.
 - 2026-10-19: validação HTTP read-only do preview público `/cadastro` retornou `200 OK`; nenhuma alteração remota ou automação de navegador.
 - 2026-10-19: Code Review do head `a9f4ade` confirmou Vercel, preview comments, Edge Functions, typecheck/build e GitGuardian `success`; Supabase Preview `skipped` por ausência de branch associada.
+- 2026-10-19: leitura da configuração Vercel confirmou `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` no alvo Production (DEV autorizado); `/cadastro` retornou HTTP 200. Nenhuma variável foi alterada.

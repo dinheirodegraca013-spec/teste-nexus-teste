@@ -1511,3 +1511,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **APROVADO:** Code Review confirmou Vercel, comentários de preview, Edge Functions, typecheck/build e GitGuardian (`success`) no head atual.
 - **NÃO APLICÁVEL:** Supabase Preview ficou `skipped` porque a branch não está associada a uma Supabase Branch; isso não altera o DEV autorizado.
+
+## Ciclo autônomo — 2026-10-19: revalidação das variáveis e rota pública
+
+- **CONFIRMADO (somente leitura):** o projeto Vercel `nexusteste` agora lista `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` também no alvo Production, com comentários apontando ao DEV autorizado.
+- **CONFIRMADO:** a rota pública `/cadastro` retornou `200 OK` no domínio `teste-nexus-teste.vercel.app`; não foram lidos valores descriptografados.
+- **ESCOPO:** nenhuma variável foi criada, alterada ou removida pelo agente; não houve alteração no banco ou em produção.
