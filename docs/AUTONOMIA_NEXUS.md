@@ -144,7 +144,7 @@
 
 # ESTADO OPERACIONAL HISTÓRICO — NÃO USAR COMO PERÍMETRO ATUAL (16/10/2026)
 
-> **PERÍMETRO OBRIGATÓRIO:** o ÚNICO Supabase autorizado para o NEXUS em desenvolvimento é `qidstqsbxwkbkwowhpab`. Os projetos `wrovgjhpyacmmetejiqk`, `qesiqjcpphkwryjvpzmq` e o Gestio `fbvcapoydkodpifkwjwg` são históricos/outros e NÃO PODEM SER ALTERADOS. As referências abaixo a projetos antigos são histórico, não instruções de execução.
+> **REGISTRO HISTÓRICO:** em 16/10/2026 o único Supabase autorizado era `qidstqsbxwkbkwowhpab`. Este bloco é somente evidência histórica e não é um perímetro operacional. O DEV atual autorizado é `qwvbvqlzcyfkuszxrlgv`; os demais projetos são históricos/outros e NÃO PODEM SER ALTERADOS.
 >
 > **Branch:** `fix/persist-rbac-permissions`; PR #1 permanece DRAFT, **sem merge e sem deploy de produção**.
 > **Documento técnico de referência:** `docs/NEXUS_FULL_AUDIT_20261016.md`.
@@ -849,7 +849,7 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 ## Ciclo autônomo — 2026-10-18: preparação de E2E autenticado
 
-- **APROVADO:** o script `scripts/e2e/tenant-auth-readonly.mjs` exige explicitamente DEV autorizado, valida o projeto `qidstqsbxwkbkwowhpab`, usa duas contas distintas e executa somente leituras/saída de sessão.
+- **APROVADO:** o script `scripts/e2e/tenant-auth-readonly.mjs` exige explicitamente o DEV atual `qwvbvqlzcyfkuszxrlgv`, usa duas contas distintas e executa somente leituras/saída de sessão.
 - **BLOQUEADO EXTERNO:** a execução local parou antes de qualquer rede por ausência de autorização explícita e das variáveis de duas contas de teste em organizações diferentes.
 - **SEGURANÇA:** nenhum segredo foi solicitado, impresso, criado ou persistido; não houve alteração no banco.
 - **Próxima ação:** executar o script somente quando o responsável fornecer ambiente/contas TEST controladas e autorização explícita para esse smoke test DEV.
