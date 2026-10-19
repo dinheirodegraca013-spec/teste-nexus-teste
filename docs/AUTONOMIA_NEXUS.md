@@ -1857,3 +1857,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO:** o logotipo navegável de `PublicLayout.tsx` passou a ser um botão semântico, com nome acessível e foco visível.
 - **TESTE:** contrato público atualizado; `npm test` passou 282/282, com lint, build e diff-check aprovados.
 - **PENDÊNCIA EXTERNA:** Vercel permanece temporariamente rate-limited; nenhuma promoção ou alteração remota foi feita.
+
+## Ciclo autônomo — 2026-10-19: auditoria direcionada de logs do frontend
+
+- **AUDITADO:** `AuthContext`, `DashboardPage` e `coreServices` registram apenas host, operação, tabela, status/código e mensagens de erro; não encontrei senha, token, chave, cookie, sessão ou payload de usuário nos logs revisados.
+- **PENDÊNCIA:** `DashboardPage` e o cadastro de perfil ainda registram `details`/`hint` fornecidos pelo Supabase. Esses campos podem expor detalhes internos de diagnóstico, mas não houve evidência de credencial ou dado pessoal nesta revisão; nenhuma alteração foi aplicada sem falha comprovada.
