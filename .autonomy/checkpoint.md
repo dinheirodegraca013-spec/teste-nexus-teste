@@ -229,5 +229,6 @@
 - 2026-10-19: auditoria estática de logs não encontrou credenciais ou tokens; e-mail de login é mascarado antes do console.
 - 2026-10-19: contrato SQL read-only executado no DEV sem exceções; RLS, grants e policies cobertos permaneceram válidos.
 - 2026-10-19: integrada correção de recuperação de senha com `redirectTo` para `/redefinir-senha`; `npm test` 277/277, lint e build aprovados. Branch sincronizada após commit externo.
+- 2026-10-19: Code Review do head `de9d108` confirmou Vercel, preview comments, GitGuardian, build/typecheck e Edge Functions `success`; Supabase Preview `skipped` por ausência de branch.
 - 2026-10-19: marcadas como legado/DO NOT EXECUTE quatro propostas SQL que apontavam ao projeto antigo `qidstqsbxwkbkwowhpab`; scripts atuais do DEV permanecem separados. Nenhum SQL remoto executado.
 - 2026-10-19: quinta proposta SQL legada (`restrict_table_privileges`) também foi marcada como DO NOT EXECUTE; nenhum script ativo continua referenciando o projeto antigo.
