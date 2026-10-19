@@ -1935,3 +1935,4 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **REPROVADO (somente leitura):** a proteção do Supabase Auth contra senhas vazadas está desativada.
 - **BLOQUEADO POR AUTORIZAÇÃO:** não apliquei SQL/RLS nem alterei a configuração de Auth. É necessário apresentar scripts específicos e obter aprovação antes de qualquer intervenção privilegiada.
 - **FALHA TRANSITÓRIA:** consulta agregada de logs retornou erro de backend; nenhum retry automático foi feito.
+- **CI:** o head `eae2835` passou Vercel Preview, typecheck/build, Edge Functions e GitGuardian; Supabase Preview ficou `skipped` por ausência de branch associada.
