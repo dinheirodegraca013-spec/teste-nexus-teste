@@ -1,5 +1,7 @@
 # NEXUS — Contrato de provisionamento e isolamento
 
+> **Nota de escopo:** contrato histórico. O Supabase DEV atualmente autorizado é `qwvbvqlzcyfkuszxrlgv`; o destino antigo abaixo serve apenas como evidência histórica.
+
 Destino: Supabase `qidstqsbxwkbkwowhpab`. Estado: NÃO HOMOLOGADO.
 
 ## Falha reproduzida por inspeção

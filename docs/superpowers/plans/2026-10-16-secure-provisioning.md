@@ -1,5 +1,7 @@
 # Provisionamento seguro do NEXUS Implementation Plan
 
+> **Nota de escopo:** plano histórico. O Supabase DEV atualmente autorizado é `qwvbvqlzcyfkuszxrlgv`; referências ao destino antigo não são instruções de execução.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Fazer o primeiro cadastro e os convites criarem perfis no tenant correto, sem permitir escalada de privilégio ou acesso cruzado.

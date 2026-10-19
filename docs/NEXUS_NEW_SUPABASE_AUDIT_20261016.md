@@ -1,5 +1,7 @@
 # NEXUS — Novo banco: compatibilidade de migrations
 
+> **Nota de escopo:** documento histórico. O Supabase DEV atualmente autorizado é `qwvbvqlzcyfkuszxrlgv`; não aplicar instruções deste arquivo sem adaptar e revisar.
+
 Data: 2026-10-16
 Destino EXCLUSIVO: qidstqsbxwkbkwowhpab
 Estado: EM DESENVOLVIMENTO — NÃO HOMOLOGADO

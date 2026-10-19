@@ -1,5 +1,7 @@
 # NEXUS — Especificação: provisionamento inicial seguro
 
+> **Nota de escopo:** especificação histórica. O Supabase DEV atualmente autorizado é `qwvbvqlzcyfkuszxrlgv`; referências ao destino antigo não são instruções de execução.
+
 Data: 2026-10-16  
 Destino confirmado: Supabase `qidstqsbxwkbkwowhpab`  
 Estado: proposta aprovada para planejamento; nenhuma migration aplicada.

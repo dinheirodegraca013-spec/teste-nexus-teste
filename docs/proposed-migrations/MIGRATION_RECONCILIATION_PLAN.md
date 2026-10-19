@@ -1,5 +1,7 @@
 # Plano de reconciliação de migrations — NEXUS DEV
 
+> **Nota de escopo:** inventário histórico. O Supabase DEV atualmente autorizado é `qwvbvqlzcyfkuszxrlgv`; os números do destino antigo não representam o estado atual.
+
 Estado verificado em 2026-10-18:
 
 - Supabase DEV `qidstqsbxwkbkwowhpab`: 14 migrations registradas.

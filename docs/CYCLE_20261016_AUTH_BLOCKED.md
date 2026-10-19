@@ -1,5 +1,7 @@
 # Ciclo: bloqueio de perfil
 
+> **Nota de escopo:** registro histórico. O Supabase DEV atualmente autorizado é `qwvbvqlzcyfkuszxrlgv`; não executar ações neste documento contra o destino antigo.
+
 Estado: EM DESENVOLVIMENTO.
 Destino confirmado: qidstqsbxwkbkwowhpab.
 

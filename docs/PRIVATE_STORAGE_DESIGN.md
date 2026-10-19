@@ -1,5 +1,7 @@
 # NEXUS — Storage privado de comprovantes (plano para aprovação)
 
+> **Nota de escopo:** proposta histórica. O Supabase DEV atualmente autorizado é `qwvbvqlzcyfkuszxrlgv`; o destino antigo abaixo não deve ser acessado.
+
 **Status: NÃO IMPLANTADO.** Documento de proposta, sem autorização para executar SQL de infraestrutura. Escopo exclusivo do Supabase DEV `qidstqsbxwkbkwowhpab`.
 
 ## Problema corrigido preventivamente

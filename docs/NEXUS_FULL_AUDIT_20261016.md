@@ -1,5 +1,7 @@
 # NEXUS — Auditoria técnica (2026-10-16)
 
+> **Nota de escopo:** auditoria histórica. O Supabase DEV atualmente autorizado é `qwvbvqlzcyfkuszxrlgv`; o identificador antigo abaixo não é perímetro operacional.
+
 **Estado:** REPROVADO PARA HOMOLOGAÇÃO. Auditoria estática e consultas read-only; testes autenticados E2E não executados. Nenhum merge, deploy de produção ou mudança no banco foi realizado nesta auditoria.
 
 ## Fontes verificadas
