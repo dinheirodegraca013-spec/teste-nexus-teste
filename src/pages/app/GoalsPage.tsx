@@ -505,6 +505,7 @@ export const GoalsPage: React.FC = () => {
           <div className="space-y-1.5">
             <label className="block text-xs font-medium text-slate-700">Descrição / Diretrizes</label>
             <textarea
+              aria-label="Descrição e Diretrizes"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Instruções para a equipe de campo alcançar a meta..."

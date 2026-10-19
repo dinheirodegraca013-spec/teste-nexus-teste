@@ -28,3 +28,19 @@ test('toast close and sidebar logout controls have accessible names', async () =
   assert.match(toast, /aria-label="Fechar aviso"/);
   assert.match(sidebar, /aria-label="Sair do NEXUS"/);
 });
+
+test('native app text fields expose accessible names', async () => {
+  const files = {
+    'LeadersPage.tsx': 'Link exclusivo de cadastro',
+    'IntelligencePage.tsx': 'Detalhamento da Reivindicação',
+    'GoalsPage.tsx': 'Descrição e Diretrizes',
+    'CrmPage.tsx': 'Observações e Demandas',
+    'EventsPage.tsx': 'Orientações e Detalhes da Ação',
+    'MeetingsPage.tsx': 'Ata e Deliberações',
+    'CoordinatorsPage.tsx': 'Observações Estratégicas',
+  };
+  for (const [file, label] of Object.entries(files)) {
+    const source = await readFile(new URL(`../src/pages/app/${file}`, import.meta.url), 'utf8');
+    assert.match(source, new RegExp(`aria-label="${label}"`));
+  }
+});

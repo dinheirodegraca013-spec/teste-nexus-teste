@@ -513,6 +513,7 @@ export const LeadersPage: React.FC = () => {
                 <input
                   type="text"
                   readOnly
+                  aria-label="Link exclusivo de cadastro"
                   value={getInviteLink(shareLeader)}
                   className="flex-1 bg-white border border-slate-200 rounded-lg p-2.5 text-xs text-slate-800 font-mono focus:outline-none"
                 />

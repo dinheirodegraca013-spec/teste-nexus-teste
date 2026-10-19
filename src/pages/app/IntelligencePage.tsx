@@ -388,6 +388,7 @@ export const IntelligencePage: React.FC = () => {
           <div className="space-y-1.5">
             <label className="block text-xs font-medium text-slate-700">Detalhamento da Reivindicação</label>
             <textarea
+              aria-label="Detalhamento da Reivindicação"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Descreva o que a comunidade solicitou durante a reunião ou caminhada..."

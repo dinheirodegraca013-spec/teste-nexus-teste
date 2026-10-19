@@ -330,6 +330,7 @@ export const MeetingsPage: React.FC = () => {
           <div className="space-y-1.5">
             <label className="block text-xs font-medium text-slate-700">Ata / Deliberações & Encaminhamentos</label>
             <textarea
+              aria-label="Ata e Deliberações"
               value={formData.minutes}
               onChange={(e) => setFormData({ ...formData, minutes: e.target.value })}
               placeholder="Pontos acordados, metas combinadas, distribuição de materiais..."

@@ -458,6 +458,7 @@ export const EventsPage: React.FC = () => {
           <div className="space-y-1.5">
             <label className="block text-xs font-medium text-slate-700">Orientações & Detalhes da Ação</label>
             <textarea
+              aria-label="Orientações e Detalhes da Ação"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Pontos de parada, distribuição de materiais, carro de som..."

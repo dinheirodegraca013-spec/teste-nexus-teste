@@ -458,6 +458,7 @@ export const CrmPage: React.FC = () => {
           <div className="space-y-1.5">
             <label className="block text-xs font-medium text-slate-700">Observações & Demandas</label>
             <textarea
+              aria-label="Observações e Demandas"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               placeholder="Anotações sobre a conversa, pedidos comunitários ou disponibilidade..."

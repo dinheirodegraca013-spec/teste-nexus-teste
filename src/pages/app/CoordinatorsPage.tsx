@@ -517,6 +517,7 @@ export const CoordinatorsPage: React.FC = () => {
                   <input
                     type="text"
                     readOnly
+                    aria-label="Link de cadastro do coordenador"
                     value={getCoordinatorRegistrationLink(inviteCoord)}
                     className="flex-1 bg-white border border-slate-200 rounded-lg p-2.5 text-xs text-slate-800 font-mono focus:outline-none"
                   />
@@ -558,6 +559,7 @@ export const CoordinatorsPage: React.FC = () => {
                   <input
                     type="text"
                     readOnly
+                    aria-label="Link do polo para lideranças"
                     value={getCoordPoloLink(inviteCoord)}
                     className="flex-1 bg-white border border-slate-200 rounded-lg p-2.5 text-xs text-slate-800 font-mono focus:outline-none"
                   />
@@ -649,6 +651,7 @@ export const CoordinatorsPage: React.FC = () => {
           <div className="space-y-1.5">
             <label className="block text-xs font-medium text-slate-700">Observações Estratégicas</label>
             <textarea
+              aria-label="Observações Estratégicas"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               placeholder="Anotações sobre perfil de liderança, contatos e articulação..."

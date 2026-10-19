@@ -1651,6 +1651,11 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO:** fechar toast e sair da barra lateral receberam `aria-label` e `type="button"` explícitos.
 - **TESTE:** contrato de controles atualizado; `npm test` passou 288/288, com lint, build e diff-check aprovados.
 
+## Ciclo autônomo — 2026-10-19: nomes programáticos em campos nativos
+
+- **CORRIGIDO:** campos nativos de links, descrições, observações, orientações e atas em módulos operacionais receberam `aria-label` explícito.
+- **TESTE:** contrato de formulários atualizado; `npm test` passou 289/289, com lint, build e diff-check aprovados.
+
 ## Ciclo autônomo — 2026-10-19: revisão externa dos controles finais
 
 - **APROVADO:** build/typecheck, Edge Functions e GitGuardian passaram no head `c34cb36`; nenhum segredo foi detectado.
