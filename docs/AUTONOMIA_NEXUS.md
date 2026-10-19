@@ -1667,6 +1667,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO:** `FileUpload` agora associa seu rótulo ao input oculto por um ID React único, evitando ambiguidades com múltiplos uploads.
 - **TESTE:** contrato atualizado; `npm test` passou 290/290, com lint, build e diff-check aprovados.
 
+## Ciclo autônomo — 2026-10-19: revisão externa do upload
+
+- **APROVADO:** no head `e93ff16`, build/typecheck, Edge Functions e GitGuardian passaram; nenhum segredo foi detectado.
+- **BLOQUEIO EXTERNO:** Vercel permanece rate-limited por 24 horas; não houve retry ou deploy manual.
+- **NÃO APLICÁVEL:** Supabase Preview `skipped` sem branch associada.
+
 ## Ciclo autônomo — 2026-10-19: revisão externa dos controles finais
 
 - **APROVADO:** build/typecheck, Edge Functions e GitGuardian passaram no head `c34cb36`; nenhum segredo foi detectado.
