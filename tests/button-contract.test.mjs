@@ -58,3 +58,8 @@ test('native app text fields expose accessible names', async () => {
     assert.match(source, new RegExp(`aria-label="${label}"`));
   }
 });
+
+test('shared search input exposes an accessible name', async () => {
+  const source = await readFile(new URL('../src/components/ui/SearchInput.tsx', import.meta.url), 'utf8');
+  assert.match(source, /aria-label=\{placeholder \|\| 'Buscar'\}/);
+});

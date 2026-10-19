@@ -21,6 +21,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        aria-label={placeholder || 'Buscar'}
         placeholder={placeholder}
         className="w-full bg-white text-slate-900 text-xs sm:text-sm rounded-lg border border-slate-200 hover:border-slate-300 pl-9 pr-8 py-2 focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900 placeholder-slate-400 transition-all shadow-2xs"
       />

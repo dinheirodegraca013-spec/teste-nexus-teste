@@ -1629,6 +1629,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **MELHORIA:** `tests/button-contract.test.mjs` agora percorre os componentes TSX e falha se um botão nativo não declarar `type` explicitamente.
 - **TESTE:** `npm test` passou 291/291; lint, build e `git diff --check` aprovados.
 
+## Ciclo autônomo — 2026-10-19: nome acessível da busca
+
+- **CORRIGIDO:** o `SearchInput` compartilhado agora expõe `aria-label` usando o placeholder ou o fallback “Buscar”.
+- **MELHORIA:** incluído contrato de regressão para preservar esse nome acessível.
+- **TESTE:** `npm test` passou 292/292; lint, build e `git diff --check` aprovados.
+
 ## Ciclo autônomo — 2026-10-19: revisão externa do head `c45e6a1`
 
 - **APROVADO:** Vercel Preview concluído com sucesso e sem feedback pendente; typecheck/build, Edge Functions e GitGuardian também passaram.
