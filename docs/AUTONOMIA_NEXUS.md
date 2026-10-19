@@ -1581,3 +1581,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO:** os controles visuais de retorno ao início em `ForgotPasswordPage.tsx` e `ResetPasswordPage.tsx` deixaram de ser `div` clicáveis e passaram a ser botões semânticos, com nome acessível e foco visível.
 - **TESTE:** novo contrato de acessibilidade; `npm test` passou 279/279, com lint, build e diff-check aprovados.
 - **COMMIT:** `f73b463`, enviado para `fix/persist-rbac-permissions`; sem alteração de banco ou produção.
+
+## Ciclo autônomo — 2026-10-19: checks da acessibilidade de senha
+
+- **APROVADO:** no head `0a49bc7`, Edge Functions, typecheck/build e GitGuardian concluíram `success`.
+- **NÃO APLICÁVEL:** Supabase Preview ficou `skipped` por ausência de branch Supabase associada.
+- **BLOQUEADO EXTERNO:** Vercel continua rate-limited; não houve retry nem promoção.

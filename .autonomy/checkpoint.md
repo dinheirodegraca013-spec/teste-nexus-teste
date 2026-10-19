@@ -247,3 +247,4 @@
 - 2026-10-19: advisor de performance read-only reportou 11 índices sem uso e 2 pares de policies permissivas; nenhuma remoção/consolidação automática.
 - 2026-10-19: reconciliação read-only confirmou 17 migrations remotas e 18 locais; a migration da RPC de metas segue apenas como reconciliação, sem execução remota.
 - 2026-10-19: corrigidos controles `div` clicáveis nas páginas de recuperação/redefinição de senha; teste 279/279, lint e build aprovados; commit `f73b463` enviado.
+- 2026-10-19: checks do head `0a49bc7` passaram em Edge/build/GitGuardian; Supabase Preview `skipped` e Vercel rate-limited, sem retry.
