@@ -68,6 +68,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               <button
                 type="button"
                 onClick={() => removeToast(toast.id)}
+                aria-label="Fechar aviso"
                 className="text-slate-400 hover:text-slate-600 transition-colors p-0.5 cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />

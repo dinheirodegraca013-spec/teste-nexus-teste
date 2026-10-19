@@ -232,7 +232,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             </button>
             <button
+              type="button"
               onClick={() => signOut()}
+              aria-label="Sair do NEXUS"
               title="Sair do NEXUS"
               className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-slate-200/60 transition-colors cursor-pointer"
             >

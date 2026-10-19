@@ -261,3 +261,4 @@
 - 2026-10-19: menu móvel e limpar busca receberam `aria-label`; suíte 286/286, lint/build/diff-check aprovados.
 - 2026-10-19: fechamentos de previews de imagem receberam `aria-label`; suíte 287/287, lint/build/diff-check aprovados.
 - 2026-10-19: CI do head `e6e08b7` aprovou Vercel, preview comments, build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped`.
+- 2026-10-19: fechar toast e sair receberam nomes acessíveis; suíte 288/288, lint/build/diff-check aprovados.

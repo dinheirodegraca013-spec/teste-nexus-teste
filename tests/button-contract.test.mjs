@@ -21,3 +21,10 @@ test('image preview close controls have accessible names', async () => {
     assert.match(source, /aria-label="Fechar visualização da imagem"/);
   }
 });
+
+test('toast close and sidebar logout controls have accessible names', async () => {
+  const toast = await readFile(new URL('../src/contexts/ToastContext.tsx', import.meta.url), 'utf8');
+  const sidebar = await readFile(new URL('../src/components/layout/Sidebar.tsx', import.meta.url), 'utf8');
+  assert.match(toast, /aria-label="Fechar aviso"/);
+  assert.match(sidebar, /aria-label="Sair do NEXUS"/);
+});
