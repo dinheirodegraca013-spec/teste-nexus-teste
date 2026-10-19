@@ -50,9 +50,18 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number, serviceName: str
   });
 }
 
+function summarizeDashboardError(error: unknown) {
+  const candidate = error && typeof error === 'object' ? error as Record<string, unknown> : {};
+  return {
+    code: typeof candidate.code === 'string' ? candidate.code : undefined,
+    message: typeof candidate.message === 'string' ? candidate.message : String(error),
+    status: typeof candidate.status === 'number' ? candidate.status : undefined,
+  };
+}
+
 /**
  * Trata o resultado de cada consulta sem mascarar o erro.
- * Registra no console: tabela/serviço, error.code, error.message, error.details, error.hint.
+ * Registra no console apenas tabela/serviço e um resumo seguro do erro.
  * Se a tabela estiver vazia, retorna array vazio sem registrar erro.
  */
 function processQueryResult<T>(
@@ -63,10 +72,8 @@ function processQueryResult<T>(
     const err = result.reason;
     console.error(`[NEXUS DASHBOARD] Erro no serviço: ${serviceName}`, {
       service: serviceName,
+      ...summarizeDashboardError(err),
       code: err?.code || 'FETCH_REJECTED',
-      message: err?.message || String(err),
-      details: err?.details || null,
-      hint: err?.hint || null,
     });
     return [];
   }
@@ -75,10 +82,8 @@ function processQueryResult<T>(
   if (error) {
     console.error(`[NEXUS DASHBOARD] Erro retornado pela tabela/serviço: ${serviceName}`, {
       service: serviceName,
+      ...summarizeDashboardError(error),
       code: error.code || 'UNKNOWN_ERROR',
-      message: error.message || 'Erro retornado pelo Supabase',
-      details: error.details || null,
-      hint: error.hint || null,
     });
     return [];
   }
@@ -166,10 +171,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
       if (!isCurrentLoad()) return;
       console.error('[NEXUS DASHBOARD] Erro inesperado ao carregar dados da dashboard:', {
         service: 'dashboard_general',
+        ...summarizeDashboardError(err),
         code: err?.code || 'UNEXPECTED_ERROR',
-        message: err?.message || String(err),
-        details: err?.details || null,
-        hint: err?.hint || null,
       });
       toastError('Erro ao carregar painel geral: ' + (err?.message || 'Erro inesperado'));
     } finally {
