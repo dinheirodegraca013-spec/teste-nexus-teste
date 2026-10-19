@@ -1955,3 +1955,10 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CONFIRMADO:** `profiles` possui duas policies permissivas de `UPDATE` e `user_module_permissions` possui duas de `SELECT` para `authenticated`.
 - **PREPARADO:** `docs/proposed-migrations/CONSOLIDATE_DUPLICATE_RLS_POLICIES.sql` une as regras de `profiles` e remove somente a policy duplicada de permissões, preservando o comportamento tenant-scoped.
 - **BLOQUEADO POR AUTORIZAÇÃO:** o script é estrutural/RLS e não foi executado.
+
+## Reconciliação de migrations — DEV
+
+- **CONFIRMADO (somente leitura):** o projeto `qwvbvqlzcyfkuszxrlgv` registra 17 migrations aplicadas, enquanto `supabase/migrations` contém 18 arquivos.
+- `nexus_bootstrap_schema` e `nexus_private_storage` estão aplicados no banco com versões de registro diferentes dos nomes locais, embora correspondam aos arquivos versionados.
+- `20261019000000_add_atomic_goal_increment` existe localmente e ainda não consta no banco; permanece como migration pendente/proposta.
+- **LIMITE:** não alterei o histórico do Supabase nem apliquei a migration pendente.
