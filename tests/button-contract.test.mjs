@@ -63,3 +63,9 @@ test('shared search input exposes an accessible name', async () => {
   const source = await readFile(new URL('../src/components/ui/SearchInput.tsx', import.meta.url), 'utf8');
   assert.match(source, /aria-label=\{placeholder \|\| 'Buscar'\}/);
 });
+
+test('shared Input generates unique label associations', async () => {
+  const source = await readFile(new URL('../src/components/ui/Input.tsx', import.meta.url), 'utf8');
+  assert.match(source, /useId/);
+  assert.match(source, /generatedId\.replace/);
+});

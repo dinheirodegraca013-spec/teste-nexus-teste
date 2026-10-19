@@ -1646,6 +1646,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **APROVADO:** não foram encontrados `textarea`, `select` ou `<img>` nativos sem identificação/`alt` nas fontes TSX.
 - **RESULTADO:** nenhuma alteração adicional necessária nesta área; produção e Supabase permanecem inalterados.
 
+## Ciclo autônomo — 2026-10-19: IDs únicos no Input compartilhado
+
+- **CORRIGIDO:** `Input.tsx` deixou de derivar IDs apenas do texto do label; agora usa `useId`, evitando IDs duplicados em campos repetidos.
+- **MELHORIA:** contrato de regressão adicionado para garantir associações únicas entre label e campo.
+- **TESTE:** `npm test` passou 293/293; lint, build e `git diff --check` aprovados.
+
 ## Ciclo autônomo — 2026-10-19: revisão CI do head `d4c9905`
 
 - **APROVADO:** typecheck/build, Edge Functions e GitGuardian passaram; nenhum segredo foi detectado.
