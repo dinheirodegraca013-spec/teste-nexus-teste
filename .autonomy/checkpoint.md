@@ -227,5 +227,6 @@
 - 2026-10-19: auditoria de dependências de produção encontrou 0 vulnerabilidades (`npm audit --omit=dev --audit-level=moderate`); nenhum pacote alterado.
 - 2026-10-19: reconciliação read-only confirmou 17 migrations remotas e 18 locais; a 18ª é a RPC de metas versionada para revisão, sem execução no DEV.
 - 2026-10-19: auditoria estática de logs não encontrou credenciais ou tokens; e-mail de login é mascarado antes do console.
+- 2026-10-19: contrato SQL read-only executado no DEV sem exceções; RLS, grants e policies cobertos permaneceram válidos.
 - 2026-10-19: marcadas como legado/DO NOT EXECUTE quatro propostas SQL que apontavam ao projeto antigo `qidstqsbxwkbkwowhpab`; scripts atuais do DEV permanecem separados. Nenhum SQL remoto executado.
 - 2026-10-19: quinta proposta SQL legada (`restrict_table_privileges`) também foi marcada como DO NOT EXECUTE; nenhum script ativo continua referenciando o projeto antigo.
