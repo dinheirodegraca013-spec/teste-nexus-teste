@@ -233,3 +233,4 @@
 - 2026-10-19: marcadas como legado/DO NOT EXECUTE quatro propostas SQL que apontavam ao projeto antigo `qidstqsbxwkbkwowhpab`; scripts atuais do DEV permanecem separados. Nenhum SQL remoto executado.
 - 2026-10-19: quinta proposta SQL legada (`restrict_table_privileges`) também foi marcada como DO NOT EXECUTE; nenhum script ativo continua referenciando o projeto antigo.
 - 2026-10-19: validação HTTP read-only do preview público `/cadastro` retornou `200 OK`; nenhuma alteração remota ou automação de navegador.
+- 2026-10-19: Code Review do head `a9f4ade` confirmou Vercel, preview comments, Edge Functions, typecheck/build e GitGuardian `success`; Supabase Preview `skipped` por ausência de branch associada.
