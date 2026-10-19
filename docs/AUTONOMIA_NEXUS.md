@@ -1626,6 +1626,11 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **APROVADO:** o contrato automatizado confirma o projeto DEV atual `qwvbvqlzcyfkuszxrlgv`, exige aprovação explícita, duas contas distintas e não permite impressão de senhas, tokens ou chaves.
 - **TESTE:** contrato E2E e suíte completa passaram 285/285, com lint, build e diff-check aprovados. O smoke autenticado real continua condicionado às variáveis locais de teste.
 
+## Ciclo autônomo — 2026-10-19: auditoria de logs do frontend
+
+- **APROVADO:** logs de autenticação registram somente hostname, nome/mensagem/status/código de erro e estados booleanos; não registram senha, token, chave ou objeto de sessão. O login mascara o e-mail antes do console.
+- **AÇÃO:** nenhuma alteração necessária; manter a revisão quando novos fluxos de autenticação forem adicionados.
+
 ## Ciclo autônomo — 2026-10-19: acessibilidade do upload de evidências
 
 - **CORRIGIDO:** o dropzone de `FileUpload.tsx` agora possui papel de botão, foco por teclado, ativação por Enter/Espaço e estado desabilitado anunciado.
