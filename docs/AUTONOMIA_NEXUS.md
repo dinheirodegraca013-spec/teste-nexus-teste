@@ -1942,3 +1942,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - As duas tabelas `private.*_scopes` estão deliberadamente sem policies e sem privilégios para `authenticated`; o contrato SQL exige acesso apenas pelos RPCs privilegiados. Criar policies genéricas reduziria o isolamento.
 - Os cinco RPCs `SECURITY DEFINER` foram desenhados para uso autenticado, mas validam tenant, papel e usuário ativo; o contrato SQL confirma `EXECUTE` para `authenticated` e nega para `anon`. Revogar esses grants sem substituir o fluxo quebraria operações administrativas.
 - A única pendência operacional direta é habilitar **Leaked password protection** no painel de Auth do Supabase DEV. Não há ferramenta de configuração disponível nesta sessão e nenhuma alteração foi simulada.
+
+## Divergência entre domínio público e branch autorizada
+
+- **CONFIRMADO:** `teste-nexus-teste.vercel.app` está associado a um deployment `READY` de produção no commit ancestral `ac4df21`.
+- **ESTADO DA BRANCH:** `fix/persist-rbac-permissions` está no head `738cd74`, com as correções recentes e sem merge.
+- **LIMITE RESPEITADO:** não promovi a branch, não alterei alias e não fiz deploy de produção. Portanto, erros observados no domínio público podem refletir o deployment antigo; a validação correta deve usar o Preview da branch.
