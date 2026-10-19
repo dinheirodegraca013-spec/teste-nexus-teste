@@ -21,6 +21,9 @@ export const Modal: React.FC<ModalProps> = ({
 }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
+  // Keep the latest callback without re-running the focus effect on every keystroke.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   const titleId = useId();
   const descriptionId = useId();
 
@@ -36,7 +39,7 @@ export const Modal: React.FC<ModalProps> = ({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key !== 'Tab' || !dialog) return;
@@ -67,7 +70,7 @@ export const Modal: React.FC<ModalProps> = ({
       restoreFocusRef.current?.focus();
       restoreFocusRef.current = null;
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   const maxWidthClass = {
     sm: 'max-w-sm',
