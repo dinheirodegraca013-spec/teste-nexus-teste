@@ -236,3 +236,4 @@
 - 2026-10-19: Code Review do head `a9f4ade` confirmou Vercel, preview comments, Edge Functions, typecheck/build e GitGuardian `success`; Supabase Preview `skipped` por ausência de branch associada.
 - 2026-10-19: leitura da configuração Vercel confirmou `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` no alvo Production (DEV autorizado); `/cadastro` retornou HTTP 200. Nenhuma variável foi alterada.
 - 2026-10-19: consultas read-only confirmaram duas contas Auth e dois perfis em organizações distintas no DEV; smoke E2E não iniciado porque variáveis locais `NEXUS_E2E_*` estão ausentes.
+- 2026-10-19: Vercel preview do head `dd68138` ficou `READY`; nenhuma promoção, merge ou alteração de variáveis.

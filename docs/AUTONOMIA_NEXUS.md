@@ -1523,3 +1523,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CONFIRMADO (read-only):** o DEV contém duas contas Auth confirmadas e dois perfis administrativos em organizações distintas (`92db2278-c602-4048-afa2-14de5bf05d6c` e `3dd67023-5786-443c-a55f-0597c19e985d`).
 - **NÃO EXECUTADO:** o smoke E2E não foi iniciado porque as sete variáveis `NEXUS_E2E_*` não estão configuradas neste ambiente. Nenhuma senha foi lida, exibida ou armazenada.
 - **ESCOPO:** apenas consultas de leitura; nenhum dado, Auth, policy ou schema foi alterado.
+
+## Ciclo autônomo — 2026-10-19: preview do head atual
+
+- **APROVADO:** Vercel criou deployment `dpl_95LdbFEY3hLXXb2hV3VTLqe1FEZo` em estado `READY` para o commit `dd68138` da branch de desenvolvimento.
+- **ESCOPO:** somente preview; sem promoção para produção, merge ou alteração de variáveis.
