@@ -1948,3 +1948,4 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CONFIRMADO:** `teste-nexus-teste.vercel.app` está associado a um deployment `READY` de produção no commit ancestral `ac4df21`.
 - **ESTADO DA BRANCH:** `fix/persist-rbac-permissions` está no head `738cd74`, com as correções recentes e sem merge.
 - **LIMITE RESPEITADO:** não promovi a branch, não alterei alias e não fiz deploy de produção. Portanto, erros observados no domínio público podem refletir o deployment antigo; a validação correta deve usar o Preview da branch.
+- **CI ATUAL:** no head `a243283`, typecheck/build, Edge Functions e GitGuardian passaram; Supabase Preview foi `skipped` e Vercel está rate-limited, com retry indicado somente após 24 horas.
