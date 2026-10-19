@@ -16,5 +16,6 @@ test('Drawer traps keyboard focus and restores the trigger focus', () => {
   assert.match(source, /const dialogRef = useRef/);
   assert.match(source, /focusableSelector/);
   assert.match(source, /e\.key !== 'Tab'/);
+  assert.match(source, /!dialog\.contains\(document\.activeElement\)/);
   assert.match(source, /restoreFocusRef\.current\?\.focus\(\)/);
 });
