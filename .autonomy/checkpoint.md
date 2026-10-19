@@ -303,3 +303,4 @@
 - 2026-10-19: `DashboardPage` passou a limitar logs a serviço/status/código/mensagem; suíte 300/300, lint/build/diff-check aprovados; CI e Vercel Preview do head `76689ee` verdes.
 - 2026-10-19: serviço de auditoria passou a resumir erros; suíte 300/300, lint/build/diff-check aprovados; CI do head `1337d12` verde, Vercel voltou a rate-limit.
 - 2026-10-19: validações de entrada e parsing de convite deixaram de registrar valores fornecidos; suíte 301/301, lint/build/diff-check aprovados; CI do head `6e2bd0d` verde.
+- 2026-10-19: auditoria de dependências e busca direcionada por segredos/TODOs sem achados acionáveis; `npm audit --omit=dev --audit-level=moderate` reportou 0 vulnerabilidades; árvore limpa.
