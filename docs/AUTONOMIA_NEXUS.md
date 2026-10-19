@@ -1981,4 +1981,5 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CONFIRMADO:** `AuthContext` registrava `message` bruto retornado pelo provedor em erros de autenticação.
 - **CORRIGIDO:** logs agora preservam apenas `errorName`, `code`, `status` validados e `message: redacted`; mensagens não são mais emitidas no console.
 - **APROVADO:** suíte `npm test` 305/305, `npm run lint` e `npm run build`.
-- **PENDENTE:** CI/preview do novo commit; nenhuma alteração em Supabase, produção ou histórico remoto foi feita neste ciclo.
+- **APROVADO:** CI do head `704e914` confirmou Vercel Preview, typecheck/build e Edge Functions; Supabase Preview foi `skipped` e GitGuardian `neutral` por limite de tamanho da PR.
+- **PENDENTE:** homologação E2E autenticada; nenhuma alteração em Supabase ou produção foi feita neste ciclo.
