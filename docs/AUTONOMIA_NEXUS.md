@@ -1485,6 +1485,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **CONTRATO SQL READ-ONLY:** `supabase/tests/nexus_security_contract.sql` executado no DEV `qwvbvqlzcyfkuszxrlgv` sem exceção; RLS, grants e policies cobertos pelo contrato permaneceram válidos.
 
+- **INTEGRADO:** correção da recuperação de senha passou a direcionar para `/redefinir-senha` na origem atual; merge preservou a correção de sessão parcial. Suíte `277/277`, lint e build aprovados.
+
 - **CI DO HEAD `815ba0f`:** typecheck/build, Edge Functions e GitGuardian passaram; o check Vercel reportou apenas rate limit temporário de deployment (`retry in 24 hours`). Nenhum retry ou deploy manual foi feito.
 
 ## Ciclo autônomo — 2026-10-19: destino explícito da recuperação de senha
