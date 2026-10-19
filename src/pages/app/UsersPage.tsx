@@ -60,6 +60,7 @@ export const UsersPage: React.FC = () => {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteName, setInviteName] = useState('');
   const [inviteRole, setInviteRole] = useState<UserRole>('operator');
+  const [invitePerms, setInvitePerms] = useState(createDefaultPermissions);
 
   // Permission editor state
   const [perms, setPerms] = useState(createDefaultPermissions);
@@ -97,6 +98,10 @@ export const UsersPage: React.FC = () => {
       return;
     }
 
+    if (!Object.values(invitePerms).some((permission) => permission.can_view)) {
+      toastError('Selecione pelo menos um módulo de leitura antes de enviar o convite.');
+      return;
+    }
     setIsSubmitting(true);
     try {
       const { error } = await membersService.invite({
@@ -104,6 +109,7 @@ export const UsersPage: React.FC = () => {
         email: inviteEmail.trim(),
         role: inviteRole,
         name: inviteName.trim(),
+        permissions: Object.entries(invitePerms).filter(([, p]) => p.can_view).map(([key]) => permissionModuleKeys[key]),
       });
 
       if (error) {
@@ -113,6 +119,7 @@ export const UsersPage: React.FC = () => {
         setIsInviteModalOpen(false);
         setInviteEmail('');
         setInviteName('');
+        setInvitePerms(createDefaultPermissions());
         success('Membro convidado para a organização no Supabase!');
       }
     } catch (err: any) {
@@ -405,7 +412,7 @@ export const UsersPage: React.FC = () => {
           <Select
             label="Nível de Permissão (Role)"
             value={inviteRole}
-            onChange={(e) => setInviteRole(e.target.value as UserRole)}
+            onChange={(e) => { setInviteRole(e.target.value as UserRole); setInvitePerms(createDefaultPermissions()); }}
             options={[
               { value: 'operator', label: 'Operador de Campo (Apenas Registro)' },
               { value: 'coordinator', label: 'Coordenador Territorial (Seu Território)' },
@@ -415,6 +422,27 @@ export const UsersPage: React.FC = () => {
               { value: 'viewer', label: 'Visualizador / Auditor (Somente Leitura)' },
             ]}
           />
+
+          <fieldset className="rounded-xl border border-slate-200 p-3 space-y-2">
+            <legend className="px-1 text-sm font-semibold">Permissões antes do convite (somente leitura)</legend>
+            <p className="text-xs text-slate-500">Escolha os módulos que o convidado poderá consultar. O servidor validará os limites do cargo e gravará as permissões antes de confirmar o convite.</p>
+            <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+              {Object.keys(permissionModuleKeys).filter((key) => {
+                const allowed: Record<string, string[]> = {
+                  coordinator: ['coordenadores', 'liderancas', 'crm', 'presencas'],
+                  controller: ['coordenadores', 'liderancas', 'crm', 'presencas'],
+                  leader: ['crm', 'presencas'],
+                };
+                return !allowed[inviteRole] || allowed[inviteRole].includes(key);
+              }).map((key) => (
+                <label key={key} className="flex items-center gap-2 text-xs text-slate-700 capitalize">
+                  <input type="checkbox" checked={invitePerms[key].can_view}
+                    onChange={(e) => setInvitePerms((previous) => ({ ...previous, [key]: { ...previous[key], can_view: e.target.checked } }))} />
+                  {key}
+                </label>
+              ))}
+            </div>
+          </fieldset>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
             <Button type="button" variant="outline" size="sm" onClick={() => setIsInviteModalOpen(false)}>
