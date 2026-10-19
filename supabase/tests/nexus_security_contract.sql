@@ -1,5 +1,5 @@
 -- NEXUS DEV SECURITY CONTRACT (read-only assertions, no test fixtures)
--- Run against authorized Supabase project qidstqsbxwkbkwowhpab AFTER migrations.
+-- Run read-only against authorized Supabase DEV project qwvbvqlzcyfkuszxrlgv AFTER migrations.
 -- This file does not create/alter accounts, data, functions, grants, or RLS.
 DO $verify$
 DECLARE

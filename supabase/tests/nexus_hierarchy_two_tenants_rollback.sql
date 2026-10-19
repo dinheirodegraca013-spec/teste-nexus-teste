@@ -1,4 +1,4 @@
--- DEV ONLY qidstqsbxwkbkwowhpab. Transactional synthetic RLS check.
+-- DEV ONLY qwvbvqlzcyfkuszxrlgv. Transactional synthetic RLS check.
 -- Never run in production. No emails are sent. Transaction ALWAYS rolls back.
 BEGIN;
 INSERT INTO public.organizations(id,name,slug,campaign_type) VALUES
