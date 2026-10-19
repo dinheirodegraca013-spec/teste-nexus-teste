@@ -1593,3 +1593,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO:** os logotipos clicáveis de `LoginPage.tsx` e `RegisterPage.tsx` passaram de `div` para botões semânticos, com nome acessível e foco visível.
 - **TESTE:** contrato público atualizado; `npm test` passou 281/281, com lint, build e diff-check aprovados.
 - **PENDÊNCIA EXTERNA:** Vercel permanece temporariamente rate-limited; nenhuma promoção ou alteração remota foi feita.
+
+## Ciclo autônomo — 2026-10-19: acessibilidade do cabeçalho público
+
+- **CORRIGIDO:** o logotipo navegável de `PublicLayout.tsx` passou a ser um botão semântico, com nome acessível e foco visível.
+- **TESTE:** contrato público atualizado; `npm test` passou 282/282, com lint, build e diff-check aprovados.
+- **PENDÊNCIA EXTERNA:** Vercel permanece temporariamente rate-limited; nenhuma promoção ou alteração remota foi feita.

@@ -9,3 +9,9 @@ for (const file of ['ForgotPasswordPage.tsx', 'ResetPasswordPage.tsx', 'LoginPag
     assert.match(source, /focus-visible:ring-2/);
   });
 }
+
+test('PublicLayout exposes a keyboard-accessible brand home control', async () => {
+  const source = await readFile(new URL('../src/components/layout/PublicLayout.tsx', import.meta.url), 'utf8');
+  assert.match(source, /<button\s+type="button"[\s\S]*aria-label="Voltar para o início"/);
+  assert.match(source, /focus-visible:ring-2/);
+});

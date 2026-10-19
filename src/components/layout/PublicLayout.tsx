@@ -18,9 +18,11 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
       {/* Public Navbar */}
       <header className="h-16 border-b border-slate-200 bg-white/85 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-full flex items-center justify-between">
-          <div
+          <button
+            type="button"
             onClick={() => onNavigate('/')}
-            className="flex items-center gap-2.5 cursor-pointer select-none"
+            aria-label="Voltar para o início"
+            className="flex items-center gap-2.5 cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 rounded-lg"
           >
             <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-black tracking-widest text-sm shadow-xs">
               N
@@ -29,7 +31,7 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
               <span className="text-base font-bold tracking-widest text-slate-950">NEXUS</span>
               <span className="text-[10px] text-slate-400 uppercase tracking-widest font-mono font-semibold">SaaS</span>
             </div>
-          </div>
+          </button>
 
           <nav className="hidden md:flex items-center gap-6 text-xs text-slate-500 font-medium">
             <button
