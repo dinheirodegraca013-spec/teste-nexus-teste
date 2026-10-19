@@ -1468,4 +1468,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO NO REPOSITÓRIO:** o SQL dessa RPC foi versionado em `supabase/migrations/20261019000000_add_atomic_goal_increment.sql`; não foi executado novamente no banco.
 - **TESTES:** suíte `275/275`, lint, build e diff-check aprovados.
 
+## Ciclo autônomo — 2026-10-19: cadastro sem sessão parcial
+
+- **CORRIGIDO:** falhas de provisionamento após `signUp` agora encerram a sessão Auth criada e limpam tenant, perfil e permissões antes de retornar erro.
+- **TESTE:** regressão adicionada; suíte `276/276`, lint, build e diff-check aprovados.
+
 - **CI DO HEAD `815ba0f`:** typecheck/build, Edge Functions e GitGuardian passaram; o check Vercel reportou apenas rate limit temporário de deployment (`retry in 24 hours`). Nenhum retry ou deploy manual foi feito.

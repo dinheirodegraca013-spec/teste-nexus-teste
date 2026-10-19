@@ -144,6 +144,14 @@ test('signUp fails closed when Supabase does not return a user', async () => {
   assert.match(source, /O servidor não confirmou a criação da conta/);
 });
 
+test('signUp clears a session when provisioning cannot complete', async () => {
+  const source = await readFile(new URL('../src/contexts/AuthContext.tsx', import.meta.url), 'utf8');
+  const rpcFailure = source.match(/if \(rpcErr \|\| !isValidUUID\(rpcOrgId\)\) \{([\s\S]*?)return \{ error: new Error\('Conta criada, mas não foi possível configurar a organização/);
+  const loadFailure = source.match(/if \(!loaded\.profile \|\| !loaded\.organization\) \{([\s\S]*?)return \{ error: new Error\('Conta criada, mas o perfil ou a organização não está disponível/);
+  assert.ok(rpcFailure?.[1].includes('clearAuthenticatedState'), 'RPC provisioning failure must clear the partial session');
+  assert.ok(loadFailure?.[1].includes('clearAuthenticatedState'), 'profile loading failure must clear the partial session');
+});
+
 test('password reset applies the same minimum as account creation', async () => {
   const source = await readFile(new URL('../src/pages/public/ResetPasswordPage.tsx', import.meta.url), 'utf8');
   assert.match(source, /password\.length < 8/);

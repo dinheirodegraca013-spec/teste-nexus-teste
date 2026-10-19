@@ -333,6 +333,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setPermissions([]);
   };
 
+  const clearAuthenticatedState = async () => {
+    invalidateUserData();
+    setUser(null);
+    setSession(null);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) logAuthError('clearAuthenticatedState:signOut', error);
+    } catch (err: any) {
+      logAuthError('clearAuthenticatedState:signOut', err);
+    }
+  };
+
   const loadUserDataSafe = useCallback(async (authUser: User) => {
     const pending = inFlightPromiseRef.current;
     if (pending?.userId === authUser.id) return pending.promise;
@@ -586,16 +598,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
             if (rpcErr || !isValidUUID(rpcOrgId)) {
               console.error('[NEXUS PROVISION] Erro na RPC provision_new_user no signUp:', rpcErr);
+              await clearAuthenticatedState();
               return { error: new Error('Conta criada, mas não foi possível configurar a organização. Tente entrar novamente ou contate o suporte.'), user: data.user };
             }
             console.log('[NEXUS PROVISION] RPC provision_new_user bem-sucedida no signUp:', { rpcOrgId });
           } catch (rpcEx) {
             console.error('[NEXUS PROVISION] Exceção na RPC provision_new_user no signUp:', rpcEx);
+            await clearAuthenticatedState();
             return { error: new Error('Conta criada, mas houve uma falha ao configurar a organização. Tente entrar novamente ou contate o suporte.'), user: data.user };
           }
         }
         const loaded = await loadUserDataSafe(data.user);
         if (!loaded.profile || !loaded.organization) {
+          await clearAuthenticatedState();
           return { error: new Error('Conta criada, mas o perfil ou a organização não está disponível. Tente entrar novamente ou contate o suporte.'), user: data.user };
         }
       }
