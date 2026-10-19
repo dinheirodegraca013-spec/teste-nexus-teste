@@ -252,3 +252,4 @@
 - 2026-10-19: corrigido logotipo clicável do `PublicLayout`; contrato público e suíte 282/282, lint/build/diff-check aprovados. Vercel segue rate-limited.
 - 2026-10-19: corrigido dropzone não teclado-acessível do `FileUpload`; contrato e suíte 283/283, lint/build/diff-check aprovados. Vercel segue rate-limited.
 - 2026-10-19: corrigidos marca e perfil clicáveis da `Sidebar`; contrato e suíte 284/284, lint/build/diff-check aprovados. Vercel segue rate-limited.
+- 2026-10-19: revisão externa do head `ca6d8cf` aprovou Vercel, build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped` sem branch associada.
