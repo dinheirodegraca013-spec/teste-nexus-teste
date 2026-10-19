@@ -1,4 +1,5 @@
--- PROPOSTA NAO APLICADA. Destino: qidstqsbxwkbkwowhpab.
+-- LEGACY PROPOSAL FOR REVIEW ONLY. DO NOT EXECUTE.
+-- Historical target was qidstqsbxwkbkwowhpab; current DEV is qwvbvqlzcyfkuszxrlgv.
 -- TRUNCATE nao e protegido por RLS. Nao executar TRUNCATE como teste.
 -- Remove privilegios administrativos desnecessarios dos papeis da API.
 -- Preserva SELECT/INSERT/UPDATE/DELETE e todas as policies existentes.

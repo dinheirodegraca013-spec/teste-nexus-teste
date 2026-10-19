@@ -225,3 +225,4 @@
 - 2026-10-19: CI do head `afe5aa5` finalizou com build/typecheck, Edge Functions e GitGuardian aprovados; Supabase Preview skipped e Vercel rate-limited.
 - 2026-10-19: auditoria direcionada dos serviços confirmou validação de linhas retornadas em criações/atualizações; sem novo falso sucesso identificado.
 - 2026-10-19: marcadas como legado/DO NOT EXECUTE quatro propostas SQL que apontavam ao projeto antigo `qidstqsbxwkbkwowhpab`; scripts atuais do DEV permanecem separados. Nenhum SQL remoto executado.
+- 2026-10-19: quinta proposta SQL legada (`restrict_table_privileges`) também foi marcada como DO NOT EXECUTE; nenhum script ativo continua referenciando o projeto antigo.
