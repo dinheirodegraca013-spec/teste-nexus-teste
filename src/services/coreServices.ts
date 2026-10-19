@@ -7,6 +7,15 @@ export function isValidUUID(id: unknown): id is string {
   return typeof id === 'string' && UUID_REGEX.test(id.trim());
 }
 
+function summarizeServiceError(error: unknown) {
+  const candidate = error && typeof error === 'object' ? error as Record<string, unknown> : {};
+  return {
+    status: typeof candidate.status === 'number' ? candidate.status : undefined,
+    code: typeof candidate.code === 'string' ? candidate.code : undefined,
+    message: typeof candidate.message === 'string' ? candidate.message : String(error),
+  };
+}
+
 export const organizationsService = {
   async getById(id: string) {
     const { data, error } = await supabase
@@ -203,20 +212,12 @@ export const profilesService = {
       console.error('[NEXUS PROFILE] INSERT_ERROR', {
         operation: 'INSERT',
         table: 'profiles',
-        status: (error as any)?.status || (error as any)?.statusCode,
-        code: error.code,
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
+        ...summarizeServiceError(error),
       });
       console.error('[NEXUS PROFILE] SELECT_ERROR', {
         operation: 'SELECT_RETURNING',
         table: 'profiles',
-        status: (error as any)?.status || (error as any)?.statusCode,
-        code: error.code,
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
+        ...summarizeServiceError(error),
       });
     } else {
       console.log('[NEXUS PROFILE] INSERT_RESPONSE', {

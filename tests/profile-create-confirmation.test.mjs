@@ -34,3 +34,10 @@ test('confirmed profile create returns the persisted row', async () => {
   assert.equal(result.error, null);
   assert.equal(result.data?.id, userId);
 });
+
+test('profile create logs only a summarized service error', async () => {
+  const source = await (await import('node:fs/promises')).readFile(new URL('../src/services/coreServices.ts', import.meta.url), 'utf8');
+  assert.match(source, /function summarizeServiceError\(error: unknown\)/);
+  assert.doesNotMatch(source, /details:\s*error\.details/);
+  assert.doesNotMatch(source, /hint:\s*error\.hint/);
+});
