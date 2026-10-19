@@ -40,12 +40,14 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onNaviga
     <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
       <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs text-left">
         <div className="text-center mb-6">
-          <div 
+          <button
+            type="button"
             onClick={() => onNavigate('/')} 
-            className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-slate-900 text-white font-black text-base shadow-xs cursor-pointer mb-3"
+            aria-label="Voltar para o início"
+            className="inline-flex items-center justify-center w-10 h-10 rounded-xl border-0 p-0 bg-slate-900 text-white font-black text-base shadow-xs cursor-pointer mb-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2"
           >
             N
-          </div>
+          </button>
           <h2 className="text-xl sm:text-2xl font-bold text-slate-950 tracking-tight">
             Recuperar Senha
           </h2>
