@@ -320,3 +320,6 @@
 - 2026-10-19: CI do head `704e914` aprovou Vercel Preview, typecheck/build e Edge Functions; Supabase Preview `skipped`; GitGuardian `neutral` por limite de tamanho da PR, sem indicação de segredo.
 - 2026-10-19: teste comportamental adicionou e-mail, token e senha sintéticos ao erro de autenticação e confirmou redaction; suíte 306/306, lint/build/diff-check aprovados. Nenhuma alteração em banco/produção.
 - 2026-10-19: CI do head `da572f3` confirmou typecheck/build, Edge Functions e Vercel Preview aprovados; Supabase Preview `skipped`; GitGuardian `neutral` por limite da PR.
+- 2026-10-19: Task 1 E2E read-only aprovada com duas contas sintéticas no DEV `qwvbvqlzcyfkuszxrlgv`: autenticação, tenants distintos, bloqueio cross-tenant e Storage privado confirmados.
+- 2026-10-19: Task 2 aplicou e verificou `consolidate_duplicate_rls_policies`; Task 3 aplicou e verificou `add_atomic_goal_increment` (anon sem EXECUTE; authenticated/service_role permitidos). Nenhuma escrita de dados reais.
+- 2026-10-19: Task 4 depende de login administrativo no painel Supabase para ativar leaked password protection; nenhuma senha de painel foi solicitada ou armazenada.

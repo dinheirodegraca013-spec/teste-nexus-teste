@@ -1985,3 +1985,10 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **APROVADO:** CI do head `704e914` confirmou Vercel Preview, typecheck/build e Edge Functions; Supabase Preview foi `skipped` e GitGuardian `neutral` por limite de tamanho da PR.
 - **PENDENTE:** homologação E2E autenticada; nenhuma alteração em Supabase ou produção foi feita neste ciclo.
 - **CI remoto:** head `da572f3` aprovado em typecheck/build, Edge Functions e Vercel Preview; Supabase Preview `skipped`.
+
+## Tasks autorizadas — 2026-10-19
+
+- **Task 1 concluída:** homologação E2E somente leitura confirmou autenticação de duas contas sintéticas, organizações distintas, isolamento RLS e Storage privado no DEV `qwvbvqlzcyfkuszxrlgv`.
+- **Task 2 concluída:** migration `consolidate_duplicate_rls_policies` aplicada; policies duplicadas removidas e policy administrativa verificada por leitura.
+- **Task 3 concluída:** migration `add_atomic_goal_increment` aplicada; RPC disponível para `authenticated`/`service_role` e bloqueada para `anon`.
+- **Task 4 pendente:** ativação de leaked password protection requer sessão administrativa no painel Supabase; não há ferramenta de configuração autenticada disponível.
