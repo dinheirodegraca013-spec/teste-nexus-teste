@@ -1575,3 +1575,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **CONFIRMADO:** DEV lista 17 migrations aplicadas; o checkout contém 18 arquivos.
 - **DIVERGÊNCIA CONTROLADA:** `20261019000000_add_atomic_goal_increment.sql` permanece apenas como reconciliação local da RPC já existente, sem reexecução remota.
+
+## Ciclo autônomo — 2026-10-19: acessibilidade na recuperação de senha
+
+- **CORRIGIDO:** os controles visuais de retorno ao início em `ForgotPasswordPage.tsx` e `ResetPasswordPage.tsx` deixaram de ser `div` clicáveis e passaram a ser botões semânticos, com nome acessível e foco visível.
+- **TESTE:** novo contrato de acessibilidade; `npm test` passou 279/279, com lint, build e diff-check aprovados.
+- **COMMIT:** `f73b463`, enviado para `fix/persist-rbac-permissions`; sem alteração de banco ou produção.
