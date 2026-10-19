@@ -1548,3 +1548,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **APROVADO:** Edge Functions, typecheck/build e GitGuardian passaram no head `990d47c`.
 - **BLOQUEADO EXTERNO:** o status Vercel deste commit retornou `failure` por rate limit, solicitando nova tentativa em 24 horas. Não houve retry, deploy manual ou alteração de produção.
+
+## Ciclo autônomo — 2026-10-19: foco de modal
+
+- **CORRIGIDO:** `Modal.tsx` agora recupera o foco para o primeiro/último controle quando uma tecla `Tab` é recebida com foco fora do diálogo.
+- **TESTE:** regressão adicionada em `tests/modal-accessibility.test.mjs`; teste específico e suíte completa passaram (277/277), além de lint, build e diff-check.
+- **COMMIT:** `516e674`, enviado para `fix/persist-rbac-permissions`; sem alteração de banco ou produção.

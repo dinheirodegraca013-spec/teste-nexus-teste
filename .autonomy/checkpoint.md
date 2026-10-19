@@ -241,3 +241,4 @@
 - 2026-10-19: marco local aprovado: `npm test` 277/277, lint, build e diff-check passaram; aviso de Vite ocorreu somente por ausência de variáveis no executor local.
 - 2026-10-19: inventário read-only de logs DEV confirmou fontes e volumes; análise por nível ficou pendente por schema/backend transitório, sem alteração remota.
 - 2026-10-19: checks do head `990d47c` passaram em Edge/build/GitGuardian; Vercel ficou rate-limited por 24h. Sem retry ou deploy manual.
+- 2026-10-19: corrigido escape de foco no `Modal`; regressão e suíte 277/277, lint e build aprovados; commit `516e674` enviado.
