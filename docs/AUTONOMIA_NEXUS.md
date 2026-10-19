@@ -1992,3 +1992,4 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Task 2 concluída:** migration `consolidate_duplicate_rls_policies` aplicada; policies duplicadas removidas e policy administrativa verificada por leitura.
 - **Task 3 concluída:** migration `add_atomic_goal_increment` aplicada; RPC disponível para `authenticated`/`service_role` e bloqueada para `anon`.
 - **Task 4 pendente:** ativação de leaked password protection requer sessão administrativa no painel Supabase; não há ferramenta de configuração autenticada disponível.
+- **Decisão do usuário:** não ativar essa proteção agora por permanecer no plano Free do DEV. O risco residual fica aceito temporariamente; a aplicação mantém senha mínima, validações locais e testes de autenticação. Reavaliar antes de produção.

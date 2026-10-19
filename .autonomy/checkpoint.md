@@ -323,3 +323,4 @@
 - 2026-10-19: Task 1 E2E read-only aprovada com duas contas sintéticas no DEV `qwvbvqlzcyfkuszxrlgv`: autenticação, tenants distintos, bloqueio cross-tenant e Storage privado confirmados.
 - 2026-10-19: Task 2 aplicou e verificou `consolidate_duplicate_rls_policies`; Task 3 aplicou e verificou `add_atomic_goal_increment` (anon sem EXECUTE; authenticated/service_role permitidos). Nenhuma escrita de dados reais.
 - 2026-10-19: Task 4 depende de login administrativo no painel Supabase para ativar leaked password protection; nenhuma senha de painel foi solicitada ou armazenada.
+- 2026-10-19: usuário decidiu não ativar leaked password protection no plano Free do DEV neste momento; risco residual aceito e documentado. Mantidas senha mínima, validações locais e testes de autenticação; produção inalterada.
