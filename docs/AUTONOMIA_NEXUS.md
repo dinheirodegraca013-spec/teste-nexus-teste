@@ -1600,6 +1600,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **NÃO APLICÁVEL:** Supabase Preview foi ignorado porque a branch não está associada a uma branch Supabase.
 - **PENDÊNCIA EXTERNA:** status Vercel continua `failure` por limite temporário de deploy; não houve novo deploy nem alteração de produção.
 
+## Ciclo autônomo — 2026-10-19: auditoria final de ações destrutivas
+
+- **CORRIGIDO:** exclusões de demandas de Inteligência e itens de Materiais passaram a expor `aria-label="Excluir"` nos botões somente de ícone.
+- **TESTE:** `npm test` passou 290/290; lint, build e `git diff --check` aprovados.
+- **PENDÊNCIA EXTERNA:** Vercel segue rate-limited; nenhuma promoção ou alteração remota foi feita.
+
 ## Ciclo autônomo — 2026-10-19: nomes acessíveis em ações de ícone
 
 - **CORRIGIDO:** ações de editar, excluir, visualizar, convite, permissões e remoção de arquivo agora expõem `aria-label` explícito, mantendo os `title` existentes.

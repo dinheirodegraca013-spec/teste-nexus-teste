@@ -270,3 +270,4 @@
 - 2026-10-19: CI do head `c34cb36` aprovou build/typecheck, Edge Functions e GitGuardian; Vercel rate-limited por 24h e Supabase Preview `skipped`.
 - 2026-10-19: ações de ícone em módulos operacionais receberam `aria-label` explícito; suíte 290/290, lint/build/diff-check aprovados; Vercel segue rate-limited.
 - 2026-10-19: revisão externa do head `084440e` aprovou build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel segue rate-limited.
+- 2026-10-19: exclusões de Inteligência e Materiais receberam nomes acessíveis; suíte 290/290, lint/build/diff-check aprovados; Vercel segue rate-limited.
