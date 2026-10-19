@@ -1,5 +1,5 @@
--- REVIEW ONLY. NOT EXECUTED. Requires specific user approval under AGENTS.md.
--- Authorized Supabase DEV: qidstqsbxwkbkwowhpab.
+-- LEGACY REFERENCE ONLY. DO NOT EXECUTE against the current DEV.
+-- Historical target was qidstqsbxwkbkwowhpab; current DEV is qwvbvqlzcyfkuszxrlgv.
 -- All 9 affected SELECT policies verified 2026-10-16.
 -- ATTENTION: user_module_permissions currently contains 0 rows, so granting
 -- these policies without provisioning permissions first will hide all data

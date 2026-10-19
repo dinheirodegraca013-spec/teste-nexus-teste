@@ -1,5 +1,5 @@
--- REVIEW ONLY. DO NOT APPLY WITHOUT SPECIFIC APPROVAL.
--- Supabase DEV only: qidstqsbxwkbkwowhpab
+-- LEGACY REFERENCE ONLY. DO NOT EXECUTE.
+-- Superseded by FIX_PRIVATE_STORAGE_POLICY_REGEX_QWVB.sql for DEV qwvbvqlzcyfkuszxrlgv.
 -- Corrects the doubled backslash before file extensions in the three
 -- existing nexus_private_evidence_* policies. No bucket or data changes.
 BEGIN;

@@ -1,5 +1,5 @@
--- PROPOSTA PARA REVISAO. NAO APLICADA.
--- Destino exclusivo: qidstqsbxwkbkwowhpab.
+-- LEGACY PROPOSAL FOR REVIEW ONLY. DO NOT EXECUTE.
+-- Historical target was qidstqsbxwkbkwowhpab; current DEV is qwvbvqlzcyfkuszxrlgv.
 -- Requer aprovacao especifica, backup e testes em ambiente controlado.
 BEGIN;
 

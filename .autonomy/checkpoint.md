@@ -221,3 +221,4 @@
 - 2026-10-19: Security Advisor read-only confirmou 2 tabelas privadas sem policies, 5 SECURITY DEFINER para authenticated e leaked-password protection desativada; Storage permanece resolvido. Nenhuma alteração estrutural executada.
 - 2026-10-19: reconciliada localmente a RPC `nexus_increment_goal` ausente do histórico de migrations; contrato versionado sem execução remota. `npm test` 275/275, lint e build aprovados.
 - 2026-10-19: CI do head `815ba0f` aprovou build/typecheck, Edge Functions e GitGuardian; Vercel ficou rate-limited por 24h. Sem retry/deploy manual.
+- 2026-10-19: marcadas como legado/DO NOT EXECUTE quatro propostas SQL que apontavam ao projeto antigo `qidstqsbxwkbkwowhpab`; scripts atuais do DEV permanecem separados. Nenhum SQL remoto executado.

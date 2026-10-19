@@ -1,5 +1,5 @@
--- REVIEW ONLY. NOT APPLIED. Requires specific user approval under AGENTS.md.
--- Supabase DEV only: qidstqsbxwkbkwowhpab
+-- LEGACY REFERENCE ONLY. DO NOT EXECUTE against the current DEV.
+-- Historical target was qidstqsbxwkbkwowhpab; use the current DEV-specific script instead.
 -- Verified on 2026-10-16: storage.buckets has zero rows and storage.objects
 -- has zero user-created RLS policies in authorized DEV.
 --
