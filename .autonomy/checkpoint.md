@@ -308,3 +308,4 @@
 - 2026-10-19: referências antigas do Supabase foram marcadas como históricas; código e testes seguem no DEV `qwvbvqlzcyfkuszxrlgv`; diff-check aprovado.
 - 2026-10-19: PR do head `08b91f1` executou typecheck/build, Edge Functions e GitGuardian com sucesso após remoção do push duplicado; Vercel documental segue rate-limited.
 - 2026-10-19: auditoria de dependências e busca direcionada por segredos/TODOs sem achados acionáveis; `npm audit --omit=dev --audit-level=moderate` reportou 0 vulnerabilidades; árvore limpa.
+- 2026-10-19: consulta somente leitura aos advisors do Supabase DEV `qwvbvqlzcyfkuszxrlgv` confirmou duas tabelas privadas com RLS sem policies, cinco funções `SECURITY DEFINER` executáveis por `authenticated` e proteção contra senhas vazadas desativada. Logs agregados falharam com erro transitório do backend. Nenhuma alteração estrutural foi aplicada; correções dependem de script e aprovação específica.

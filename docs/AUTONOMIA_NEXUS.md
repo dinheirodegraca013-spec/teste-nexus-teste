@@ -1927,3 +1927,11 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **APROVADO:** o head documental `08b91f1` acionou o `pull_request` normalmente; typecheck/build, Edge Functions e GitGuardian passaram, confirmando que a remoção do gatilho `push` não retirou cobertura.
 - **NÃO APLICÁVEL:** Supabase Preview `skipped`, pois a branch não está associada a uma branch Supabase.
 - **PENDÊNCIA EXTERNA:** Vercel retornou rate limit para este head documental; nenhum retry manual ou deploy de produção foi realizado.
+
+## Ciclo autônomo — 2026-10-19: advisors do Supabase DEV
+
+- **REPROVADO (somente leitura):** os advisors do projeto `qwvbvqlzcyfkuszxrlgv` identificaram RLS habilitado sem policies em `private.nexus_controller_scopes` e `private.nexus_team_memberships`.
+- **REPROVADO (somente leitura):** cinco funções `SECURITY DEFINER` estão executáveis por `authenticated`: `nexus_distribute_material`, `nexus_increment_goal`, `nexus_set_controller_scope`, `nexus_set_team_scope` e `provision_new_user`.
+- **REPROVADO (somente leitura):** a proteção do Supabase Auth contra senhas vazadas está desativada.
+- **BLOQUEADO POR AUTORIZAÇÃO:** não apliquei SQL/RLS nem alterei a configuração de Auth. É necessário apresentar scripts específicos e obter aprovação antes de qualquer intervenção privilegiada.
+- **FALHA TRANSITÓRIA:** consulta agregada de logs retornou erro de backend; nenhum retry automático foi feito.
