@@ -1862,3 +1862,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **AUDITADO:** `AuthContext`, `DashboardPage` e `coreServices` registram apenas host, operação, tabela, status/código e mensagens de erro; não encontrei senha, token, chave, cookie, sessão ou payload de usuário nos logs revisados.
 - **PENDÊNCIA:** `DashboardPage` e o cadastro de perfil ainda registram `details`/`hint` fornecidos pelo Supabase. Esses campos podem expor detalhes internos de diagnóstico, mas não houve evidência de credencial ou dado pessoal nesta revisão; nenhuma alteração foi aplicada sem falha comprovada.
+
+## Ciclo autônomo — 2026-10-19: CI da auditoria de logs
+
+- **APROVADO:** no head `19f5a83`, typecheck/build, Edge Functions e GitGuardian passaram; nenhum segredo foi detectado.
+- **NÃO APLICÁVEL:** Supabase Preview `skipped`, pois a branch não está associada a uma branch Supabase.
+- **BLOQUEIO EXTERNO:** Vercel continua rate-limited por 24 horas; não houve retry, deploy manual ou merge.

@@ -297,3 +297,4 @@
 - 2026-10-19: revisão do head `c45e6a1` aprovou Vercel Preview, build/typecheck, Edge Functions, GitGuardian e feedback sem pendências; produção inalterada.
 - 2026-10-19: head `b4636d2` manteve build/typecheck, Edge Functions e GitGuardian aprovados; Vercel voltou a rate-limit após commit documental; preview `c45e6a1` segue aprovado.
 - 2026-10-19: auditoria direcionada de logs do frontend sem exposição comprovada de credenciais; `details`/`hint` permanecem como pendência de endurecimento, sem alteração aplicada.
+- 2026-10-19: CI do head `19f5a83` aprovou typecheck/build, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel segue rate-limited.
