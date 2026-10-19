@@ -1984,3 +1984,4 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **ENDURECIDO:** teste comportamental executa o resumo com e-mail, token e senha sintéticos e confirma que nenhum valor aparece no resultado; suíte atual 306/306.
 - **APROVADO:** CI do head `704e914` confirmou Vercel Preview, typecheck/build e Edge Functions; Supabase Preview foi `skipped` e GitGuardian `neutral` por limite de tamanho da PR.
 - **PENDENTE:** homologação E2E autenticada; nenhuma alteração em Supabase ou produção foi feita neste ciclo.
+- **CI remoto:** head `da572f3` aprovado em typecheck/build, Edge Functions e Vercel Preview; Supabase Preview `skipped`.

@@ -319,3 +319,4 @@
 - 2026-10-19: auditoria confirmou que `AuthContext` ainda registrava mensagens brutas de erros do provedor; corrigido para resumo redigido (`redacted`) com nome/código/status validados. Suíte 305/305, lint e build aprovados; nenhuma alteração em banco/produção.
 - 2026-10-19: CI do head `704e914` aprovou Vercel Preview, typecheck/build e Edge Functions; Supabase Preview `skipped`; GitGuardian `neutral` por limite de tamanho da PR, sem indicação de segredo.
 - 2026-10-19: teste comportamental adicionou e-mail, token e senha sintéticos ao erro de autenticação e confirmou redaction; suíte 306/306, lint/build/diff-check aprovados. Nenhuma alteração em banco/produção.
+- 2026-10-19: CI do head `da572f3` confirmou typecheck/build, Edge Functions e Vercel Preview aprovados; Supabase Preview `skipped`; GitGuardian `neutral` por limite da PR.
