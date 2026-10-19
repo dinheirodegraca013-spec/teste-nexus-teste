@@ -324,3 +324,4 @@
 - 2026-10-19: Task 2 aplicou e verificou `consolidate_duplicate_rls_policies`; Task 3 aplicou e verificou `add_atomic_goal_increment` (anon sem EXECUTE; authenticated/service_role permitidos). Nenhuma escrita de dados reais.
 - 2026-10-19: Task 4 depende de login administrativo no painel Supabase para ativar leaked password protection; nenhuma senha de painel foi solicitada ou armazenada.
 - 2026-10-19: usuário decidiu não ativar leaked password protection no plano Free do DEV neste momento; risco residual aceito e documentado. Mantidas senha mínima, validações locais e testes de autenticação; produção inalterada.
+- 2026-10-19: Inteligência recebeu mapa de calor territorial agregado e resumo de lideranças/frentes de trabalho; navegação mobile recebeu fechamento por ESC, botão de fechar e scroll isolado. `npm test` 308/308, lint e build OK. Nenhuma alteração no banco, produção ou main.

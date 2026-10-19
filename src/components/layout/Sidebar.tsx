@@ -18,7 +18,8 @@ import {
   CreditCard, 
   Settings, 
   User, 
-  LogOut
+  LogOut,
+  X
 } from 'lucide-react';
 import { useAuth, normalizeRole } from '../../contexts/AuthContext';
 import { AppModule } from '../../types';
@@ -138,6 +139,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Sidebar container */}
       <aside
+        id="nexus-mobile-navigation"
+        aria-label="Navegação principal"
         className={`fixed top-0 bottom-0 left-0 z-50 w-64 bg-white border-r border-slate-200 flex flex-col transition-transform duration-200 ease-in-out lg:translate-x-0 ${
           isMobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
@@ -158,6 +161,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">SaaS Operação</div>
             </div>
           </button>
+          <button
+            type="button"
+            onClick={onCloseMobile}
+            aria-label="Fechar menu de navegação"
+            className="lg:hidden p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Active organization. Membership changes are managed server-side. */}
@@ -171,7 +182,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Navigation items */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-5 custom-scrollbar text-left">
+        <nav className="flex-1 overflow-y-auto overscroll-contain p-3 space-y-5 custom-scrollbar text-left" aria-label="Seções do aplicativo">
           {navGroups.map((group) => {
             const filteredItems = group.items.filter(item => {
               if (item.adminOnly && !['admin', 'superadmin'].includes(normalizeRole(profile?.role))) return false;
@@ -213,7 +224,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             );
           })}
-        </div>
+        </nav>
 
         {/* User profile & Logout */}
         <div className="p-3 border-t border-slate-100 bg-white">

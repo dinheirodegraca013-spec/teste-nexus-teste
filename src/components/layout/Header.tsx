@@ -6,9 +6,10 @@ import { isSupabaseConfigured, supabaseUrl } from '../../lib/supabase';
 interface HeaderProps {
   onOpenMobileMenu: () => void;
   currentPath: string;
+  isMobileMenuOpen?: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu, currentPath }) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu, currentPath, isMobileMenuOpen = false }) => {
   const { organization, profile } = useAuth();
 
   const getPageTitle = (path: string) => {
@@ -44,7 +45,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu, currentPath })
           type="button"
           onClick={onOpenMobileMenu}
           aria-label="Abrir menu de navegação"
-          className="lg:hidden p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+          aria-expanded={isMobileMenuOpen}
+          aria-controls="nexus-mobile-navigation"
+          className="lg:hidden min-w-10 min-h-10 p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 transition-colors cursor-pointer"
         >
           <Menu className="w-5 h-5" />
         </button>

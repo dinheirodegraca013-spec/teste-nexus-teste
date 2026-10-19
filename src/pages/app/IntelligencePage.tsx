@@ -27,6 +27,8 @@ export const IntelligencePage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [selectedTerritory, setSelectedTerritory] = useState('all');
+  const [territoryView, setTerritoryView] = useState<'heatmap' | 'summary'>('heatmap');
+  const [selectedHeatTerritory, setSelectedHeatTerritory] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -126,18 +128,43 @@ export const IntelligencePage: React.FC = () => {
     }
   };
 
-  // Dynamically group contacts and leaders by territory/neighborhood
-  const territoryMap = new Map<string, { contactsCount: number; leadersCount: number }>();
+  // Agregado por território: nunca expõe a localização exata de uma pessoa.
+  const territoryMap = new Map<string, {
+    contactsCount: number;
+    leadersCount: number;
+    demandsCount: number;
+    highPriorityDemands: number;
+    leaderNames: string[];
+    categories: string[];
+  }>();
+  const getTerritory = (value?: string) => value?.trim() || 'Geral';
+  const getTerritoryData = (name: string) => territoryMap.get(name) || {
+    contactsCount: 0,
+    leadersCount: 0,
+    demandsCount: 0,
+    highPriorityDemands: 0,
+    leaderNames: [],
+    categories: [],
+  };
   leaders.forEach(l => {
-    const t = l.territory || l.neighborhood || 'Geral';
-    const current = territoryMap.get(t) || { contactsCount: 0, leadersCount: 0 };
+    const t = getTerritory(l.territory || l.neighborhood);
+    const current = getTerritoryData(t);
     current.leadersCount += 1;
+    if (l.name && !current.leaderNames.includes(l.name)) current.leaderNames.push(l.name);
     territoryMap.set(t, current);
   });
   contacts.forEach(c => {
-    const t = c.territory || c.neighborhood || 'Geral';
-    const current = territoryMap.get(t) || { contactsCount: 0, leadersCount: 0 };
+    const t = getTerritory(c.territory || c.neighborhood);
+    const current = getTerritoryData(t);
     current.contactsCount += 1;
+    territoryMap.set(t, current);
+  });
+  demands.forEach(d => {
+    const t = getTerritory(d.territory || d.neighborhood);
+    const current = getTerritoryData(t);
+    current.demandsCount += 1;
+    if (d.priority === 'high') current.highPriorityDemands += 1;
+    if (d.category && !current.categories.includes(d.category)) current.categories.push(d.category);
     territoryMap.set(t, current);
   });
 
@@ -151,9 +178,24 @@ export const IntelligencePage: React.FC = () => {
       name,
       contactsCount: data.contactsCount,
       leadersCount: data.leadersCount,
+      demandsCount: data.demandsCount,
+      highPriorityDemands: data.highPriorityDemands,
+      leaderNames: data.leaderNames,
+      categories: data.categories,
       status,
     };
   });
+
+  const maxTerritoryScore = Math.max(
+    1,
+    ...territoriesList.map(t => t.contactsCount + (t.leadersCount * 8) + (t.demandsCount * 3)),
+  );
+  const heatTerritory = territoriesList.find(t => t.name === selectedHeatTerritory) || territoriesList[0];
+  const heatColor = (territory: typeof territoriesList[number]) => {
+    const score = territory.contactsCount + (territory.leadersCount * 8) + (territory.demandsCount * 3);
+    const intensity = Math.max(0.12, Math.min(0.9, score / maxTerritoryScore));
+    return `rgba(15, 23, 42, ${intensity})`;
+  };
 
   const filteredDemands = demands.filter(d => 
     selectedTerritory === 'all' || d.territory === selectedTerritory
@@ -203,6 +245,90 @@ export const IntelligencePage: React.FC = () => {
         <ErrorState message={loadError} onRetry={loadData} />
       ) : (
         <>
+          {/* Heatmap / territorial summary */}
+          <section className="space-y-3" aria-labelledby="territorial-map-title">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 id="territorial-map-title" className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-slate-500" />
+                  Mapa de calor das lideranças e trabalhos
+                </h3>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Visão agregada por território. A intensidade combina apoiadores, lideranças e demandas registradas.
+                </p>
+              </div>
+              <div className="flex rounded-lg border border-slate-200 bg-white p-0.5 self-start" role="tablist" aria-label="Visualização territorial">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={territoryView === 'heatmap'}
+                  onClick={() => setTerritoryView('heatmap')}
+                  className={`px-3 py-1.5 text-xs rounded-md transition-colors ${territoryView === 'heatmap' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900'}`}
+                >Mapa de calor</button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={territoryView === 'summary'}
+                  onClick={() => setTerritoryView('summary')}
+                  className={`px-3 py-1.5 text-xs rounded-md transition-colors ${territoryView === 'summary' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900'}`}
+                >Resumo</button>
+              </div>
+            </div>
+
+            {territoriesList.length === 0 ? (
+              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-500">
+                Cadastre uma liderança, apoiador ou demanda com território para visualizar o mapa.
+              </div>
+            ) : territoryView === 'heatmap' ? (
+              <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_260px] gap-3">
+                <div className="rounded-xl border border-slate-200 bg-slate-100 p-3 min-h-[220px]">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2" role="list" aria-label="Intensidade por território">
+                    {territoriesList.map((territory) => (
+                      <button
+                        key={territory.name}
+                        type="button"
+                        role="listitem"
+                        onClick={() => setSelectedHeatTerritory(territory.name)}
+                        aria-label={`${territory.name}: ${territory.leadersCount} lideranças, ${territory.contactsCount} apoiadores e ${territory.demandsCount} demandas`}
+                        className={`min-h-[92px] rounded-lg p-3 text-left text-white shadow-sm transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 ${heatTerritory?.name === territory.name ? 'ring-2 ring-slate-900 ring-offset-2' : ''}`}
+                        style={{ backgroundColor: heatColor(territory) }}
+                      >
+                        <span className="block truncate text-xs font-bold">{territory.name}</span>
+                        <span className="mt-2 block text-[10px] opacity-80">Lideranças</span>
+                        <strong className="font-mono text-lg">{territory.leadersCount}</strong>
+                        <span className="ml-2 text-[10px] opacity-80">trabalhos: {territory.demandsCount}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-end gap-2 pt-3 text-[10px] text-slate-500">
+                    <span>menor intensidade</span><span className="h-2 w-16 rounded bg-slate-200" aria-hidden="true" /><span className="h-2 w-16 rounded bg-slate-900" aria-hidden="true" /><span>maior intensidade</span>
+                  </div>
+                </div>
+                {heatTerritory && (
+                  <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-wider text-slate-400">Território selecionado</span>
+                      <h4 className="font-bold text-slate-900">{heatTerritory.name}</h4>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="rounded-lg bg-slate-50 p-2"><strong className="block font-mono">{heatTerritory.leadersCount}</strong><span className="text-[10px] text-slate-500">lideranças</span></div>
+                      <div className="rounded-lg bg-slate-50 p-2"><strong className="block font-mono">{heatTerritory.contactsCount}</strong><span className="text-[10px] text-slate-500">apoiadores</span></div>
+                      <div className="rounded-lg bg-slate-50 p-2"><strong className="block font-mono">{heatTerritory.demandsCount}</strong><span className="text-[10px] text-slate-500">trabalhos</span></div>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400">Lideranças</span>
+                      <p className="text-xs text-slate-700 mt-1">{heatTerritory.leaderNames.join(', ') || 'Nenhuma cadastrada'}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400">Frentes de trabalho</span>
+                      <p className="text-xs text-slate-700 mt-1">{heatTerritory.categories.join(', ') || 'Nenhuma demanda cadastrada'}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </section>
+
           {/* Territories Overview */}
           <div className="space-y-3">
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">

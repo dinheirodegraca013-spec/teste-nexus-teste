@@ -1993,3 +1993,11 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Task 3 concluída:** migration `add_atomic_goal_increment` aplicada; RPC disponível para `authenticated`/`service_role` e bloqueada para `anon`.
 - **Task 4 pendente:** ativação de leaked password protection requer sessão administrativa no painel Supabase; não há ferramenta de configuração autenticada disponível.
 - **Decisão do usuário:** não ativar essa proteção agora por permanecer no plano Free do DEV. O risco residual fica aceito temporariamente; a aplicação mantém senha mínima, validações locais e testes de autenticação. Reavaliar antes de produção.
+
+## Melhoria de produto — mapa territorial e navegação mobile — 2026-10-19
+
+- **Entregue:** a aba Inteligência agora possui uma visão de mapa de calor territorial agregada, com intensidade baseada em apoiadores, lideranças e demandas, seleção de território e resumo das frentes de trabalho.
+- **Privacidade:** a primeira versão usa somente território/bairro já cadastrado e não expõe coordenadas exatas. Um mapa geográfico real exigirá dados de latitude/longitude, consentimento e migration específica; não foi criado nem aplicado SQL nesta etapa.
+- **Mobile:** menu lateral recebeu botão de fechamento, área de toque ampliada, fechamento por ESC, bloqueio do scroll do fundo e rolagem independente.
+- **Validação:** `npm test` 308/308, `npm run lint` e `npm run build` aprovados.
+- **Próxima evolução opcional:** adicionar coordenadas aproximadas por território, com revisão de privacidade e aprovação específica de schema/RLS antes de qualquer alteração no Supabase.
