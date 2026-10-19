@@ -1560,3 +1560,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CORRIGIDO:** `Drawer.tsx` recebeu a mesma recuperação de foco fora do diálogo aplicada ao Modal.
 - **TESTE:** contrato de acessibilidade atualizado; `npm test` passou 277/277, com lint, build e diff-check aprovados.
 - **COMMIT:** `dcb60f1`, enviado para a branch de desenvolvimento; sem alteração de banco ou produção.
+
+## Ciclo autônomo — 2026-10-19: checks do Drawer
+
+- **APROVADO:** no head `7c0ab8d`, typecheck/build, Edge Functions e GitGuardian passaram; o job de build inicialmente em andamento também concluiu `success`.
+- **BLOQUEADO EXTERNO:** Vercel continua rate-limited por 24 horas; nenhum retry ou promoção foi realizado.
