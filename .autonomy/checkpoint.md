@@ -217,3 +217,4 @@
 - 2026-10-19 00:02 BRT: descrição da PR #1 sincronizada com 274 testes, correção de auditService.log, deployment READY e pendências estruturais; PR permanece DRAFT/sem merge.
 - 2026-10-19 00:12 BRT: autorizada e aplicada no DEV a migration `20261018235446_fix_private_storage_policy_regex_qwvb`; bucket/policies verificados read-only, advisor de Storage resolvido. `npm test` 274/274, lint e build aprovados.
 - 2026-10-19: Code Review do head `2c7d0a8` confirmou Vercel, typecheck/build, Edge Functions e GitGuardian `success`; Supabase Preview `skipped` por ausência de branch associada. Nenhuma alteração remota.
+- 2026-10-19: corrigidos os cabeçalhos dos dois contratos SQL ativos em `supabase/tests` para apontar somente ao DEV `qwvbvqlzcyfkuszxrlgv`; `npm test` 274/274, lint, build e diff-check aprovados. Próximo foco: revisar os advisories estruturais sem executar SQL não aprovado.
