@@ -1631,6 +1631,11 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **APROVADO:** logs de autenticação registram somente hostname, nome/mensagem/status/código de erro e estados booleanos; não registram senha, token, chave ou objeto de sessão. O login mascara o e-mail antes do console.
 - **AÇÃO:** nenhuma alteração necessária; manter a revisão quando novos fluxos de autenticação forem adicionados.
 
+## Ciclo autônomo — 2026-10-19: nomes acessíveis em controles de ícone
+
+- **CORRIGIDO:** menu móvel e limpeza do campo de busca receberam nomes acessíveis (`aria-label`).
+- **TESTE:** contrato de botões atualizado; `npm test` passou 286/286, com lint, build e diff-check aprovados.
+
 ## Ciclo autônomo — 2026-10-19: acessibilidade do upload de evidências
 
 - **CORRIGIDO:** o dropzone de `FileUpload.tsx` agora possui papel de botão, foco por teclado, ativação por Enter/Espaço e estado desabilitado anunciado.

@@ -28,6 +28,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         <button
           type="button"
           onClick={() => onChange('')}
+          aria-label="Limpar busca"
           className="absolute right-2.5 text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
         >
           <X className="w-3.5 h-3.5" />
