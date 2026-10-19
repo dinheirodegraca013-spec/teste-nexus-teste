@@ -1517,3 +1517,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **CONFIRMADO (somente leitura):** o projeto Vercel `nexusteste` agora lista `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` também no alvo Production, com comentários apontando ao DEV autorizado.
 - **CONFIRMADO:** a rota pública `/cadastro` retornou `200 OK` no domínio `teste-nexus-teste.vercel.app`; não foram lidos valores descriptografados.
 - **ESCOPO:** nenhuma variável foi criada, alterada ou removida pelo agente; não houve alteração no banco ou em produção.
+
+## Ciclo autônomo — 2026-10-19: pré-condições do E2E multitenant
+
+- **CONFIRMADO (read-only):** o DEV contém duas contas Auth confirmadas e dois perfis administrativos em organizações distintas (`92db2278-c602-4048-afa2-14de5bf05d6c` e `3dd67023-5786-443c-a55f-0597c19e985d`).
+- **NÃO EXECUTADO:** o smoke E2E não foi iniciado porque as sete variáveis `NEXUS_E2E_*` não estão configuradas neste ambiente. Nenhuma senha foi lida, exibida ou armazenada.
+- **ESCOPO:** apenas consultas de leitura; nenhum dado, Auth, policy ou schema foi alterado.
