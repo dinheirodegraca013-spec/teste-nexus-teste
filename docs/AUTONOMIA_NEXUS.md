@@ -1477,4 +1477,6 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **AUDITORIA DE SERVIÇOS:** os caminhos de criação/atualização revisados usam confirmação de linha retornada; nenhum novo retorno falso de sucesso foi encontrado.
 
+- **DEPENDÊNCIAS:** `npm audit --omit=dev --audit-level=moderate` encontrou 0 vulnerabilidades de produção.
+
 - **CI DO HEAD `815ba0f`:** typecheck/build, Edge Functions e GitGuardian passaram; o check Vercel reportou apenas rate limit temporário de deployment (`retry in 24 hours`). Nenhum retry ou deploy manual foi feito.
