@@ -1921,3 +1921,9 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **CORRIGIDO:** oito documentos históricos que citavam o projeto antigo agora estão marcados explicitamente como não operacionais e apontam o DEV atual `qwvbvqlzcyfkuszxrlgv`.
 - **VALIDAÇÃO:** busca direcionada confirmou que código, scripts E2E, migrations atuais e contratos usam o identificador autorizado; referências antigas restantes estão contextualizadas como histórico/proposta.
+
+## Ciclo autônomo — 2026-10-19: verificação pós-redução de CI
+
+- **APROVADO:** o head documental `08b91f1` acionou o `pull_request` normalmente; typecheck/build, Edge Functions e GitGuardian passaram, confirmando que a remoção do gatilho `push` não retirou cobertura.
+- **NÃO APLICÁVEL:** Supabase Preview `skipped`, pois a branch não está associada a uma branch Supabase.
+- **PENDÊNCIA EXTERNA:** Vercel retornou rate limit para este head documental; nenhum retry manual ou deploy de produção foi realizado.
