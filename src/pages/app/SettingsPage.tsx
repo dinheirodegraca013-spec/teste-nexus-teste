@@ -115,7 +115,7 @@ const SettingsPageContent: React.FC = () => {
             </div>
             <p className="text-xs text-slate-600">
               {isSupabaseConfigured
-                ? <>O frontend está apontando para o ambiente configurado. O isolamento RLS é aplicado e validado pelo banco para a organização: <strong className="text-slate-900 font-mono">{organization?.id}</strong>.</>
+                ? <>O frontend está apontando para o ambiente configurado. O isolamento entre organizações depende das políticas RLS do banco; esta tela não comprova a validação dessas políticas.</>
                 : 'Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no ambiente de deploy e gere um novo build para habilitar o acesso aos dados.'}
             </p>
             {supabaseUrl && <div className="text-[11px] font-mono text-slate-400 pt-1">Endpoint: {supabaseUrl}</div>}

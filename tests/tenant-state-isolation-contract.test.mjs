@@ -126,6 +126,8 @@ test('SettingsPage does not claim a connection when Supabase is unconfigured', a
   assert.match(source, /isSupabaseConfigured \? 'Supabase configurado' : 'Supabase não configurado'/);
   assert.match(source, /VITE_SUPABASE_URL/);
   assert.doesNotMatch(source, /Supabase RLS Ativo & Conectado/);
+  assert.doesNotMatch(source, /RLS é aplicado e validado/);
+  assert.match(source, /esta tela não comprova a validação dessas políticas/);
 });
 
 test('shared auth status does not claim verified Supabase connectivity', async () => {
