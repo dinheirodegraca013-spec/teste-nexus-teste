@@ -1956,6 +1956,7 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **PREPARADO:** `docs/proposed-migrations/CONSOLIDATE_DUPLICATE_RLS_POLICIES.sql` une as regras de `profiles` e remove somente a policy duplicada de permissões, preservando o comportamento tenant-scoped.
 - **ENDURECIDO:** revisão externa apontou uma alternativa de `WITH CHECK` sem verificação administrativa explícita; o script agora exige `private.nexus_is_admin()` nessa alternativa e possui teste estático de regressão.
 - **BLOQUEADO POR AUTORIZAÇÃO:** o script é estrutural/RLS e não foi executado.
+- **CI DO HEAD 8c93de4:** Preview Vercel, typecheck/build e Edge Functions passaram; Supabase Preview foi `skipped`. GitGuardian ficou `neutral` por limite de tamanho da PR, sem resultado de segredo.
 
 ## Reconciliação de migrations — DEV
 
