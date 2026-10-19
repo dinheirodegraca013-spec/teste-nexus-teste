@@ -15,6 +15,15 @@ import {
   PopularDemand 
 } from '../types';
 
+function summarizeAuditError(error: unknown) {
+  const candidate = error && typeof error === 'object' ? error as Record<string, unknown> : {};
+  return {
+    code: typeof candidate.code === 'string' ? candidate.code : undefined,
+    message: typeof candidate.message === 'string' ? candidate.message : String(error),
+    status: typeof candidate.status === 'number' ? candidate.status : undefined,
+  };
+}
+
 // A PostgREST DELETE can return error=null even when RLS deleted zero rows.
 // Require the deleted row id before telling the operator the action succeeded.
 function confirmUpdatedRow<T>(
@@ -762,10 +771,10 @@ export const auditService = {
     try {
       const { error } = await supabase.from('audit_logs').insert([entry]);
       if (error) {
-        console.warn('[Audit] Erro ao registrar log de auditoria:', error);
+        console.warn('[Audit] Erro ao registrar log de auditoria:', summarizeAuditError(error));
       }
     } catch (err) {
-      console.warn('[Audit] Erro ao registrar log de auditoria:', err);
+      console.warn('[Audit] Erro ao registrar log de auditoria:', summarizeAuditError(err));
     }
   }
 };

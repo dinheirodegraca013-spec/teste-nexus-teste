@@ -32,4 +32,6 @@ test('audit log reports a returned Supabase error instead of silently ignoring i
   assert.equal(warnings.length, 1);
   assert.match(String(warnings[0][0]), /Erro ao registrar log de auditoria/);
   assert.match(String(warnings[0][1]?.message), /audit unavailable/);
+  assert.equal(warnings[0][1]?.details, undefined);
+  assert.equal(warnings[0][1]?.hint, undefined);
 });
