@@ -1975,3 +1975,10 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **NÃO VERIFICADO:** E2E autenticado no navegador, CI remoto e preview; os mocks não comprovam autenticação ou RLS no servidor. Nenhum acesso ao banco, migration, deploy, merge, workflow, segredo ou arquivo de ambiente foi realizado/alterado.
 - **Documentação:** `ESCOPO.md`, `BACKLOG.md`, `ESTADO.md`, `TESTES.md` e `AUDITORIA.md` não existem na raiz; evidências concentradas neste registro persistente, preservando o histórico.
 - **Próxima ação:** executar homologação de login/convite e isolamento com contas sintéticas de teste em ambiente autorizado; depende de credenciais e ambiente de teste disponíveis. Não inferir homologação completa a partir destes testes locais.
+
+## Ciclo autônomo — 2026-10-19: redaction de erros de autenticação
+
+- **CONFIRMADO:** `AuthContext` registrava `message` bruto retornado pelo provedor em erros de autenticação.
+- **CORRIGIDO:** logs agora preservam apenas `errorName`, `code`, `status` validados e `message: redacted`; mensagens não são mais emitidas no console.
+- **APROVADO:** suíte `npm test` 305/305, `npm run lint` e `npm run build`.
+- **PENDENTE:** CI/preview do novo commit; nenhuma alteração em Supabase, produção ou histórico remoto foi feita neste ciclo.

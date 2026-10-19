@@ -6,10 +6,15 @@ import { organizationsService, profilesService, permissionsService, isValidUUID 
 
 function summarizeAuthError(error: unknown) {
   const candidate = error && typeof error === 'object' ? error as Record<string, unknown> : {};
+  const safeToken = (value: unknown) => {
+    if (typeof value !== 'string') return undefined;
+    const normalized = value.trim();
+    return /^[A-Za-z0-9_.:-]{1,64}$/.test(normalized) ? normalized : undefined;
+  };
   return {
-    errorName: typeof candidate.name === 'string' ? candidate.name : 'UnknownError',
-    message: typeof candidate.message === 'string' ? candidate.message : String(error),
-    code: typeof candidate.code === 'string' ? candidate.code : undefined,
+    errorName: safeToken(candidate.name) || 'UnknownError',
+    message: 'redacted',
+    code: safeToken(candidate.code),
     status: typeof candidate.status === 'number' ? candidate.status : undefined,
   };
 }
@@ -521,10 +526,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const parsedHost = supabaseUrl ? new URL(supabaseUrl).hostname : 'configuração-ausente';
       console.error(`[AuthNetworkError][${operation}]`, {
         targetHost: parsedHost,
-        errorName: err?.name || 'UnknownError',
-        message: err?.message || String(err),
-        status: err?.status,
-        code: err?.code,
+        ...summarizeAuthError(err),
       });
     } catch {
       console.error(`[AuthNetworkError][${operation}]`, summarizeAuthError(err));
