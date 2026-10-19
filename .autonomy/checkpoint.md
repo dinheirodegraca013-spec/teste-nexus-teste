@@ -276,3 +276,4 @@
 - 2026-10-19: CI do head `3d866d7` aprovou build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel segue rate-limited.
 - 2026-10-19: auditoria de navegação externa sem achados; botões nativos restantes receberam `type="button"`; suíte 290/290, lint/build/diff-check aprovados.
 - 2026-10-19: adicionado contrato que exige `type` explícito em botões nativos; suíte 291/291, lint/build/diff-check aprovados.
+- 2026-10-19: revisão do head `c45e6a1` aprovou Vercel Preview, build/typecheck, Edge Functions, GitGuardian e feedback sem pendências; produção inalterada.
