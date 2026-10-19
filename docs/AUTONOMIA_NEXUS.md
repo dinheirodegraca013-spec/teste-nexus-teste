@@ -1594,6 +1594,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **TESTE:** contrato público atualizado; `npm test` passou 281/281, com lint, build e diff-check aprovados.
 - **PENDÊNCIA EXTERNA:** Vercel permanece temporariamente rate-limited; nenhuma promoção ou alteração remota foi feita.
 
+## Ciclo autônomo — 2026-10-19: nomes acessíveis em ações de ícone
+
+- **CORRIGIDO:** ações de editar, excluir, visualizar, convite, permissões e remoção de arquivo agora expõem `aria-label` explícito, mantendo os `title` existentes.
+- **TESTE:** `npm test` passou 290/290; `npm run lint`, `npm run build` e `git diff --check` aprovados.
+- **PENDÊNCIA EXTERNA:** Vercel permanece temporariamente rate-limited; nenhuma promoção ou alteração remota foi feita.
+
 ## Ciclo autônomo — 2026-10-19: acessibilidade da navegação autenticada
 
 - **CORRIGIDO:** marca e perfil da `Sidebar.tsx` passaram de `div` clicável para botões semânticos, com nomes acessíveis e foco visível.

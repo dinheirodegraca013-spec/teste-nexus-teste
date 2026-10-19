@@ -414,6 +414,7 @@ export const CoordinatorsPage: React.FC = () => {
                   <div className="flex items-center justify-end gap-1.5">
                     <button
                       onClick={() => handleOpenCoordInvite(coord, 'coord_access')}
+                      aria-label="Enviar link de cadastro ao coordenador"
                       title="Enviar link de cadastro ao coordenador"
                       className="p-1.5 rounded text-slate-500 hover:text-indigo-600 hover:bg-slate-100 transition-colors cursor-pointer"
                     >
@@ -421,6 +422,7 @@ export const CoordinatorsPage: React.FC = () => {
                     </button>
                     <button
                       onClick={() => handleViewDetails(coord)}
+                      aria-label="Ver detalhes"
                       title="Ver detalhes"
                       className="p-1.5 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
                     >
@@ -428,6 +430,7 @@ export const CoordinatorsPage: React.FC = () => {
                     </button>
                     <button
                       onClick={() => handleOpenCreate(coord)}
+                      aria-label="Editar"
                       title="Editar"
                       className="p-1.5 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
                     >
@@ -435,6 +438,7 @@ export const CoordinatorsPage: React.FC = () => {
                     </button>
                     <button
                       onClick={() => handleDelete(coord.id)}
+                      aria-label="Excluir"
                       title="Excluir"
                       className="p-1.5 rounded text-slate-500 hover:text-rose-600 hover:bg-slate-100 transition-colors cursor-pointer"
                     >
@@ -763,6 +767,7 @@ export const CoordinatorsPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleSendWhatsAppLeader(lead, selectedCoord)}
+                          aria-label="Enviar convite via WhatsApp"
                           title="Enviar convite via WhatsApp"
                           className="px-2 py-1 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200 text-[11px] flex items-center gap-1 cursor-pointer"
                         >

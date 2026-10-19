@@ -230,6 +230,7 @@ export const PresencePage: React.FC = () => {
                 <TableCell className="text-right">
                   <button
                     onClick={() => handleDelete(log.id)}
+                    aria-label="Excluir"
                     className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-slate-100 transition-colors cursor-pointer"
                     title="Excluir"
                   >

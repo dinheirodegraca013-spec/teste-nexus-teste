@@ -441,6 +441,7 @@ export const LeadersPage: React.FC = () => {
                     <div className="flex items-center justify-end gap-1.5">
                       <button
                         onClick={() => handleOpenShare(lead)}
+                        aria-label="Enviar convite"
                         title="Enviar convite"
                         className="p-1.5 rounded text-emerald-600 hover:text-emerald-700 hover:bg-slate-100 transition-colors cursor-pointer"
                       >
@@ -451,6 +452,7 @@ export const LeadersPage: React.FC = () => {
                           setSelectedLeader(lead);
                           setIsDrawerOpen(true);
                         }}
+                        aria-label="Ver detalhes"
                         title="Ver detalhes"
                         className="p-1.5 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
                       >
@@ -458,6 +460,7 @@ export const LeadersPage: React.FC = () => {
                       </button>
                       <button
                         onClick={() => handleOpenModal(lead)}
+                        aria-label="Editar"
                         title="Editar"
                         className="p-1.5 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
                       >
@@ -465,6 +468,7 @@ export const LeadersPage: React.FC = () => {
                       </button>
                       <button
                         onClick={() => handleDelete(lead.id)}
+                        aria-label="Excluir"
                         title="Excluir"
                         className="p-1.5 rounded text-slate-500 hover:text-rose-600 hover:bg-slate-100 transition-colors cursor-pointer"
                       >

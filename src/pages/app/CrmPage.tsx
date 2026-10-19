@@ -348,6 +348,7 @@ export const CrmPage: React.FC = () => {
                         setSelectedContact(contact);
                         setIsDrawerOpen(true);
                       }}
+                      aria-label="Ver detalhes"
                       title="Ver detalhes"
                       className="p-1.5 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
                     >
@@ -355,6 +356,7 @@ export const CrmPage: React.FC = () => {
                     </button>
                     <button
                       onClick={() => handleOpenModal(contact)}
+                      aria-label="Editar"
                       title="Editar"
                       className="p-1.5 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
                     >
@@ -362,6 +364,7 @@ export const CrmPage: React.FC = () => {
                     </button>
                     <button
                       onClick={() => handleDelete(contact.id)}
+                      aria-label="Excluir"
                       title="Excluir"
                       className="p-1.5 rounded text-slate-500 hover:text-rose-600 hover:bg-slate-100 transition-colors cursor-pointer"
                     >

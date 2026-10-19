@@ -247,6 +247,7 @@ export const MeetingsPage: React.FC = () => {
                   <div className="flex items-center justify-end gap-1.5">
                     <button
                       onClick={() => handleOpenModal(m)}
+                      aria-label="Editar"
                       className="p-1.5 rounded text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
                       title="Editar"
                     >
@@ -254,6 +255,7 @@ export const MeetingsPage: React.FC = () => {
                     </button>
                     <button
                       onClick={() => handleDelete(m.id)}
+                      aria-label="Excluir"
                       className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-slate-100 transition-colors cursor-pointer"
                       title="Excluir"
                     >

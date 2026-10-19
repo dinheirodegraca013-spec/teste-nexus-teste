@@ -344,6 +344,7 @@ export const UsersPage: React.FC = () => {
                     {['leader', 'coordinator', 'controller'].includes(member.role) && (
                       <button
                         onClick={() => handleOpenScope(member)}
+                        aria-label="Vincular liderança ou coordenação"
                         className="p-1.5 rounded text-slate-400 hover:text-indigo-700 hover:bg-indigo-50 transition-colors cursor-pointer"
                         title="Vincular liderança ou coordenação"
                       >
@@ -352,6 +353,7 @@ export const UsersPage: React.FC = () => {
                     )}
                     <button
                       onClick={() => handleOpenPerms(member)}
+                      aria-label="Configurar permissões granulares"
                       className="p-1.5 rounded text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
                       title="Configurar Permissões Granulares"
                     >
@@ -360,6 +362,7 @@ export const UsersPage: React.FC = () => {
                     <button
                       type="button"
                       disabled
+                      aria-label="Revogação de acesso indisponível"
                       className="p-1.5 rounded text-slate-300 cursor-not-allowed"
                       title="Revogação de acesso temporariamente indisponível: exige fluxo administrativo seguro"
                     >
