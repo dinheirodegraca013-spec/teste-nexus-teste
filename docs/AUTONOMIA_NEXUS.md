@@ -1456,3 +1456,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **APROVADO:** no head `2c7d0a8`, Vercel, typecheck/build, Edge Functions e GitGuardian concluíram com `success`.
 - **PENDÊNCIA CONTROLADA:** Supabase Preview ficou `skipped` porque a branch não está associada a um Supabase Branch; o DEV principal já foi verificado separadamente.
 - **ESCOPO:** somente leitura de checks; nenhum deploy, merge, produção ou banco foi alterado.
+
+## Ciclo autônomo — 2026-10-19: advisories pós-migration
+
+- **CONFIRMADO (read-only):** o Storage não voltou a gerar alerta; permanecem 2 tabelas privadas sem policies, 5 funções `SECURITY DEFINER` executáveis por `authenticated` e proteção contra senhas vazadas desativada.
+- **DECISÃO:** não alterei funções privilegiadas, RLS privado nem configuração do Auth; esses itens continuam em preparação/revisão conforme autorização registrada.
