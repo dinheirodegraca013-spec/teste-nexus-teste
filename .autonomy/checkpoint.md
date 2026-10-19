@@ -287,6 +287,7 @@
 - 2026-10-19: CI do head `d086e3b` aprovou build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel segue rate-limited.
 - 2026-10-19: CI do head `89ef48c` aprovou Vercel Preview sem feedback, build/typecheck, Edge Functions e GitGuardian; produção inalterada.
 - 2026-10-19: head `89f8617` manteve build/typecheck, Edge Functions e GitGuardian aprovados; Vercel voltou a rate-limit após documentação.
+- 2026-10-19: CI do head `9dc2b07` aprovou build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel segue rate-limited.
 - 2026-10-19: auditoria de IDs HTML estáticos sem duplicidades; nenhuma alteração adicional necessária.
 - 2026-10-19: CI do head `d4c9905` aprovou build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel segue rate-limited.
 - 2026-10-19: revisão do head `c45e6a1` aprovou Vercel Preview, build/typecheck, Edge Functions, GitGuardian e feedback sem pendências; produção inalterada.
