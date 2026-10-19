@@ -300,3 +300,4 @@
 - 2026-10-19: CI do head `19f5a83` aprovou typecheck/build, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel segue rate-limited.
 - 2026-10-19: `AuthContext` passou a resumir erros sem objetos brutos; suíte 298/298, lint/build/diff-check aprovados; CI do head `0b1dd1b` verde, Vercel segue rate-limited.
 - 2026-10-19: `coreServices` passou a limitar logs de criação de perfil a status/código/mensagem; suíte 299/299, lint/build/diff-check aprovados; CI do head `8e7f0e3` verde.
+- 2026-10-19: `DashboardPage` passou a limitar logs a serviço/status/código/mensagem; suíte 300/300, lint/build/diff-check aprovados; CI e Vercel Preview do head `76689ee` verdes.

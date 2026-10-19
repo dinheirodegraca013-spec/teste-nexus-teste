@@ -1882,3 +1882,10 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **TESTE:** contrato de regressão adicionado; `npm test` passou 299/299, com lint, build e diff-check aprovados.
 - **CI:** typecheck/build, Edge Functions e GitGuardian passaram no head `8e7f0e3`; Supabase Preview foi `skipped` por ausência de branch associada.
 - **PENDÊNCIA EXTERNA:** Vercel permanece rate-limited; produção/main não foram alteradas.
+
+## Ciclo autônomo — 2026-10-19: sanitização de erros do dashboard
+
+- **CORRIGIDO:** `DashboardPage` deixou de registrar `details` e `hint` das consultas; os logs agora usam serviço, status, código e mensagem.
+- **TESTE:** contrato de regressão adicionado; `npm test` passou 300/300, com lint, build e diff-check aprovados.
+- **CI:** Vercel Preview, typecheck/build, Edge Functions, GitGuardian e feedback do preview passaram no head `76689ee`; nenhum segredo foi detectado. Supabase Preview foi `skipped` por ausência de branch associada.
+- **PENDÊNCIA:** não houve merge ou alteração de produção/main.
