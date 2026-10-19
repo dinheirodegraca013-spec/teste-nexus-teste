@@ -4,6 +4,16 @@ import { supabase, isSupabaseConfigured, supabaseUrl } from '../lib/supabase';
 import { Organization, Profile, UserRole, AppModule, UserModulePermission } from '../types';
 import { organizationsService, profilesService, permissionsService, isValidUUID } from '../services';
 
+function summarizeAuthError(error: unknown) {
+  const candidate = error && typeof error === 'object' ? error as Record<string, unknown> : {};
+  return {
+    errorName: typeof candidate.name === 'string' ? candidate.name : 'UnknownError',
+    message: typeof candidate.message === 'string' ? candidate.message : String(error),
+    code: typeof candidate.code === 'string' ? candidate.code : undefined,
+    status: typeof candidate.status === 'number' ? candidate.status : undefined,
+  };
+}
+
 interface SignUpParams {
   name: string;
   email: string;
@@ -186,7 +196,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         activeProfile = userProfile;
       } catch (profEx: any) {
         if (!isCurrent()) return empty;
-        console.error('[NEXUS AUTH] profile:error', profEx?.message || profEx);
+        console.error('[NEXUS AUTH] profile:error', summarizeAuthError(profEx));
         throw profEx;
       }
 
@@ -268,7 +278,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (!orgErr && orgData) loadedOrg = orgData;
         } catch (orgEx: any) {
           if (!isCurrent()) return empty;
-          console.warn('[NEXUS AUTH] organization:warn', orgEx?.message || orgEx);
+          console.warn('[NEXUS AUTH] organization:warn', summarizeAuthError(orgEx));
         }
       }
       setOrganization(loadedOrg);
@@ -298,7 +308,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (!permsErr) loadedPerms = perms || [];
         } catch (permsEx: any) {
           if (!isCurrent()) return empty;
-          console.error('[NEXUS AUTH] permissions:error', permsEx?.message || permsEx);
+          console.error('[NEXUS AUTH] permissions:error', summarizeAuthError(permsEx));
         }
       }
       setPermissions(loadedPerms);
@@ -517,7 +527,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         code: err?.code,
       });
     } catch {
-      console.error(`[AuthNetworkError][${operation}]`, err);
+      console.error(`[AuthNetworkError][${operation}]`, summarizeAuthError(err));
     }
   };
 
@@ -597,13 +607,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               p_profile_name: name.trim(),
             });
             if (rpcErr || !isValidUUID(rpcOrgId)) {
-              console.error('[NEXUS PROVISION] Erro na RPC provision_new_user no signUp:', rpcErr);
+              console.error('[NEXUS PROVISION] Erro na RPC provision_new_user no signUp:', summarizeAuthError(rpcErr));
               await clearAuthenticatedState();
               return { error: new Error('Conta criada, mas não foi possível configurar a organização. Tente entrar novamente ou contate o suporte.'), user: data.user };
             }
             console.log('[NEXUS PROVISION] RPC provision_new_user bem-sucedida no signUp:', { rpcOrgId });
           } catch (rpcEx) {
-            console.error('[NEXUS PROVISION] Exceção na RPC provision_new_user no signUp:', rpcEx);
+            console.error('[NEXUS PROVISION] Exceção na RPC provision_new_user no signUp:', summarizeAuthError(rpcEx));
             await clearAuthenticatedState();
             return { error: new Error('Conta criada, mas houve uma falha ao configurar a organização. Tente entrar novamente ou contate o suporte.'), user: data.user };
           }
