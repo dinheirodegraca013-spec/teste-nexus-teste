@@ -85,3 +85,16 @@ test('shared fields associate validation messages with controls', async () => {
     assert.match(source, /id=\{messageId\}/);
   }
 });
+
+test('public authentication fields declare autocomplete intent', async () => {
+  const files = {
+    'LoginPage.tsx': ['current-password', 'username'],
+    'RegisterPage.tsx': ['new-password', 'email'],
+    'ResetPasswordPage.tsx': ['new-password'],
+    'ForgotPasswordPage.tsx': ['email'],
+  };
+  for (const [file, values] of Object.entries(files)) {
+    const source = await readFile(new URL(`../src/pages/public/${file}`, import.meta.url), 'utf8');
+    for (const value of values) assert.match(source, new RegExp(`autoComplete="${value}"`));
+  }
+});

@@ -76,6 +76,7 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onNaviga
             <Input
               label="Seu E-mail Cadastrado"
               type="email"
+              autoComplete="email"
               placeholder="seu.email@organizacao.com.br"
               value={email}
               onChange={(e) => setEmail(e.target.value)}

@@ -353,23 +353,23 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
           <Input
             label="Criar Senha (mínimo 8 caracteres)"
             type="password"
+            autoComplete="new-password"
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             leftIcon={<Lock className="w-4 h-4" />}
             required
-            autoComplete="new-password"
           />
 
           <Input
             label="Confirmar Senha"
             type="password"
+            autoComplete="new-password"
             placeholder="••••••••"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             leftIcon={<Lock className="w-4 h-4" />}
             required
-            autoComplete="new-password"
           />
 
           <div className="flex items-start gap-2 pt-1 text-xs text-slate-500">

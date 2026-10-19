@@ -1664,6 +1664,11 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **MELHORIA:** contrato de regressão garante a ligação entre controle e mensagem.
 - **TESTE:** `npm test` passou 295/295; lint, build e `git diff --check` aprovados.
 
+## Ciclo autônomo — 2026-10-19: autocomplete de autenticação
+
+- **MELHORIA:** login, cadastro, recuperação e redefinição de senha agora declaram `autocomplete` apropriado (`username`, `email`, `current-password` e `new-password`).
+- **TESTE:** contrato de autenticação adicionado; `npm test` passou 296/296, lint, build e diff-check aprovados.
+
 ## Ciclo autônomo — 2026-10-19: revisão CI do head `e98ba61`
 
 - **APROVADO:** typecheck/build, Edge Functions e GitGuardian concluíram com sucesso; nenhum segredo foi detectado.

@@ -104,12 +104,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
           <Input
             label="E-mail"
             type="email"
+            autoComplete="username"
             placeholder="seu.email@organizacao.com.br"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             leftIcon={<Mail className="w-4 h-4" />}
             required
-            autoComplete="email"
           />
 
           <div>
