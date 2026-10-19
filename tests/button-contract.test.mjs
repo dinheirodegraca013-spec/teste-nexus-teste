@@ -8,6 +8,20 @@ test('shared Button defaults to a non-submitting button', async () => {
   assert.match(source, /\.\.\.props/);
 });
 
+test('native buttons declare their submission behavior explicitly', async () => {
+  const { readdir } = await import('node:fs/promises');
+  const pages = await readdir(new URL('../src', import.meta.url), { recursive: true });
+  const sources = pages.filter((file) => file.endsWith('.tsx'));
+  const missingType = [];
+  for (const file of sources) {
+    const source = await readFile(new URL(`../src/${file}`, import.meta.url), 'utf8');
+    for (const match of source.matchAll(/<button\b[^>]*>/g)) {
+      if (!/\btype\s*=/.test(match[0])) missingType.push(file);
+    }
+  }
+  assert.deepEqual(missingType, []);
+});
+
 test('icon-only shared controls have accessible names', async () => {
   const header = await readFile(new URL('../src/components/layout/Header.tsx', import.meta.url), 'utf8');
   const search = await readFile(new URL('../src/components/ui/SearchInput.tsx', import.meta.url), 'utf8');
