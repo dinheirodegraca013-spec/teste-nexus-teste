@@ -283,6 +283,7 @@
 - 2026-10-19: `Select` passou a usar IDs únicos via `useId`; suíte 294/294, lint/build/diff-check aprovados.
 - 2026-10-19: `Input` e `Select` passaram a associar erros/ajuda via ARIA; suíte 295/295, lint/build/diff-check aprovados.
 - 2026-10-19: fluxos públicos receberam autocomplete explícito e contrato de regressão; suíte 296/296, lint/build/diff-check aprovados.
+- 2026-10-19: troca de senha autenticada recebeu autocomplete `new-password`; suíte 297/297, lint/build/diff-check aprovados.
 - 2026-10-19: CI do head `e98ba61` aprovou build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel segue rate-limited.
 - 2026-10-19: CI do head `d086e3b` aprovou build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel segue rate-limited.
 - 2026-10-19: CI do head `89ef48c` aprovou Vercel Preview sem feedback, build/typecheck, Edge Functions e GitGuardian; produção inalterada.

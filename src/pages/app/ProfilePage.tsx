@@ -130,6 +130,7 @@ export const ProfilePage: React.FC = () => {
           <Input
             label="Nova Senha (mínimo 8 caracteres)"
             type="password"
+            autoComplete="new-password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             placeholder="••••••••"
@@ -138,6 +139,7 @@ export const ProfilePage: React.FC = () => {
           <Input
             label="Confirmar Nova Senha"
             type="password"
+            autoComplete="new-password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="••••••••"

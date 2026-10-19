@@ -98,3 +98,8 @@ test('public authentication fields declare autocomplete intent', async () => {
     for (const value of values) assert.match(source, new RegExp(`autoComplete="${value}"`));
   }
 });
+
+test('profile password fields declare new-password autocomplete', async () => {
+  const source = await readFile(new URL('../src/pages/app/ProfilePage.tsx', import.meta.url), 'utf8');
+  assert.equal((source.match(/autoComplete="new-password"/g) || []).length, 2);
+});

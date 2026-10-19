@@ -1669,6 +1669,11 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **MELHORIA:** login, cadastro, recuperação e redefinição de senha agora declaram `autocomplete` apropriado (`username`, `email`, `current-password` e `new-password`).
 - **TESTE:** contrato de autenticação adicionado; `npm test` passou 296/296, lint, build e diff-check aprovados.
 
+## Ciclo autônomo — 2026-10-19: autocomplete da troca de senha
+
+- **MELHORIA:** o formulário autenticado de alteração de senha agora marca ambos os campos como `new-password`.
+- **TESTE:** contrato atualizado; `npm test` passou 297/297, lint, build e `git diff --check` aprovados.
+
 ## Ciclo autônomo — 2026-10-19: revisão CI do head `e98ba61`
 
 - **APROVADO:** typecheck/build, Edge Functions e GitGuardian concluíram com sucesso; nenhum segredo foi detectado.
