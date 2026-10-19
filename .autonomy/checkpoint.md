@@ -240,3 +240,4 @@
 - 2026-10-19: checks do head `ac8091f` passaram em Vercel, build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped` sem branch associada.
 - 2026-10-19: marco local aprovado: `npm test` 277/277, lint, build e diff-check passaram; aviso de Vite ocorreu somente por ausência de variáveis no executor local.
 - 2026-10-19: inventário read-only de logs DEV confirmou fontes e volumes; análise por nível ficou pendente por schema/backend transitório, sem alteração remota.
+- 2026-10-19: checks do head `990d47c` passaram em Edge/build/GitGuardian; Vercel ficou rate-limited por 24h. Sem retry ou deploy manual.

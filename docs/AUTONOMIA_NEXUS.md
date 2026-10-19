@@ -1543,3 +1543,8 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **READ-ONLY:** a janela de 24 horas expôs fontes de logs saudáveis: pgbouncer (11.625), edge (187), postgREST (175), postgres (99), auth (40), storage (21), auth audit (18) e realtime (10).
 - **LIMITAÇÃO:** a consulta agregada por nível não pôde ser concluída porque `level` não existe no schema exposto; uma consulta de amostra também retornou erro transitório do backend. Nenhuma alteração foi feita.
+
+## Ciclo autônomo — 2026-10-19: limite externo de deployment
+
+- **APROVADO:** Edge Functions, typecheck/build e GitGuardian passaram no head `990d47c`.
+- **BLOQUEADO EXTERNO:** o status Vercel deste commit retornou `failure` por rate limit, solicitando nova tentativa em 24 horas. Não houve retry, deploy manual ou alteração de produção.
