@@ -1475,4 +1475,6 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 
 - **CI CONFIRMADO:** o head `afe5aa5` concluiu typecheck/build, Edge Functions e GitGuardian com `success`; Supabase Preview permaneceu `skipped` sem branch associada. Vercel segue apenas com rate limit temporário.
 
+- **AUDITORIA DE SERVIÇOS:** os caminhos de criação/atualização revisados usam confirmação de linha retornada; nenhum novo retorno falso de sucesso foi encontrado.
+
 - **CI DO HEAD `815ba0f`:** typecheck/build, Edge Functions e GitGuardian passaram; o check Vercel reportou apenas rate limit temporário de deployment (`retry in 24 hours`). Nenhum retry ou deploy manual foi feito.
