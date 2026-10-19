@@ -1673,6 +1673,11 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **BLOQUEIO EXTERNO:** Vercel permanece rate-limited por 24 horas; não houve retry ou deploy manual.
 - **NÃO APLICÁVEL:** Supabase Preview `skipped` sem branch associada.
 
+## Ciclo autônomo — 2026-10-19: nova verificação de limite Vercel
+
+- **APROVADO:** no head documental `5ea53de`, build/typecheck, Edge Functions e GitGuardian continuam aprovados; nenhum segredo foi detectado.
+- **BLOQUEIO EXTERNO PERSISTENTE:** Vercel ainda retorna limite de deployments por 24 horas; nenhum retry ou deploy manual foi realizado.
+
 ## Ciclo autônomo — 2026-10-19: revisão externa dos controles finais
 
 - **APROVADO:** build/typecheck, Edge Functions e GitGuardian passaram no head `c34cb36`; nenhum segredo foi detectado.
