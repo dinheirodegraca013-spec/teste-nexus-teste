@@ -312,3 +312,4 @@
 - 2026-10-19: CI do head `eae2835` aprovou Vercel Preview, typecheck/build, Edge Functions e GitGuardian; Supabase Preview permaneceu `skipped` por ausência de branch associada.
 - 2026-10-19: auditoria Vercel confirmou `teste-nexus-teste.vercel.app` apontando para deployment `READY` de produção no commit ancestral `ac4df21`; a branch autorizada está no head `738cd74`. Nenhum alias, promote ou deploy de produção foi alterado.
 - 2026-10-19: CI do head `a243283` aprovou typecheck/build, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel informou rate limit com retry somente após 24h.
+- 2026-10-19: advisor de performance confirmou duas duplicações permissivas de RLS (`profiles` UPDATE e `user_module_permissions` SELECT). Script de consolidação foi preparado em `docs/proposed-migrations/CONSOLIDATE_DUPLICATE_RLS_POLICIES.sql`, sem execução; aguarda aprovação específica.
