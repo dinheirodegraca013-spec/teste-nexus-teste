@@ -302,3 +302,4 @@
 - 2026-10-19: `coreServices` passou a limitar logs de criação de perfil a status/código/mensagem; suíte 299/299, lint/build/diff-check aprovados; CI do head `8e7f0e3` verde.
 - 2026-10-19: `DashboardPage` passou a limitar logs a serviço/status/código/mensagem; suíte 300/300, lint/build/diff-check aprovados; CI e Vercel Preview do head `76689ee` verdes.
 - 2026-10-19: serviço de auditoria passou a resumir erros; suíte 300/300, lint/build/diff-check aprovados; CI do head `1337d12` verde, Vercel voltou a rate-limit.
+- 2026-10-19: validações de entrada e parsing de convite deixaram de registrar valores fornecidos; suíte 301/301, lint/build/diff-check aprovados; CI do head `6e2bd0d` verde.
