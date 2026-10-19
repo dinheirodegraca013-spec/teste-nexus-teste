@@ -46,7 +46,7 @@ Deno.serve(async (req: Request) => {
     return jsonResponse(401, { error: "Sessão inválida ou expirada." });
   }
 
-  let body: { email?: unknown; name?: unknown; role?: unknown; organization_id?: unknown };
+  let body: { email?: unknown; name?: unknown; role?: unknown; organization_id?: unknown; permissions?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -67,6 +67,25 @@ Deno.serve(async (req: Request) => {
   if (!allowedRoles.has(requestedRole)) {
     return jsonResponse(403, { error: "Esse nível de acesso não pode ser concedido por convite." });
   }
+
+  const allModules = new Set([
+    "dashboard", "organizations", "users", "crm", "coordinators", "leaders",
+    "goals", "field", "presence", "events", "meetings", "materials",
+    "stickers", "intelligence", "reports", "settings",
+  ]);
+  const scopedModules: Record<string, Set<string>> = {
+    coordinator: new Set(["coordinators", "leaders", "crm", "presence"]),
+    controller: new Set(["coordinators", "leaders", "crm", "presence"]),
+    leader: new Set(["crm", "presence"]),
+  };
+  if (!Array.isArray(body.permissions) || body.permissions.length === 0 ||
+      body.permissions.length > allModules.size ||
+      !body.permissions.every((value) => typeof value === "string" && allModules.has(value)) ||
+      new Set(body.permissions).size !== body.permissions.length ||
+      body.permissions.some((value) => scopedModules[requestedRole] && !scopedModules[requestedRole].has(value))) {
+    return jsonResponse(400, { error: "Selecione módulos de leitura válidos para o cargo antes do convite." });
+  }
+  const requestedModules = body.permissions as string[];
 
   const { data: caller, error: callerError } = await adminClient
     .from("profiles")
@@ -140,6 +159,27 @@ Deno.serve(async (req: Request) => {
         ? "O convite foi criado, mas o perfil não pôde ser concluído e a limpeza automática falhou. A equipe técnica precisa finalizar o provisionamento."
         : "O convite não pôde ser concluído e foi cancelado automaticamente. Tente novamente.",
     });
+  }
+
+  // Save the exact administrator-selected grants before reporting success.
+  // A failed write cancels the newly invited account instead of leaving a
+  // logged-in member with no permissions (the original 403 incident).
+  const { data: granted, error: grantsError } = await adminClient
+    .from("user_module_permissions")
+    .upsert(requestedModules.map((module_key) => ({
+      user_id: invitation.user.id, module_key,
+      can_read: true, can_write: false, can_delete: false,
+    })), { onConflict: "user_id,module_key" })
+    .select("module_key,can_read,can_write,can_delete");
+  const persisted = new Set((granted ?? []).filter((p) => p.can_read === true &&
+    p.can_write === false && p.can_delete === false).map((p) => p.module_key));
+  if (grantsError || requestedModules.some((key) => !persisted.has(key))) {
+    console.error("Invitation permission provisioning failed", { code: grantsError?.code });
+    const { error: rollbackError } = await adminClient.auth.admin.deleteUser(invitation.user.id);
+    if (rollbackError) console.error("Invite rollback failed", { code: rollbackError.status });
+    return jsonResponse(500, { error: rollbackError
+      ? "Permissões não foram confirmadas e a reversão automática falhou. Contate o suporte."
+      : "Permissões não foram confirmadas; o convite foi cancelado. Tente novamente." });
   }
 
   return jsonResponse(200, { success: true, member: profile });
