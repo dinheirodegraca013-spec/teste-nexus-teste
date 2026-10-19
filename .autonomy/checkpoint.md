@@ -220,3 +220,4 @@
 - 2026-10-19: corrigidos os cabeçalhos dos dois contratos SQL ativos em `supabase/tests` para apontar somente ao DEV `qwvbvqlzcyfkuszxrlgv`; `npm test` 274/274, lint, build e diff-check aprovados. Próximo foco: revisar os advisories estruturais sem executar SQL não aprovado.
 - 2026-10-19: Security Advisor read-only confirmou 2 tabelas privadas sem policies, 5 SECURITY DEFINER para authenticated e leaked-password protection desativada; Storage permanece resolvido. Nenhuma alteração estrutural executada.
 - 2026-10-19: reconciliada localmente a RPC `nexus_increment_goal` ausente do histórico de migrations; contrato versionado sem execução remota. `npm test` 275/275, lint e build aprovados.
+- 2026-10-19: CI do head `815ba0f` aprovou build/typecheck, Edge Functions e GitGuardian; Vercel ficou rate-limited por 24h. Sem retry/deploy manual.
