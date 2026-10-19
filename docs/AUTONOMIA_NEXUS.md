@@ -1658,6 +1658,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **MELHORIA:** contrato de regressão adicionado para preservar a associação label/select.
 - **TESTE:** `npm test` passou 294/294; lint, build e `git diff --check` aprovados.
 
+## Ciclo autônomo — 2026-10-19: associação de mensagens de validação
+
+- **CORRIGIDO:** `Input` e `Select` agora expõem `aria-invalid` e associam mensagens de erro/ajuda por `aria-describedby`.
+- **MELHORIA:** contrato de regressão garante a ligação entre controle e mensagem.
+- **TESTE:** `npm test` passou 295/295; lint, build e `git diff --check` aprovados.
+
 ## Ciclo autônomo — 2026-10-19: revisão CI do head `e98ba61`
 
 - **APROVADO:** typecheck/build, Edge Functions e GitGuardian concluíram com sucesso; nenhum segredo foi detectado.

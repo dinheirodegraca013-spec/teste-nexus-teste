@@ -75,3 +75,13 @@ test('shared Select generates unique label associations', async () => {
   assert.match(source, /useId/);
   assert.match(source, /generatedId\.replace/);
 });
+
+test('shared fields associate validation messages with controls', async () => {
+  const input = await readFile(new URL('../src/components/ui/Input.tsx', import.meta.url), 'utf8');
+  const select = await readFile(new URL('../src/components/ui/Select.tsx', import.meta.url), 'utf8');
+  for (const source of [input, select]) {
+    assert.match(source, /aria-invalid=\{error \? true : undefined\}/);
+    assert.match(source, /aria-describedby=\{messageId\}/);
+    assert.match(source, /id=\{messageId\}/);
+  }
+});
