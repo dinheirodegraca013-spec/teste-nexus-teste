@@ -98,7 +98,7 @@ export const UsersPage: React.FC = () => {
       return;
     }
 
-    if (!Object.values(invitePerms).some((permission) => permission.can_view)) {
+    if (!Object.keys(invitePerms).some((key) => invitePerms[key]?.can_view === true)) {
       toastError('Selecione pelo menos um módulo de leitura antes de enviar o convite.');
       return;
     }
@@ -109,7 +109,7 @@ export const UsersPage: React.FC = () => {
         email: inviteEmail.trim(),
         role: inviteRole,
         name: inviteName.trim(),
-        permissions: Object.entries(invitePerms).filter(([, p]) => p.can_view).map(([key]) => permissionModuleKeys[key]),
+        permissions: Object.keys(invitePerms).filter((key) => invitePerms[key]?.can_view === true).map((key) => permissionModuleKeys[key]),
       });
 
       if (error) {
