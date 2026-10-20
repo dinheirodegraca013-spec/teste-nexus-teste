@@ -185,7 +185,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <nav className="flex-1 overflow-y-auto overscroll-contain p-3 space-y-5 custom-scrollbar text-left" aria-label="Seções do aplicativo">
           {navGroups.map((group) => {
             const filteredItems = group.items.filter(item => {
-              if (item.adminOnly && !['admin', 'superadmin'].includes(normalizeRole(profile?.role))) return false;
+              if ((item.adminOnly || ['users', 'settings', 'organizations'].includes(item.module || '')) && !['admin', 'superadmin'].includes(normalizeRole(profile?.role))) return false;
               if (!item.module) return true;
               return hasPermission(item.module, 'view');
             });
