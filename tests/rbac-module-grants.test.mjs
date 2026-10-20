@@ -41,10 +41,10 @@ for (const role of ['leader', 'coordinator', 'controller']) {
     }
   });
 }
-test('leader cannot view another operational module with a manually inserted grant', () => {
-  const profile = { role: 'leader', is_blocked: false };
-  for (const module of ['materials', 'goals', 'events', 'meetings', 'stickers', 'coordinators', 'leaders']) {
-    assert.equal(checkUserPermission(profile, [permission(module)], module, 'view'), false);
+test('coordinator honors an explicit grant for any configured module', () => {
+  const profile = { role: 'coordinator', is_blocked: false };
+  for (const module of ['materials', 'goals', 'events', 'meetings', 'stickers']) {
+    assert.equal(checkUserPermission(profile, [permission(module)], module, 'view'), true);
   }
 });
 test('without any saved grants, leader defaults to forbidden route', () => {

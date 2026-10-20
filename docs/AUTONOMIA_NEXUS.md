@@ -2010,3 +2010,11 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Verificação read-only:** caminho sintético JPG aceito pela regex corrigida e rejeitado pela regex antiga; nenhuma produção/main/dado real alterado.
 - **Validação local:** `npm test` 310/310, `npm run lint`, `npm run build` e `git diff --check` aprovados.
 - **Preview Vercel:** deployment `nexusteste-27nml6cm0-dinheirodegraca013-specs-projects.vercel.app` ficou `READY` no commit `be4b18e`; o endpoint público respondeu HTTP 200. Nenhum alias de produção foi promovido.
+
+## Correção de permissões explícitas para coordenadores — 2026-10-20
+
+- **Causa confirmada:** `checkUserPermission` aplicava uma lista fixa (`coordinators`, `leaders`, `crm`, `presence`) depois de carregar as permissões salvas, ignorando módulos adicionais escolhidos pelo administrador.
+- **Correção:** permissões de leitura agora respeitam exclusivamente o grant explícito persistido; as escritas continuam bloqueadas no frontend até existirem políticas/RLS correspondentes.
+- **Teste:** adicionada regressão para coordenador com grants explícitos em módulos adicionais.
+- **Validação:** 310/310 testes, lint e build aprovados.
+- **Pendente:** sincronizar/publicar a correção na branch remota após revisão dos commits remotos recentes, que incluem uma função `SECURITY DEFINER` ainda pendente de validação.

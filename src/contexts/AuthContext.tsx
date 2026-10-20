@@ -104,19 +104,11 @@ export function checkUserPermission(
   // which the server will refuse. Never trust frontend UI as a security gate.
   if (action !== 'view') return false;
 
-  // Every non-admin must have an EXPLICIT saved module grant. A role
-  // indicates the maximum accessible module set; it does not itself grant
-  // access. The server's RLS is the final enforcement boundary.
+  // Every non-admin must have an EXPLICIT saved module grant. The role
+  // does not silently add or remove modules after an administrator saves
+  // the grant. The server's RLS is the final enforcement boundary.
   const saved = perms.find((p) => p.module === module);
-  if (!saved?.can_view) return false;
-
-  const scopedReadModules: Partial<Record<string, readonly AppModule[]>> = {
-    leader: ['crm', 'presence'],
-    coordinator: ['coordinators', 'leaders', 'crm', 'presence'],
-    controller: ['coordinators', 'leaders', 'crm', 'presence'],
-  };
-  const scoped = scopedReadModules[normRole];
-  return scoped ? scoped.includes(module) : true;
+  return Boolean(saved?.can_view);
 }
 
 const adminOnlyRoutes = new Set(['/app/onboarding', '/app/planos']);
