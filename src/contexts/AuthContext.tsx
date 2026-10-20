@@ -473,6 +473,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [loadUserDataSafe]);
 
+  // Permission changes made by an administrator do not trigger an auth event
+  // in another user's browser. Refresh grants when the tab regains focus,
+  // without clearing the current profile or navigation during the request.
+  useEffect(() => {
+    if (!user || !profile || profile.id !== user.id || profile.is_blocked) return;
+    let active = true;
+    let pending = false;
+    let lastChecked = 0;
+    const refreshGrants = async () => {
+      if (!active || pending || document.visibilityState !== 'visible') return;
+      const now = Date.now();
+      if (now - lastChecked < 5000) return;
+      lastChecked = now;
+      pending = true;
+      try {
+        const { data, error } = await permissionsService.getByUserId(user.id);
+        if (active && !error && data) setPermissions(data);
+        if (error) console.error('[NEXUS AUTH] permission-sync:error', summarizeAuthError(error));
+      } catch (error) {
+        console.error('[NEXUS AUTH] permission-sync:error', summarizeAuthError(error));
+      } finally {
+        pending = false;
+      }
+    };
+    const onVisible = () => { if (document.visibilityState === 'visible') void refreshGrants(); };
+    window.addEventListener('focus', onVisible);
+    document.addEventListener('visibilitychange', onVisible);
+    void refreshGrants();
+    return () => {
+      active = false;
+      window.removeEventListener('focus', onVisible);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [user?.id, profile?.id, profile?.is_blocked]);
+
   const refreshUserData = async () => {
     let generation = loadGenerationRef.current;
     const isCurrent = () => generation === loadGenerationRef.current;
