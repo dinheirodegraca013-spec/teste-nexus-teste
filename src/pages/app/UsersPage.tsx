@@ -40,7 +40,8 @@ const createDefaultPermissions = () =>
   ) as Record<string, { can_view: boolean; can_edit: boolean; can_delete: boolean }>;
 
 export const UsersPage: React.FC = () => {
-  const { organization } = useAuth();
+  const { organization, profile } = useAuth();
+  const isOrganizationAdmin = profile?.role === 'admin' || profile?.role === 'superadmin';
   const { success, error: toastError } = useToast();
   const orgId = organization?.id || '';
 
@@ -273,6 +274,16 @@ export const UsersPage: React.FC = () => {
       default: return <Badge variant="neutral" size="sm">{role}</Badge>;
     }
   };
+
+  // Defense in depth: only organization admins may operate this screen.
+  // Supabase RLS independently denies permission changes by other roles.
+  if (!isOrganizationAdmin) {
+    return (
+      <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
+        Somente o administrador da organização pode gerenciar convites e permissões.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 text-left">
