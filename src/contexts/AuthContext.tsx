@@ -103,6 +103,9 @@ export function checkUserPermission(
   // in PostgreSQL. Even a stored permission must not advertise a write
   // which the server will refuse. Never trust frontend UI as a security gate.
   if (action !== 'view') return false;
+  // Administrative configuration and RBAC management are never delegated
+  // through ordinary module grants, including stale grants from invitations.
+  if (module === 'users' || module === 'settings' || module === 'organizations') return false;
 
   // Every non-admin must have an EXPLICIT saved module grant. The role
   // does not silently add or remove modules after an administrator saves
