@@ -2049,3 +2049,10 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Regra:** contas de liderança e coordenação não exibem o nome administrativo atribuído no cadastro.
 - **Interface:** menu lateral, painel de campo, saudação e perfil exibem somente um registro curto do sistema (`Registro #...`) e o e-mail autenticado; o nome administrativo não pode ser editado por essas contas.
 - **Validação:** `npm test` 315/315, lint, build e diff-check aprovados.
+
+## Migration RLS aplicada no DEV — 2026-10-21
+
+- **Execução autorizada:** aplicada exclusivamente no Supabase DEV `qwvbvqlzcyfkuszxrlgv` a migration `20261021190000_nexus_self_scoped_team_read_policies.sql`.
+- **Resultado:** `leaders_read` e `coordinators_read` foram recriadas com leitura própria condicionada ao vínculo do usuário e a grant operacional; administradores mantêm a leitura ampla da organização. Nenhuma permissão de escrita foi concedida.
+- **Verificação read-only:** ambas as policies existem como `SELECT` para `authenticated` e exibem as condições de organização, vínculo hierárquico e grants operacionais.
+- **Produção/main:** não alteradas.
