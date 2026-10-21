@@ -2056,3 +2056,11 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Resultado:** `leaders_read` e `coordinators_read` foram recriadas com leitura própria condicionada ao vínculo do usuário e a grant operacional; administradores mantêm a leitura ampla da organização. Nenhuma permissão de escrita foi concedida.
 - **Verificação read-only:** ambas as policies existem como `SELECT` para `authenticated` e exibem as condições de organização, vínculo hierárquico e grants operacionais.
 - **Produção/main:** não alteradas.
+
+## Regressão RLS no carregamento de lideranças — 2026-10-21
+
+- **Erro confirmado nos logs do DEV:** `permission denied for table nexus_team_memberships` durante o `SELECT` de `leaders`/`coordinators`.
+- **Causa:** a policy pública fazia `EXISTS` direto na tabela privada, que corretamente não concede acesso ao papel `authenticated`.
+- **Correção preparada:** `supabase/migrations/20261021220000_nexus_self_scoped_team_read_policy_privilege_fix.sql` remove a leitura direta e delega a validação do vínculo às funções `SECURITY DEFINER` existentes. A tabela privada continua fechada ao navegador.
+- **Validação local:** `npm test` 315/315, lint, build e diff-check aprovados.
+- **Pendente:** executar a nova migration somente após autorização específica para esse arquivo no DEV `qwvbvqlzcyfkuszxrlgv`.
