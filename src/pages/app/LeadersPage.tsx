@@ -100,10 +100,15 @@ export const LeadersPage: React.FC = () => {
       nome: lead.name,
       coord_id: lead.coordinator_id || '',
     });
+    if (lead.email?.trim()) params.set('email', lead.email.trim());
     return `${origin}/cadastro?${params.toString()}`;
   };
 
   const handleOpenShare = (lead: Leader) => {
+    if (!lead.email?.trim()) {
+      toastError('Cadastre o e-mail da liderança antes de gerar o convite. Sem ele, o acesso não pode ser vinculado com segurança.');
+      return;
+    }
     setShareLeader(lead);
     setCopiedLink(false);
     setIsShareModalOpen(true);

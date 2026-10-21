@@ -2027,3 +2027,11 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Teste:** adicionada regressão para metadata sem `role`, mas com `organization_id` de convite.
 - **Validação:** teste direcionado aprovado; `npm test` 311/311, `npm run lint` e `npm run build` aprovados.
 - **Pendência real:** se a função `nexus_claim_preapproved_team_membership` ainda não estiver aplicada no Supabase DEV correto, o administrador precisa aplicar a migration versionada e executar verificação read-only. Nenhuma alteração SQL foi executada nesta correção.
+
+## Correção de convite sem e-mail — 2026-10-21
+
+- **Causa confirmada no DEV:** existe uma liderança ativa sem e-mail. A RPC `nexus_claim_preapproved_team_membership` só pode vincular uma conta confirmada por e-mail exato; não é seguro inferir identidade pelo nome.
+- **Correção:** a tela de Lideranças só inclui o e-mail no link quando ele existe e bloqueia a geração/abertura de convite sem e-mail, explicando que o cadastro precisa ser concluído antes.
+- **Verificação read-only:** a função existe no projeto `qwvbvqlzcyfkuszxrlgv`; coordenadores com e-mail são provisionáveis, enquanto a liderança ativa sem e-mail não pode ser vinculada. Nenhum dado foi alterado no banco.
+- **Próximo passo operacional:** o administrador deve editar a liderança, preencher o e-mail exato usado no cadastro e gerar um novo convite. Senha não deve ser compartilhada.
+- **Validação pendente deste ciclo:** executar `npm test`, `npm run lint`, `npm run build` e publicar na branch autorizada.
