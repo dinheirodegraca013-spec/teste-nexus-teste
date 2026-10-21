@@ -2067,6 +2067,11 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - Verificação read-only: bucket privado confirmado, três policies Storage presentes (`SELECT`, `INSERT`, `DELETE`) e duas funções auxiliares `SECURITY DEFINER` confirmadas.
 - Produção/main: não alteradas.
 
+## Promoção Vercel autorizada — 2026-10-21
+
+- A pedido explícito, o alias `teste-nexus-teste.vercel.app` foi movido para o deployment READY `dpl_9Ms4B3LVnYMnT17sC18fZQmD6XsS`, commit `568550c`.
+- Verificação: alias principal confirmado no deployment novo e resposta HTTP 200.
+
 ## Regressão RLS no carregamento de lideranças — 2026-10-21
 
 - **Erro confirmado nos logs do DEV:** `permission denied for table nexus_team_memberships` durante o `SELECT` de `leaders`/`coordinators`.
