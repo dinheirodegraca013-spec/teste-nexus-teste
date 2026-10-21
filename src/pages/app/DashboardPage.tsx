@@ -25,6 +25,7 @@ import { StatCard } from '../../components/ui/StatCard';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { ErrorState } from '../../components/ui/ErrorState';
+import { getOperationalIdentity } from '../../utils/operationalIdentity';
 
 interface DashboardPageProps {
   onNavigate: (path: string) => void;
@@ -92,7 +93,8 @@ function processQueryResult<T>(
 }
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
-  const { organization, profile } = useAuth();
+  const { organization, profile, user } = useAuth();
+  const operationalIdentity = getOperationalIdentity(profile, user?.email);
   const { error: toastError } = useToast();
   const orgId = organization?.id || profile?.organization_id || '';
 
@@ -221,7 +223,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             {new Intl.DateTimeFormat('pt-BR', { dateStyle: 'full' }).format(new Date())}
           </div>
           <h2 className="text-xl sm:text-2xl font-bold text-slate-950 mt-0.5 tracking-tight">
-            Olá, {profile?.full_name?.split(' ')[0] || 'Gestor'}
+            Olá, {operationalIdentity.label}
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
             Visão geral da operação em <strong className="text-slate-800 font-semibold">{organization?.name || 'Sua Organização'}</strong>

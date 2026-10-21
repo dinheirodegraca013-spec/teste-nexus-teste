@@ -2035,3 +2035,17 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Verificação read-only:** a função existe no projeto `qwvbvqlzcyfkuszxrlgv`; coordenadores com e-mail são provisionáveis, enquanto a liderança ativa sem e-mail não pode ser vinculada. Nenhum dado foi alterado no banco.
 - **Próximo passo operacional:** o administrador deve editar a liderança, preencher o e-mail exato usado no cadastro e gerar um novo convite. Senha não deve ser compartilhada.
 - **Validação pendente deste ciclo:** executar `npm test`, `npm run lint`, `npm run build` e publicar na branch autorizada.
+
+## Correção de leitura própria para liderança e coordenação — 2026-10-21
+
+- **Causa confirmada:** as policies `leaders_read` e `coordinators_read` exigiam o grant administrativo dos módulos `leaders`/`coordinators` até para carregar o vínculo próprio usado pelo painel operacional.
+- **Correção preparada:** `supabase/migrations/20261021190000_nexus_self_scoped_team_read_policies.sql` mantém o escopo por organização e vínculo hierárquico, permitindo a leitura própria com grant operacional (`field`, `crm`, `presence` ou `stickers`). Não concede escrita nem acesso a outros registros.
+- **Teste de regressão:** `tests/self-scoped-team-read-policy.test.mjs` cobre liderança e coordenação.
+- **Validação local:** `npm test` 314/314, `npm run lint`, `npm run build` e `git diff --check` aprovados.
+- **Pendente:** a migration RLS está apenas versionada; aguarda aprovação específica para execução no Supabase DEV `qwvbvqlzcyfkuszxrlgv`.
+
+## Privacidade da identidade operacional — 2026-10-21
+
+- **Regra:** contas de liderança e coordenação não exibem o nome administrativo atribuído no cadastro.
+- **Interface:** menu lateral, painel de campo, saudação e perfil exibem somente um registro curto do sistema (`Registro #...`) e o e-mail autenticado; o nome administrativo não pode ser editado por essas contas.
+- **Validação:** `npm test` 315/315, lint, build e diff-check aprovados.

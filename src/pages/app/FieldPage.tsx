@@ -10,6 +10,7 @@ import { FileUpload } from '../../components/ui/FileUpload';
 import { Leader, CarSticker, HouseSticker, CrmContact, FieldPresence } from '../../types';
 import { leadersService, crmService, stickersService, presenceService } from '../../services';
 import { uploadPrivateEvidenceDataUrl } from '../../services/privateEvidenceStorage';
+import { getOperationalIdentity } from '../../utils/operationalIdentity';
 
 interface FieldPageProps {
   onNavigate?: (path: string) => void;
@@ -22,7 +23,7 @@ const goalPercent = (reached: number, target: number | null): number | null =>
   target === null ? null : Math.min(100, Math.max(0, Math.round((reached / target) * 100)));
 
 export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
-  const { organization, profile } = useAuth();
+  const { organization, profile, user } = useAuth();
   const { success, error: toastError } = useToast();
   const orgId = profile?.organization_id || '';
 
@@ -42,6 +43,7 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
   const currentLeader = profile?.role === 'leader' && leaders.length === 1
     ? leaders[0]
     : undefined;
+  const operationalIdentity = getOperationalIdentity(profile, user?.email);
 
   // Contact fast form
   const [contactName, setContactName] = useState('');
@@ -389,7 +391,7 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
               </div>
               <div className="text-xs text-slate-600">
                 {currentLeader ? (
-                  <span>Líder: <strong className="text-slate-900">{currentLeader.name}</strong> • {currentLeader.neighborhood || currentLeader.territory}</span>
+                  <span>{operationalIdentity.label} • {operationalIdentity.email}</span>
                 ) : (
                   <span>Operação de Rua • {organization?.name || 'NEXUS'}</span>
                 )}

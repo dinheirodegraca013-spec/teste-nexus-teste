@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { useAuth, normalizeRole } from '../../contexts/AuthContext';
 import { AppModule } from '../../types';
+import { getOperationalIdentity } from '../../utils/operationalIdentity';
 
 interface SidebarProps {
   currentPath: string;
@@ -49,7 +50,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isMobileOpen,
   onCloseMobile,
 }) => {
-  const { profile, organization, signOut, hasPermission } = useAuth();
+  const { user, profile, organization, signOut, hasPermission } = useAuth();
+  const operationalIdentity = getOperationalIdentity(profile, user?.email);
 
   const isLeader = normalizeRole(profile?.role) === 'leader';
 
@@ -236,10 +238,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
               className="flex items-center gap-2.5 min-w-0 cursor-pointer flex-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 rounded-lg"
             >
               <div className="w-7 h-7 rounded-lg bg-slate-200 text-slate-800 flex items-center justify-center text-xs font-semibold shrink-0 border border-slate-300">
-                {profile?.full_name?.charAt(0) || <User className="w-3.5 h-3.5" />}
+                {operationalIdentity.label.charAt(0) || <User className="w-3.5 h-3.5" />}
               </div>
               <div className="truncate">
-                <div className="text-xs font-semibold text-slate-900 truncate">{profile?.full_name || 'Usuário'}</div>
+                <div className="text-xs font-semibold text-slate-900 truncate">{operationalIdentity.label}</div>
+                {operationalIdentity.restricted && <div className="text-[10px] text-slate-400 truncate">{operationalIdentity.email}</div>}
                 <div className="text-[10px] text-slate-400 capitalize font-medium">{profile?.role || 'admin'}</div>
               </div>
             </button>
