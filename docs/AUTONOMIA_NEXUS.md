@@ -2063,4 +2063,6 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Causa:** a policy pública fazia `EXISTS` direto na tabela privada, que corretamente não concede acesso ao papel `authenticated`.
 - **Correção preparada:** `supabase/migrations/20261021220000_nexus_self_scoped_team_read_policy_privilege_fix.sql` remove a leitura direta e delega a validação do vínculo às funções `SECURITY DEFINER` existentes. A tabela privada continua fechada ao navegador.
 - **Validação local:** `npm test` 315/315, lint, build e diff-check aprovados.
-- **Pendente:** executar a nova migration somente após autorização específica para esse arquivo no DEV `qwvbvqlzcyfkuszxrlgv`.
+- **Execução autorizada:** migration aplicada exclusivamente no DEV `qwvbvqlzcyfkuszxrlgv`.
+- **Verificação read-only:** `leaders_read` e `coordinators_read` continuam como `SELECT` para `authenticated` e não fazem leitura direta de `private.nexus_team_memberships`.
+- **Produção/main:** não alteradas.
