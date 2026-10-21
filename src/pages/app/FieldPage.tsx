@@ -681,7 +681,7 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
                 <span>Foto de Comprovação da Adesivagem</span>
               </label>
               <FileUpload
-                disabled={!['admin', 'superadmin'].includes(profile?.role || '')}
+                disabled={!profile || profile.is_blocked === true}
                 value={carPhoto}
                 accept="image/*"
                 maxSizeMB={8}
@@ -762,7 +762,7 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
                 <span>Foto da Fachada / Portão com Placa ou Adesivo</span>
               </label>
               <FileUpload
-                disabled={!['admin', 'superadmin'].includes(profile?.role || '')}
+                disabled={!profile || profile.is_blocked === true}
                 value={housePhoto}
                 accept="image/*"
                 maxSizeMB={8}
@@ -846,7 +846,7 @@ export const FieldPage: React.FC<FieldPageProps> = ({ onNavigate }) => {
               </p>
               
               <FileUpload
-                disabled={!['admin', 'superadmin'].includes(profile?.role || '')}
+                disabled={!profile || profile.is_blocked === true}
                 value={presencePhoto}
                 accept="image/*"
                 maxSizeMB={10}

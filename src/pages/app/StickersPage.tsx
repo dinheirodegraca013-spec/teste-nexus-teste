@@ -529,7 +529,7 @@ export const StickersPage: React.FC = () => {
               <span>Foto do Veículo Adesivado</span>
             </label>
             <FileUpload
-              disabled={!['admin', 'superadmin'].includes(profile?.role || '')}
+              disabled={!profile || profile.is_blocked === true}
               value={carForm.photo_url}
               accept="image/*"
               maxSizeMB={8}

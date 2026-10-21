@@ -2057,6 +2057,13 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Verificação read-only:** ambas as policies existem como `SELECT` para `authenticated` e exibem as condições de organização, vínculo hierárquico e grants operacionais.
 - **Produção/main:** não alteradas.
 
+## Upload privado por hierarquia — 2026-10-21
+
+- Upload ampliado para membros ativos (admin, coordenador, liderança e demais perfis não bloqueados).
+- Novos objetos usam `<organização>/<papel>/<id-do-usuário>/<tipo>/<arquivo>`, mantendo Storage privado e vínculo por organização.
+- UI, serviço e testes atualizados; `npm test` 316/316, lint, build e diff-check aprovados.
+- Migration `20261021230000_nexus_private_storage_hierarchical_access.sql` preparada, ainda não executada no DEV; aguarda aprovação específica para RLS/Storage.
+
 ## Regressão RLS no carregamento de lideranças — 2026-10-21
 
 - **Erro confirmado nos logs do DEV:** `permission denied for table nexus_team_memberships` durante o `SELECT` de `leaders`/`coordinators`.

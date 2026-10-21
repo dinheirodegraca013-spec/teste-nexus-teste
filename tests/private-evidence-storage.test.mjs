@@ -92,27 +92,30 @@ test('empty and oversized evidence rejected without database access',async()=>{
   assert.equal((await inspectEvidenceImage(huge)).code,'EVIDENCE_FILE_INVALID');
 });
 test('correct tenant prefix and object key required',()=>{
-  const valid=org+'/cars/10000000-0000-4000-8000-000000000004.webp';
+  const valid=org+'/leader/'+uid+'/cars/10000000-0000-4000-8000-000000000004.webp';
   assert.equal(isTenantEvidencePath(valid,org),true);
   assert.equal(isTenantEvidencePath(valid,other),false);
-  assert.equal(isTenantEvidencePath(org+'/cars/../other.jpg',org),false);
+  assert.equal(isTenantEvidencePath(org+'/leader/'+uid+'/cars/../other.jpg',org),false);
   assert.equal(isTenantEvidencePath('https://example.invalid/x.jpg',org),false);
   assert.equal(isTenantEvidencePath('data:image/png;base64,x',org),false);
 });
 test('upload is denied before Supabase when the wrong tenant is requested',async()=>{
   const state=setup({profile:{data:{organization_id:other,role:'admin',is_blocked:false},error:null}});
   const answer=await uploadPrivateEvidence(org,'cars',photo);
-  assert.equal(answer.error.code,'TENANT_ADMIN_REQUIRED');
+  assert.equal(answer.error.code,'TENANT_MEMBER_REQUIRED');
   assert.equal(state.calls.some(x=>Array.isArray(x)&&x[0]==='upload'),false);
 });
-test('upload denies blocked or nonadmin accounts',async()=>{
-  for(const profile of [
-    {organization_id:org,role:'leader',is_blocked:false},
-    {organization_id:org,role:'admin',is_blocked:true},
-  ]) {
-    const state=setup({profile:{data:profile,error:null}});
+test('upload allows active tenant members and denies blocked accounts',async()=>{
+  for(const role of ['leader','coordinator','operator','viewer']) {
+    const state=setup({profile:{data:{organization_id:org,role,is_blocked:false},error:null}});
     const answer=await uploadPrivateEvidence(org,'presences',photo);
-    assert.equal(answer.error.code,'TENANT_ADMIN_REQUIRED');
+    assert.equal(answer.error,null);
+    assert.equal(state.calls.some(x=>Array.isArray(x)&&x[0]==='upload'),true);
+  }
+  {
+    const state=setup({profile:{data:{organization_id:org,role:'admin',is_blocked:true},error:null}});
+    const answer=await uploadPrivateEvidence(org,'presences',photo);
+    assert.equal(answer.error.code,'TENANT_MEMBER_REQUIRED');
     assert.equal(state.calls.some(x=>Array.isArray(x)&&x[0]==='upload'),false);
   }
 });
@@ -134,14 +137,14 @@ test('zero-row/unconfirmed upload never reports success',async()=>{
 });
 test('cross-tenant signing rejected before any remote calls',async()=>{
   const state=setup();
-  const bad=other+'/cars/10000000-0000-4000-8000-000000000004.jpg';
+  const bad=other+'/leader/'+uid+'/cars/10000000-0000-4000-8000-000000000004.jpg';
   const response=await getPrivateEvidenceUrl(org,bad);
   assert.equal(response.error.code,'INVALID_EVIDENCE_PATH');
   assert.deepEqual(state.calls,[]);
 });
 test('signed URLs are short-lived and never public',async()=>{
   const state=setup();
-  const path=org+'/cars/10000000-0000-4000-8000-000000000004.jpg';
+  const path=org+'/leader/'+uid+'/cars/10000000-0000-4000-8000-000000000004.jpg';
   const response=await getPrivateEvidenceUrl(org,path);
   assert.equal(response.error,null);
   assert.equal(response.data.url,'https://storage.example.invalid/signed');

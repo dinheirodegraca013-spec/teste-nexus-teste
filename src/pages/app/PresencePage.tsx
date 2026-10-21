@@ -290,7 +290,7 @@ export const PresencePage: React.FC = () => {
               <span>Upload de Imagem: Foto da Presença / Lista Assinada</span>
             </label>
             <FileUpload
-              disabled={!['admin', 'superadmin'].includes(profile?.role || '')}
+              disabled={!profile || profile.is_blocked === true}
               value={formData.photo_url}
               accept="image/*"
               maxSizeMB={10}

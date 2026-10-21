@@ -6,7 +6,7 @@ export type EvidenceKind = 'presences' | 'cars' | 'houses';
 export type EvidenceObject = { path: string };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const OBJECT_KEY = /^([0-9a-f-]{36})\/(presences|cars|houses)\/([0-9a-f-]{36})\.(jpg|png|webp)$/i;
+const OBJECT_KEY = /^([0-9a-f-]{36})\/(admin|coordinator|leader|member)\/([0-9a-f-]{36})\/(presences|cars|houses)\/([0-9a-f-]{36})\.(jpg|png|webp)$/i;
 const SIGNED_URL_SECONDS = 60;
 
 type StorageFailure = { code: string; message: string };
@@ -23,7 +23,7 @@ function fail<T>(code: string, message: string): StorageResult<T> {
 export function isTenantEvidencePath(path: string, tenantId: string): boolean {
   if (!UUID.test(tenantId) || typeof path !== 'string' || path.length > 250) return false;
   const match = OBJECT_KEY.exec(path);
-  return Boolean(match && UUID.test(match[3]) &&
+  return Boolean(match && UUID.test(match[3]) && UUID.test(match[5]) &&
     match[1].toLowerCase() === tenantId.toLowerCase());
 }
 
@@ -58,7 +58,16 @@ export async function inspectEvidenceImage(file: Blob): Promise<
   return { mime, extension };
 }
 
-async function requireActiveTenantAdmin(orgId: string): Promise<StorageFailure | null> {
+type TenantMemberContext = { userId: string; scope: 'admin' | 'coordinator' | 'leader' | 'member' };
+
+function evidenceScope(role: unknown): TenantMemberContext['scope'] {
+  if (role === 'admin' || role === 'superadmin') return 'admin';
+  if (role === 'coordinator') return 'coordinator';
+  if (role === 'leader') return 'leader';
+  return 'member';
+}
+
+async function requireActiveTenantMember(orgId: string): Promise<TenantMemberContext | StorageFailure> {
   if (!UUID.test(orgId)) {
     return { code: 'INVALID_TENANT', message: 'Organização inválida.' };
   }
@@ -75,16 +84,16 @@ async function requireActiveTenantAdmin(orgId: string): Promise<StorageFailure |
     .maybeSingle();
   if (profileError || !profile || profile.is_blocked ||
       profile.organization_id !== orgId ||
-      !['admin', 'superadmin'].includes(profile.role)) {
-    return { code: 'TENANT_ADMIN_REQUIRED', message: 'Acesso administrativo negado para esta organização.' };
+      !profile.role) {
+    return { code: 'TENANT_MEMBER_REQUIRED', message: 'Acesso de membro ativo da organização é obrigatório.' };
   }
-  return null;
+  return { userId: auth.user.id, scope: evidenceScope(profile.role) };
 }
 
 /**
- * The private bucket and tenant-scoped policies are deployed in the
- * authorized DEV project. The product UI remains opt-in until authenticated
- * E2E coverage is complete; this service never falls back to a public URL.
+ * The private bucket and tenant-scoped policies are deployed through the
+ * versioned migration in the authorized DEV project; this service never
+ * falls back to a public URL.
  */
 export async function uploadPrivateEvidence(
   orgId: string, kind: EvidenceKind, file: Blob
@@ -94,10 +103,10 @@ export async function uploadPrivateEvidence(
   }
   const inspected = await inspectEvidenceImage(file);
   if ('code' in inspected) return { data: null, error: inspected };
-  const accessError = await requireActiveTenantAdmin(orgId);
-  if (accessError) return { data: null, error: accessError };
+  const member = await requireActiveTenantMember(orgId);
+  if ('code' in member) return { data: null, error: member };
 
-  const key = `${orgId}/${kind}/${crypto.randomUUID()}.${inspected.extension}`;
+  const key = `${orgId}/${member.scope}/${member.userId}/${kind}/${crypto.randomUUID()}.${inspected.extension}`;
   const { data, error } = await supabase.storage.from(EVIDENCE_BUCKET)
     .upload(key, file, {
       upsert: false,
@@ -137,8 +146,8 @@ export async function getPrivateEvidenceUrl(
   if (!isTenantEvidencePath(path, orgId)) {
     return fail('INVALID_EVIDENCE_PATH', 'Comprovante não pertence à organização.');
   }
-  const accessError = await requireActiveTenantAdmin(orgId);
-  if (accessError) return { data: null, error: accessError };
+  const member = await requireActiveTenantMember(orgId);
+  if ('code' in member) return { data: null, error: member };
 
   const { data, error } = await supabase.storage.from(EVIDENCE_BUCKET)
     .createSignedUrl(path, SIGNED_URL_SECONDS);
