@@ -2018,3 +2018,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Teste:** adicionada regressão para coordenador com grants explícitos em módulos adicionais.
 - **Validação:** 310/310 testes, lint e build aprovados.
 - **Pendente:** sincronizar/publicar a correção na branch remota após revisão dos commits remotos recentes, que incluem uma função `SECURITY DEFINER` ainda pendente de validação.
+
+## Correção de provisionamento após confirmação de convite — 2026-10-21
+
+- **Sintoma:** liderança/coordenador confirmava o e-mail e recebia a mensagem de que o perfil não havia sido provisionado na organização correta.
+- **Causa no frontend:** a tentativa da RPC `nexus_claim_preapproved_team_membership` dependia da preservação do `role` no metadata do Auth. Convites antigos ou confirmações que perdiam esse campo eram bloqueados mesmo com `organization_id` de convite válido.
+- **Correção:** quando existe organização de convite, o cliente também tenta a RPC de claim. A RPC continua sendo a autoridade: exige e-mail confirmado, registro ativo único de liderança/coordenação e administrador ativo na organização; falha permanece fechada e não cria tenant.
+- **Teste:** adicionada regressão para metadata sem `role`, mas com `organization_id` de convite.
+- **Validação:** teste direcionado aprovado; `npm test` 311/311, `npm run lint` e `npm run build` aprovados.
+- **Pendência real:** se a função `nexus_claim_preapproved_team_membership` ainda não estiver aplicada no Supabase DEV correto, o administrador precisa aplicar a migration versionada e executar verificação read-only. Nenhuma alteração SQL foi executada nesta correção.

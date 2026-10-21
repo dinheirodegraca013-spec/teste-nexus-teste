@@ -211,27 +211,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // A missing profile for an invited account must never trigger creation of a new tenant.
         // The existing provision_new_user RPC always creates a new organization and an admin profile.
         if (hasInvitedOrganization || isInvitedRole) {
-          // A coordinator/leader must have a preapproved active team record and
-          // verified email. The DB RPC determines tenant/role without trusting
-          // the URL or editable user_metadata; failure remains fail-closed.
-          if (metadataRole === 'coordinator' || metadataRole === 'leader') {
-            try {
-              const { data: claimed, error: claimError } = await withTimeout(
-                Promise.resolve(supabase.rpc('nexus_claim_preapproved_team_membership')),
-                8000,
-                'Tempo limite ao vincular membro pré-aprovado'
-              );
+          // A preapproved member must have a confirmed email and an active
+          // coordinator/leader record. The DB RPC derives the tenant and role
+          // from that verified email; it does not trust the URL or metadata.
+          // Attempt the claim whenever an invitation tenant is present, even
+          // if older confirmation links lost the role metadata in transit.
+          try {
+            const { data: claimed, error: claimError } = await withTimeout(
+              Promise.resolve(supabase.rpc('nexus_claim_preapproved_team_membership')),
+              8000,
+              'Tempo limite ao vincular membro pré-aprovado'
+            );
+            if (!isCurrent()) return empty;
+            if (!claimError && claimed === true) {
+              const { data: claimedProfile, error: claimedProfileError } = await profilesService.getById(authUser.id);
               if (!isCurrent()) return empty;
-              if (!claimError && claimed === true) {
-                const { data: claimedProfile, error: claimedProfileError } = await profilesService.getById(authUser.id);
-                if (!isCurrent()) return empty;
-                if (!claimedProfileError && claimedProfile) {
-                  activeProfile = claimedProfile;
-                }
+              if (!claimedProfileError && claimedProfile) {
+                activeProfile = claimedProfile;
               }
-            } catch (claimError) {
-              console.error('[NEXUS AUTH] preapproved-claim:error', summarizeAuthError(claimError));
             }
+          } catch (claimError) {
+            console.error('[NEXUS AUTH] preapproved-claim:error', summarizeAuthError(claimError));
           }
           if (!activeProfile) {
           const errMsg = 'Esta conta foi cadastrada por convite, mas o perfil ainda não foi provisionado na organização correta. O acesso foi bloqueado para evitar criar uma organização indevida. Solicite ao administrador que conclua o provisionamento.';

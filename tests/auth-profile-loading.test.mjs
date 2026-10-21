@@ -32,7 +32,7 @@ const result = await build({
           getById: async id => globalThis.__authProfileTest.organization ? globalThis.__authProfileTest.organization(id) : ({ data: { id }, error: null }),
           getAll: async () => ({ data: [], error: null }),
         }, permissionsService = { getByUserId: async id => ({ data: [{ user_id: id, module: 'crm', can_view: true }], error: null }) };
-        export const isValidUUID = () => false;
+        export const isValidUUID = value => typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
       `,
     }));
   } }],
@@ -85,6 +85,28 @@ test('confirmed missing profile still reaches existing provisioning flow', async
   await callbacks[0]({ id: 'synthetic-user', user_metadata: {} });
   assert.equal(rpcCalls, 1);
   assert.match(states[7], /Synthetic provisioning stop/);
+  delete globalThis.__authProfileTest;
+});
+
+test('invited tenant attempts safe claim even when role metadata is missing', async () => {
+  let rpcCalls = 0;
+  globalThis.__authProfileTest = {
+    lookup: async () => ({ data: null, error: null }),
+    rpc: async name => {
+      assert.equal(name, 'nexus_claim_preapproved_team_membership');
+      rpcCalls++;
+      return { data: false, error: null };
+    },
+  };
+  callbacks.length = 0;
+  states.length = 0;
+  AuthProvider({ children: null });
+  await callbacks[0]({
+    id: 'synthetic-invite-user',
+    user_metadata: { organization_id: '10000000-0000-4000-8000-000000000001' },
+  });
+  assert.equal(rpcCalls, 1);
+  assert.match(states[7], /perfil ainda não foi provisionado/);
   delete globalThis.__authProfileTest;
 });
 for (const staleOutcome of ['profile', 'missing', 'error']) {
