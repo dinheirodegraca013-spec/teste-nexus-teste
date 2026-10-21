@@ -2062,7 +2062,10 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - Upload ampliado para membros ativos (admin, coordenador, liderança e demais perfis não bloqueados).
 - Novos objetos usam `<organização>/<papel>/<id-do-usuário>/<tipo>/<arquivo>`, mantendo Storage privado e vínculo por organização.
 - UI, serviço e testes atualizados; `npm test` 316/316, lint, build e diff-check aprovados.
-- Migration `20261021230000_nexus_private_storage_hierarchical_access.sql` preparada, ainda não executada no DEV; aguarda aprovação específica para RLS/Storage.
+- Migration `20261021230000_nexus_private_storage_hierarchical_access.sql` preparada e executada após aprovação no DEV.
+- Execução autorizada: migration aplicada exclusivamente no Supabase DEV `qwvbvqlzcyfkuszxrlgv`.
+- Verificação read-only: bucket privado confirmado, três policies Storage presentes (`SELECT`, `INSERT`, `DELETE`) e duas funções auxiliares `SECURITY DEFINER` confirmadas.
+- Produção/main: não alteradas.
 
 ## Regressão RLS no carregamento de lideranças — 2026-10-21
 
