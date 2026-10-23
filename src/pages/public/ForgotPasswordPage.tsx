@@ -11,7 +11,7 @@ interface ForgotPasswordPageProps {
 
 export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onNavigate }) => {
   const { resetPassword } = useAuth();
-  const { success } = useToast();
+  const { success, error: showError } = useToast();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSent, setIsSent] = useState(false);
@@ -21,22 +21,33 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onNaviga
     if (!email || !email.includes('@')) return;
 
     setIsLoading(true);
-    await resetPassword(email.trim());
-    setIsLoading(false);
-    setIsSent(true);
-    success('Instruções de redefinição enviadas para seu e-mail!');
+    try {
+      const { error } = await resetPassword(email.trim());
+      if (error) {
+        showError('Não foi possível solicitar a redefinição. Tente novamente.');
+        return;
+      }
+      setIsSent(true);
+      success('Se o e-mail estiver cadastrado, você receberá as instruções de redefinição.');
+    } catch {
+      showError('Não foi possível solicitar a redefinição. Tente novamente.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
       <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs text-left">
         <div className="text-center mb-6">
-          <div 
+          <button
+            type="button"
             onClick={() => onNavigate('/')} 
-            className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-slate-900 text-white font-black text-base shadow-xs cursor-pointer mb-3"
+            aria-label="Voltar para o início"
+            className="inline-flex items-center justify-center w-10 h-10 rounded-xl border-0 p-0 bg-slate-900 text-white font-black text-base shadow-xs cursor-pointer mb-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2"
           >
             N
-          </div>
+          </button>
           <h2 className="text-xl sm:text-2xl font-bold text-slate-950 tracking-tight">
             Recuperar Senha
           </h2>
@@ -48,7 +59,7 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onNaviga
         {isSent ? (
           <div className="space-y-4">
             <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs leading-relaxed">
-              Verifique a caixa de entrada de <strong>{email}</strong>. Enviamos o link para você cadastrar uma nova senha.
+              Se o e-mail <strong>{email.trim()}</strong> estiver cadastrado, você receberá um link para cadastrar uma nova senha. Verifique também a pasta de spam.
             </div>
             <Button
               variant="outline"
@@ -65,6 +76,7 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onNaviga
             <Input
               label="Seu E-mail Cadastrado"
               type="email"
+              autoComplete="email"
               placeholder="seu.email@organizacao.com.br"
               value={email}
               onChange={(e) => setEmail(e.target.value)}

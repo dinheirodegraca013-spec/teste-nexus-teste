@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import { UploadCloud, Image, X, FileText, Camera, CheckCircle2 } from 'lucide-react';
 
 interface FileUploadProps {
@@ -7,8 +7,13 @@ interface FileUploadProps {
   accept?: string;
   value?: string | null;
   fileName?: string | null;
-  onChange: (dataUrl: string | null, fileMeta?: { name: string; size: number; type: string } | null) => void;
+  onChange?: (dataUrl: string | null, fileMeta?: { name: string; size: number; type: string } | null) => void;
+  /** Compatibility callbacks used by the field and operational forms. */
+  onFileSelected?: (file: File, dataUrl: string) => void;
+  onFileRemoved?: () => void;
+  currentFileName?: string;
   maxSizeMB?: number;
+  disabled?: boolean;
   className?: string;
 }
 
@@ -19,12 +24,22 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   value,
   fileName,
   onChange,
+  onFileSelected,
+  onFileRemoved,
+  currentFileName,
   maxSizeMB = 10,
+  disabled = false,
   className = '',
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const inputId = useId();
+  const processGenerationRef = useRef(0);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => () => {
+    processGenerationRef.current += 1;
+  }, []);
 
   const compressImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -87,6 +102,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   };
 
   const handleProcessFile = async (file: File) => {
+    if (disabled) return;
+    const processGeneration = ++processGenerationRef.current;
     setError(null);
 
     if (file.size > maxSizeMB * 1024 * 1024) {
@@ -96,19 +113,23 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
     try {
       const result = await compressImage(file);
-      onChange(result, {
+      if (processGeneration !== processGenerationRef.current) return;
+      const metadata = {
         name: file.name,
         size: Math.round(result.length * 0.75), // approximate compressed size
         type: file.type.startsWith('image/') ? 'image/jpeg' : file.type,
-      });
+      };
+      onChange?.(result, metadata);
+      onFileSelected?.(file, result);
     } catch {
+      if (processGeneration !== processGenerationRef.current) return;
       setError('Erro ao processar imagem. Tente novamente.');
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (file && !disabled) {
       handleProcessFile(file);
     }
   };
@@ -116,7 +137,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsDragging(true);
+    if (!disabled) setIsDragging(true);
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
@@ -131,33 +152,44 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     setIsDragging(false);
 
     const file = e.dataTransfer.files?.[0];
-    if (file) {
+    if (file && !disabled) {
       handleProcessFile(file);
     }
   };
 
+  const handleDropzoneKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (disabled || (e.key !== 'Enter' && e.key !== ' ')) return;
+    e.preventDefault();
+    inputRef.current?.click();
+  };
+
   const handleRemove = (e: React.MouseEvent) => {
     e.stopPropagation();
+    processGenerationRef.current += 1;
     if (inputRef.current) {
       inputRef.current.value = '';
     }
     setError(null);
-    onChange(null, null);
+    onChange?.(null, null);
+    onFileRemoved?.();
   };
 
-  const isImage = value?.startsWith('data:image') || value?.includes('http') || (fileName && /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(fileName));
+  const displayedFileName = fileName || currentFileName;
+  const isImage = value?.startsWith('data:image') || value?.includes('http') || (displayedFileName && /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(displayedFileName));
 
   return (
     <div className={`space-y-1.5 ${className}`}>
       {label && (
-        <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300">
+        <label htmlFor={inputId} className="block text-xs font-semibold text-slate-700 dark:text-zinc-300">
           {label}
         </label>
       )}
 
       <input
         ref={inputRef}
+        id={inputId}
         type="file"
+        disabled={disabled}
         accept={accept}
         onChange={handleInputChange}
         className="hidden"
@@ -183,7 +215,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-900 dark:text-zinc-100 truncate">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-              <span className="truncate">{fileName || 'Arquivo / Foto anexada'}</span>
+              <span className="truncate">{displayedFileName || 'Arquivo / Foto anexada'}</span>
             </div>
             <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">
               Pronto para envio
@@ -191,7 +223,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
             <div className="flex items-center gap-2 mt-1.5">
               <button
                 type="button"
-                onClick={() => inputRef.current?.click()}
+                onClick={() => { if (!disabled) inputRef.current?.click(); }}
                 className="text-[11px] font-medium text-slate-700 dark:text-zinc-300 hover:underline cursor-pointer"
               >
                 Trocar imagem
@@ -202,6 +234,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           <button
             type="button"
             onClick={handleRemove}
+            aria-label="Remover arquivo"
             title="Remover arquivo"
             className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
           >
@@ -210,11 +243,16 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         </div>
       ) : (
         <div
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onClick={() => inputRef.current?.click()}
-          className={`border-2 border-dashed rounded-xl p-4 transition-all text-center cursor-pointer flex flex-col items-center justify-center gap-2 ${
+          role="button"
+          tabIndex={disabled ? -1 : 0}
+          aria-label={disabled ? 'Upload temporariamente indisponível' : 'Enviar foto ou comprovante'}
+          aria-disabled={disabled}
+          onDragOver={disabled ? undefined : handleDragOver}
+          onDragLeave={disabled ? undefined : handleDragLeave}
+          onDrop={disabled ? undefined : handleDrop}
+          onClick={() => { if (!disabled) inputRef.current?.click(); }}
+          onKeyDown={handleDropzoneKeyDown}
+          className={`border-2 border-dashed rounded-xl p-4 transition-all text-center ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'} flex flex-col items-center justify-center gap-2 ${
             isDragging
               ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30'
               : 'border-slate-300 dark:border-zinc-800 hover:border-slate-400 dark:hover:border-zinc-700 bg-slate-50/50 dark:bg-zinc-950/50'
@@ -226,10 +264,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
           <div>
             <div className="text-xs font-semibold text-slate-900 dark:text-zinc-200">
-              Clique para enviar foto ou tire com a câmera
+              {disabled ? 'Upload temporariamente indisponível' : 'Clique para enviar foto ou tire com a câmera'}
             </div>
             <p className="text-[11px] text-slate-500 dark:text-zinc-500 mt-0.5">
-              {helperText}
+              {disabled ? 'Aguardando Storage privado e políticas de acesso seguras.' : helperText}
             </p>
           </div>
         </div>

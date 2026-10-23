@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { FileSpreadsheet, Download, Printer, Users, Target, Tag, MapPin, Loader2, Car, Home, UserCheck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Contact, Leader, Coordinator, Goal, CampaignEvent, CarSticker, HouseSticker } from '../../types';
 import { crmService, leadersService, coordinatorsService, goalsService, eventsService, stickersService } from '../../services';
 import { Button } from '../../components/ui/Button';
+import { buildCsvBlob } from '../../utils/csv';
 
 export const ReportsPage: React.FC = () => {
   const { organization } = useAuth();
@@ -19,9 +20,34 @@ export const ReportsPage: React.FC = () => {
   const [carStickers, setCarStickers] = useState<CarSticker[]>([]);
   const [houseStickers, setHouseStickers] = useState<HouseSticker[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadedOrgId, setLoadedOrgId] = useState('');
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const loadGenerationRef = useRef(0);
 
   const loadData = useCallback(async () => {
-    if (!orgId) return;
+    const loadGeneration = ++loadGenerationRef.current;
+    const isCurrentLoad = () => loadGeneration === loadGenerationRef.current;
+    setLoadedOrgId('');
+    setLoadError(null);
+    if (!orgId) {
+      if (!isCurrentLoad()) return;
+      setContacts([]);
+      setLeaders([]);
+      setCoordinators([]);
+      setGoals([]);
+      setEvents([]);
+      setCarStickers([]);
+      setHouseStickers([]);
+      setIsLoading(false);
+      return;
+    }
+    setContacts([]);
+    setLeaders([]);
+    setCoordinators([]);
+    setGoals([]);
+    setEvents([]);
+    setCarStickers([]);
+    setHouseStickers([]);
     setIsLoading(true);
     try {
       const [
@@ -42,6 +68,15 @@ export const ReportsPage: React.FC = () => {
         stickersService.getHouseStickers(orgId),
       ]);
 
+      if (contactsRes.error) throw contactsRes.error;
+      if (leadersRes.error) throw leadersRes.error;
+      if (coordsRes.error) throw coordsRes.error;
+      if (goalsRes.error) throw goalsRes.error;
+      if (eventsRes.error) throw eventsRes.error;
+      if (carsRes.error) throw carsRes.error;
+      if (housesRes.error) throw housesRes.error;
+      if (!isCurrentLoad()) return;
+
       setContacts(contactsRes.data || []);
       setLeaders(leadersRes.data || []);
       setCoordinators(coordsRes.data || []);
@@ -49,10 +84,14 @@ export const ReportsPage: React.FC = () => {
       setEvents(eventsRes.data || []);
       setCarStickers(carsRes.data || []);
       setHouseStickers(housesRes.data || []);
+      setLoadedOrgId(orgId);
     } catch (err: any) {
-      toastError('Erro ao carregar dados do relatório: ' + err.message);
+      if (isCurrentLoad()) {
+        setLoadError('Não foi possível carregar o relatório desta organização.');
+        toastError('Erro ao carregar dados do relatório: ' + err.message);
+      }
     } finally {
-      setIsLoading(false);
+      if (isCurrentLoad()) setIsLoading(false);
     }
   }, [orgId, toastError]);
 
@@ -60,27 +99,32 @@ export const ReportsPage: React.FC = () => {
     loadData();
   }, [loadData]);
 
+  const reportReady = Boolean(orgId && loadedOrgId === orgId && !isLoading && !loadError);
+
   const handlePrint = () => {
+    if (!reportReady) return;
     window.print();
   };
 
   const handleExportCSV = () => {
+    if (!reportReady) return;
     const headers = ['Nome', 'Telefone', 'Territorio', 'Lider', 'Status'];
     const rows = contacts.map(c => [
-      `"${c.full_name}"`,
-      `"${c.phone}"`,
-      `"${c.territory || ''}"`,
-      `"${c.leader_name || ''}"`,
-      `"${c.status}"`,
+      c.full_name,
+      c.phone,
+      c.territory || '',
+      c.leader_name || '',
+      c.status,
     ]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
+    const blob = buildCsvBlob(headers, rows);
+    const encodedUri = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
     link.setAttribute('download', `nexus_relatorio_contatos_${orgId}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(encodedUri);
   };
 
   return (
@@ -102,6 +146,7 @@ export const ReportsPage: React.FC = () => {
             variant="outline"
             size="sm"
             onClick={handlePrint}
+            disabled={!reportReady}
             leftIcon={<Printer className="w-4 h-4" />}
             className="text-xs"
           >
@@ -111,6 +156,7 @@ export const ReportsPage: React.FC = () => {
             variant="primary"
             size="sm"
             onClick={handleExportCSV}
+            disabled={!reportReady}
             leftIcon={<Download className="w-4 h-4" />}
             className="text-xs"
           >
@@ -119,10 +165,19 @@ export const ReportsPage: React.FC = () => {
         </div>
       </div>
 
-      {isLoading ? (
-        <div className="py-20 flex flex-col items-center justify-center text-slate-400 gap-3">
-          <Loader2 className="w-8 h-8 animate-spin text-slate-600" />
-          <span className="text-sm font-medium">Consolidando dados do Supabase...</span>
+      {!reportReady ? (
+        <div className="py-20 flex flex-col items-center justify-center text-slate-500 gap-3" role="status" aria-live="polite">
+          {loadError ? (
+            <>
+              <span className="text-sm font-medium">{loadError}</span>
+              {orgId && <Button variant="outline" size="sm" onClick={loadData}>Tentar novamente</Button>}
+            </>
+          ) : (
+            <>
+              <Loader2 className="w-8 h-8 animate-spin text-slate-600" />
+              <span className="text-sm font-medium">Consolidando dados do Supabase...</span>
+            </>
+          )}
         </div>
       ) : (
         /* Printable Report Document */

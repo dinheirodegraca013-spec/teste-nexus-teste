@@ -25,6 +25,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const [confirmationSent, setConfirmationSent] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState('');
+  const [inviteDetailsReady, setInviteDetailsReady] = useState(false);
 
   // Referral / Invitation query parameters
   const [isInvite, setIsInvite] = useState(false);
@@ -38,6 +39,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
 
   useEffect(() => {
     async function loadInviteDetails() {
+      setInviteDetailsReady(false);
       try {
         let searchStr = window.location.search || '';
         if (!searchStr && window.location.hash && window.location.hash.includes('?')) {
@@ -56,9 +58,10 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
         if (conviteType === 'coordenador') {
           setIsInvite(true);
           setInviteType('coordenador');
-          if (paramNome) setName(decodeURIComponent(paramNome));
-          if (paramEmail) setEmail(decodeURIComponent(paramEmail));
-          if (paramTerritorio) setInviteTerritory(decodeURIComponent(paramTerritorio));
+          // URLSearchParams already decodes query values exactly once.
+          if (paramNome) setName(paramNome);
+          if (paramEmail) setEmail(paramEmail);
+          if (paramTerritorio) setInviteTerritory(paramTerritorio);
           if (paramOrgId) setInviteOrgId(paramOrgId);
           if (paramCoordId) setInviteCoordId(paramCoordId);
 
@@ -72,8 +75,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
         } else if (conviteType === 'lider' || paramLeaderId || paramCoordId) {
           setIsInvite(true);
           setInviteType('lider');
-          if (paramNome) setName(decodeURIComponent(paramNome));
-          if (paramEmail) setEmail(decodeURIComponent(paramEmail));
+          if (paramNome) setName(paramNome);
+          if (paramEmail) setEmail(paramEmail);
           if (paramOrgId) setInviteOrgId(paramOrgId);
           if (paramLeaderId) setInviteLeaderId(paramLeaderId);
           if (paramCoordId) setInviteCoordId(paramCoordId);
@@ -87,7 +90,9 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
           }
         }
       } catch (e) {
-        console.error('Error parsing invite params', e);
+        console.error('Error parsing invite params');
+      } finally {
+        setInviteDetailsReady(true);
       }
     }
 
@@ -98,6 +103,11 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
     e.preventDefault();
     setErrorMessage('');
 
+    if (!inviteDetailsReady) {
+      setErrorMessage('Aguarde o carregamento dos dados do convite e tente novamente.');
+      return;
+    }
+
     if (!name.trim()) {
       setErrorMessage('Por favor, informe seu nome completo.');
       return;
@@ -106,8 +116,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
       setErrorMessage('Por favor, informe um e-mail válido.');
       return;
     }
-    if (password.length < 6) {
-      setErrorMessage('A senha deve possuir pelo menos 6 caracteres.');
+    if (password.length < 8) {
+      setErrorMessage('A senha deve possuir pelo menos 8 caracteres.');
       return;
     }
     if (password !== confirmPassword) {
@@ -116,6 +126,10 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
     }
     if (!acceptTerms) {
       setErrorMessage('Você deve aceitar os termos de uso e política de privacidade.');
+      return;
+    }
+    if (isInvite && (!inviteOrgId || (inviteType === 'lider' && !inviteLeaderId) || (inviteType === 'coordenador' && !inviteCoordId))) {
+      setErrorMessage('Este convite está incompleto ou expirado. Solicite um novo convite ao administrador.');
       return;
     }
 
@@ -140,12 +154,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
         if (!isSupabaseConfigured) {
           friendlyMessage = 'O backend Supabase não está configurado. As variáveis VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY precisam ser configuradas na Vercel e o projeto reconstruído.';
         } else {
-          friendlyMessage = 'Não foi possível conectar aos servidores do sistema. Verifique sua conexão com a internet ou se extensões do navegador (como bloqueadores de anúncios) estão impedindo a comunicação com o Supabase.';
+          friendlyMessage = 'Não foi possível conectar ao projeto Supabase configurado neste ambiente. Verifique VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY na Vercel, confirme que apontam para o projeto correto e faça um novo deploy; depois teste sem bloqueadores de anúncios.';
         }
       } else if (error.message?.includes('User already registered') || (error as any)?.code === 'user_already_exists') {
         friendlyMessage = 'Este e-mail já está cadastrado no sistema. Tente fazer login ou recuperar sua senha.';
       } else if (error.message?.includes('Password should be at least')) {
-        friendlyMessage = 'A senha deve ter pelo menos 6 caracteres.';
+        friendlyMessage = 'A senha deve ter pelo menos 8 caracteres.';
       }
 
       setErrorMessage(friendlyMessage);
@@ -280,12 +294,14 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
           </div>
         ) : (
           <div className="text-center mb-6">
-            <div 
+            <button
+              type="button"
               onClick={() => onNavigate('/')} 
-              className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-slate-900 text-white font-black text-base shadow-xs cursor-pointer mb-3"
+              aria-label="Voltar para o início"
+              className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-slate-900 text-white font-black text-base shadow-xs cursor-pointer mb-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2"
             >
               N
-            </div>
+            </button>
             <h2 className="text-xl sm:text-2xl font-bold text-slate-950 tracking-tight">
               Criar Conta no NEXUS
             </h2>
@@ -335,25 +351,25 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
           />
 
           <Input
-            label="Criar Senha (mínimo 6 caracteres)"
+            label="Criar Senha (mínimo 8 caracteres)"
             type="password"
+            autoComplete="new-password"
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             leftIcon={<Lock className="w-4 h-4" />}
             required
-            autoComplete="new-password"
           />
 
           <Input
             label="Confirmar Senha"
             type="password"
+            autoComplete="new-password"
             placeholder="••••••••"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             leftIcon={<Lock className="w-4 h-4" />}
             required
-            autoComplete="new-password"
           />
 
           <div className="flex items-start gap-2 pt-1 text-xs text-slate-500">

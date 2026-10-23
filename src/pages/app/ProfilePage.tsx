@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { getOperationalIdentity } from '../../utils/operationalIdentity';
 
 export const ProfilePage: React.FC = () => {
   const { user, profile, updateProfile, updatePassword } = useAuth();
@@ -16,9 +17,14 @@ export const ProfilePage: React.FC = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoadingPassword, setIsLoadingPassword] = useState(false);
+  const operationalIdentity = getOperationalIdentity(profile, user?.email);
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (operationalIdentity.restricted) {
+      toastError('Lideranças e coordenadores não podem alterar o nome administrativo da conta.');
+      return;
+    }
     if (!fullName.trim()) {
       toastError('Informe seu nome completo.');
       return;
@@ -27,12 +33,12 @@ export const ProfilePage: React.FC = () => {
     setIsLoadingProfile(true);
     const { error } = await updateProfile({
       full_name: fullName.trim(),
-      phone: phone.trim() || undefined,
+      phone: phone.trim(),
     });
     setIsLoadingProfile(false);
 
     if (error) {
-      toastError('Erro ao atualizar perfil.');
+      toastError('Erro ao atualizar perfil: ' + error.message);
     } else {
       success('Dados do perfil atualizados com sucesso!');
     }
@@ -40,8 +46,8 @@ export const ProfilePage: React.FC = () => {
 
   const handleSavePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newPassword.length < 6) {
-      toastError('A senha deve conter no mínimo 6 caracteres.');
+    if (newPassword.length < 8) {
+      toastError('A senha deve conter no mínimo 8 caracteres.');
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -81,14 +87,22 @@ export const ProfilePage: React.FC = () => {
           Dados Pessoais
         </h3>
 
-        <Input
-          label="Nome Completo"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          placeholder="Seu nome"
-          leftIcon={<User className="w-4 h-4" />}
-          required
-        />
+        {operationalIdentity.restricted ? (
+          <div className="rounded-lg border border-zinc-700 bg-zinc-950/50 p-3 text-sm text-zinc-300">
+            <div className="font-semibold text-zinc-100">{operationalIdentity.label}</div>
+            <div className="mt-1 text-xs text-zinc-400">{operationalIdentity.email}</div>
+            <div className="mt-1 text-xs text-zinc-500">Somente o e-mail e o registro do sistema ficam visíveis nesta conta.</div>
+          </div>
+        ) : (
+          <Input
+            label="Nome Completo"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            placeholder="Seu nome"
+            leftIcon={<User className="w-4 h-4" />}
+            required
+          />
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Input
@@ -128,8 +142,9 @@ export const ProfilePage: React.FC = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Input
-            label="Nova Senha"
+            label="Nova Senha (mínimo 8 caracteres)"
             type="password"
+            autoComplete="new-password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             placeholder="••••••••"
@@ -138,6 +153,7 @@ export const ProfilePage: React.FC = () => {
           <Input
             label="Confirmar Nova Senha"
             type="password"
+            autoComplete="new-password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="••••••••"

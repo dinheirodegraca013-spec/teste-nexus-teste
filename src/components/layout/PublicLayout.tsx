@@ -18,9 +18,11 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
       {/* Public Navbar */}
       <header className="h-16 border-b border-slate-200 bg-white/85 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-full flex items-center justify-between">
-          <div
+          <button
+            type="button"
             onClick={() => onNavigate('/')}
-            className="flex items-center gap-2.5 cursor-pointer select-none"
+            aria-label="Voltar para o início"
+            className="flex items-center gap-2.5 cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 rounded-lg"
           >
             <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-black tracking-widest text-sm shadow-xs">
               N
@@ -29,22 +31,25 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
               <span className="text-base font-bold tracking-widest text-slate-950">NEXUS</span>
               <span className="text-[10px] text-slate-400 uppercase tracking-widest font-mono font-semibold">SaaS</span>
             </div>
-          </div>
+          </button>
 
           <nav className="hidden md:flex items-center gap-6 text-xs text-slate-500 font-medium">
             <button
+              type="button"
               onClick={() => onNavigate('/')}
               className={`hover:text-slate-900 transition-colors cursor-pointer ${currentPath === '/' ? 'text-slate-950 font-semibold' : ''}`}
             >
               Visão Geral
             </button>
             <button
+              type="button"
               onClick={() => onNavigate('/termos')}
               className={`hover:text-slate-900 transition-colors cursor-pointer ${currentPath === '/termos' ? 'text-slate-950 font-semibold' : ''}`}
             >
               Termos de Uso
             </button>
             <button
+              type="button"
               onClick={() => onNavigate('/privacidade')}
               className={`hover:text-slate-900 transition-colors cursor-pointer ${currentPath === '/privacidade' ? 'text-slate-950 font-semibold' : ''}`}
             >
@@ -90,10 +95,10 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({
           </div>
 
           <div className="flex items-center gap-6">
-            <button onClick={() => onNavigate('/termos')} className="hover:text-slate-900 transition-colors cursor-pointer">
+              <button type="button" onClick={() => onNavigate('/termos')} className="hover:text-slate-900 transition-colors cursor-pointer">
               Termos
             </button>
-            <button onClick={() => onNavigate('/privacidade')} className="hover:text-slate-900 transition-colors cursor-pointer">
+              <button type="button" onClick={() => onNavigate('/privacidade')} className="hover:text-slate-900 transition-colors cursor-pointer">
               Privacidade
             </button>
             <div className="flex items-center gap-1.5 text-slate-600">

@@ -22,8 +22,8 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate
     e.preventDefault();
     setErrorMsg('');
 
-    if (password.length < 6) {
-      setErrorMsg('A nova senha deve ter pelo menos 6 caracteres.');
+    if (password.length < 8) {
+      setErrorMsg('A nova senha deve ter pelo menos 8 caracteres.');
       return;
     }
     if (password !== confirmPassword) {
@@ -48,12 +48,14 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate
     <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
       <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl p-6 sm:p-8 shadow-2xl text-left">
         <div className="text-center mb-6">
-          <div 
+          <button
+            type="button"
             onClick={() => onNavigate('/')} 
-            className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-zinc-100 text-zinc-950 font-black text-base shadow-sm cursor-pointer mb-3"
+            aria-label="Voltar para o início"
+            className="inline-flex items-center justify-center w-10 h-10 border-0 p-0 rounded-xl bg-zinc-100 text-zinc-950 font-black text-base shadow-sm cursor-pointer mb-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-100 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
           >
             N
-          </div>
+          </button>
           <h2 className="text-xl sm:text-2xl font-bold text-zinc-100 tracking-tight">
             Criar Nova Senha
           </h2>
@@ -88,8 +90,9 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
-              label="Nova Senha"
+              label="Nova Senha (mínimo 8 caracteres)"
               type="password"
+              autoComplete="new-password"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -100,6 +103,7 @@ export const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onNavigate
             <Input
               label="Confirmar Nova Senha"
               type="password"
+              autoComplete="new-password"
               placeholder="••••••••"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}

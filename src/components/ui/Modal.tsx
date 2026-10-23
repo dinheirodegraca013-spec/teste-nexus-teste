@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useId, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
 
@@ -19,15 +19,58 @@ export const Modal: React.FC<ModalProps> = ({
   children,
   maxWidth = 'md',
 }) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
+  // Keep the latest callback without re-running the focus effect on every keystroke.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const titleId = useId();
+  const descriptionId = useId();
+
   useEffect(() => {
+    if (!isOpen) return;
+    restoreFocusRef.current = document.activeElement as HTMLElement | null;
+    const focusableSelector = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const dialog = dialogRef.current;
+    const focusFirst = () => {
+      dialog?.focus();
+    };
+    focusFirst();
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onCloseRef.current();
+        return;
+      }
+      if (e.key !== 'Tab' || !dialog) return;
+      const focusable: HTMLElement[] = Array.from(dialog.querySelectorAll<HTMLElement>(focusableSelector));
+      if (focusable.length === 0) {
+        e.preventDefault();
+        dialog.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (!dialog.contains(document.activeElement)) {
+        e.preventDefault();
+        (e.shiftKey ? last : first).focus();
+        return;
+      }
+      if (e.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (document.activeElement === last || document.activeElement === dialog)) {
+        e.preventDefault();
+        first.focus();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      restoreFocusRef.current?.focus();
+      restoreFocusRef.current = null;
+    };
+  }, [isOpen]);
 
   const maxWidthClass = {
     sm: 'max-w-sm',
@@ -54,14 +97,22 @@ export const Modal: React.FC<ModalProps> = ({
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
             transition={{ duration: 0.15 }}
             className={`relative w-full ${maxWidthClass} bg-white border border-slate-200 rounded-2xl shadow-2xl p-6 z-10 overflow-hidden text-left text-slate-900`}
+            role="dialog"
+            aria-modal={true}
+            aria-labelledby={titleId}
+            aria-describedby={description ? descriptionId : undefined}
+            tabIndex={-1}
+            ref={dialogRef}
           >
             <div className="flex items-start justify-between pb-4 border-b border-slate-100">
               <div>
-                <h3 className="text-base font-semibold text-slate-900 tracking-tight">{title}</h3>
-                {description && <p className="text-xs text-slate-500 mt-0.5">{description}</p>}
+                <h3 id={titleId} className="text-base font-semibold text-slate-900 tracking-tight">{title}</h3>
+                {description && <p id={descriptionId} className="text-xs text-slate-500 mt-0.5">{description}</p>}
               </div>
               <button
+                type="button"
                 onClick={onClose}
+                aria-label="Fechar janela"
                 className="text-slate-400 hover:text-slate-700 transition-colors p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer"
               >
                 <X className="w-4 h-4" />

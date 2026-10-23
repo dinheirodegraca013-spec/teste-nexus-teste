@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { validatePhotoReference } from './photoEvidenceGuard';
 import { 
   Coordinator, 
   Leader, 
@@ -13,6 +14,80 @@ import {
   HouseSticker, 
   PopularDemand 
 } from '../types';
+
+function summarizeAuditError(error: unknown) {
+  const candidate = error && typeof error === 'object' ? error as Record<string, unknown> : {};
+  return {
+    code: typeof candidate.code === 'string' ? candidate.code : undefined,
+    message: typeof candidate.message === 'string' ? candidate.message : String(error),
+    status: typeof candidate.status === 'number' ? candidate.status : undefined,
+  };
+}
+
+// A PostgREST DELETE can return error=null even when RLS deleted zero rows.
+// Require the deleted row id before telling the operator the action succeeded.
+function confirmUpdatedRow<T>(
+  data: T | null,
+  error: { message: string; code?: string } | null,
+): { data: T | null; error: { message: string; code?: string } | null } {
+  if (error) return { data: null, error };
+  if (!data) {
+    return {
+      data: null,
+      error: {
+        code: 'UPDATE_NOT_APPLIED',
+        message: 'A atualização não foi confirmada. O registro pode não existir ou você pode não ter permissão.',
+      },
+    };
+  }
+  return { data, error: null };
+}
+
+function confirmCreatedRow<T>(
+  data: T | null,
+  error: { message: string; code?: string } | null,
+  code: string,
+  message: string,
+): { data: T | null; error: { message: string; code?: string } | null } {
+  if (error) return { data: null, error };
+  if (!data) return { data: null, error: { code, message } };
+  return { data, error: null };
+}
+
+function confirmRpcUuid(
+  data: unknown,
+  error: { message: string; code?: string } | null,
+  code: string,
+  message: string,
+): { data: string | null; error: { message: string; code?: string } | null } {
+  if (error) return { data: null, error };
+  if (typeof data !== 'string' || !data) return { data: null, error: { code, message } };
+  return { data, error: null };
+}
+
+// All update methods must confirm a returned row: RLS can silently affect zero rows.
+function confirmDeletedRow(
+  data: { id: string } | null,
+  error: { message: string; code?: string } | null,
+) {
+  if (error) return { error };
+  if (!data?.id) {
+    return {
+      error: {
+        code: 'DELETE_NOT_APPLIED',
+        message: 'A exclusão não foi confirmada. O registro pode não existir ou você pode não ter permissão.',
+      },
+    };
+  }
+  return { error: null };
+}
+
+// A tenant is assigned by the authenticated context and database policy. Never
+// allow a client update to attempt reassignment through a partial payload.
+function withoutOrganizationId<T extends Record<string, any>>(updates: T): Omit<T, 'organization_id'> {
+  const { organization_id: _organizationId, ...safeUpdates } = updates;
+  return safeUpdates;
+}
 
 // Coordinators Service
 export const coordinatorsService = {
@@ -31,28 +106,39 @@ export const coordinatorsService = {
       .insert([coordinator])
       .select()
       .maybeSingle();
-    return { data: data as Coordinator | null, error };
+    if (error) return { data: null, error };
+    if (!data) {
+      return {
+        data: null,
+        error: {
+          code: 'COORDINATOR_CREATE_NOT_CONFIRMED',
+          message: 'Não foi possível confirmar o cadastro do coordenador. Verifique a lista antes de tentar novamente.',
+        },
+      };
+    }
+    return { data: data as Coordinator, error: null };
   },
 
   async update(id: string, updates: Partial<Coordinator>) {
     const { data, error } = await supabase
       .from('coordinators')
-      .update(updates)
+      .update(withoutOrganizationId(updates))
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as Coordinator | null, error };
+    return confirmUpdatedRow(data as Coordinator | null, error);
   },
 
   async delete(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('coordinators')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
-
 // Leaders Service
 export const leadersService = {
   async getAll(organizationId: string) {
@@ -79,25 +165,37 @@ export const leadersService = {
       .insert([leader])
       .select()
       .maybeSingle();
-    return { data: data as Leader | null, error };
+    if (error) return { data: null, error };
+    if (!data) {
+      return {
+        data: null,
+        error: {
+          code: 'LEADER_CREATE_NOT_CONFIRMED',
+          message: 'Não foi possível confirmar o cadastro da liderança. Verifique a lista antes de tentar novamente.',
+        },
+      };
+    }
+    return { data: data as Leader, error: null };
   },
 
   async update(id: string, updates: Partial<Leader>) {
     const { data, error } = await supabase
       .from('leaders')
-      .update(updates)
+      .update(withoutOrganizationId(updates))
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as Leader | null, error };
+    return confirmUpdatedRow(data as Leader | null, error);
   },
 
   async delete(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('leaders')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
 
@@ -163,14 +261,20 @@ export const crmService = {
       .insert([dbPayload])
       .select()
       .maybeSingle();
-    return { data: data ? mapCrmContactRow(data) : null, error };
+    return confirmCreatedRow(
+      data ? mapCrmContactRow(data) : null,
+      error,
+      'CRM_CONTACT_CREATE_NOT_CONFIRMED',
+      'Não foi possível confirmar o cadastro do contato. Verifique a lista antes de tentar novamente.',
+    );
   },
 
   async update(id: string, updates: Partial<CrmContact> & Record<string, any>) {
     // Filtra e mapeia EXCLUSIVAMENTE para as colunas físicas reais de crm_contacts
     const dbPayload: Record<string, any> = {};
 
-    if (updates.organization_id !== undefined) dbPayload.organization_id = updates.organization_id;
+    // organization_id is immutable: tenant reassignment must never be attempted by the client.
+    // The database RLS remains the authoritative authorization boundary.
     if (updates.leader_id !== undefined) dbPayload.leader_id = updates.leader_id || null;
     if (updates.name !== undefined || updates.full_name !== undefined) {
       dbPayload.name = (updates.name || updates.full_name || '').trim();
@@ -196,15 +300,17 @@ export const crmService = {
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data ? mapCrmContactRow(data) : null, error };
+    return confirmUpdatedRow(data ? mapCrmContactRow(data) : null, error);
   },
 
   async delete(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('crm_contacts')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
 
@@ -225,25 +331,40 @@ export const goalsService = {
       .insert([goal])
       .select()
       .maybeSingle();
-    return { data: data as Goal | null, error };
+    return confirmCreatedRow(
+      data as Goal | null,
+      error,
+      'GOAL_CREATE_NOT_CONFIRMED',
+      'Não foi possível confirmar o cadastro da meta. Verifique a lista antes de tentar novamente.',
+    );
   },
 
   async update(id: string, updates: Partial<Goal>) {
     const { data, error } = await supabase
       .from('goals')
-      .update(updates)
+      .update(withoutOrganizationId(updates))
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as Goal | null, error };
+    return confirmUpdatedRow(data as Goal | null, error);
+  },
+
+  async incrementAtomically(id: string, amount: number) {
+    const { data, error } = await supabase.rpc('nexus_increment_goal', {
+      p_goal_id: id,
+      p_amount: amount,
+    });
+    return confirmUpdatedRow(data as Goal | null, error);
   },
 
   async delete(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('goals')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
 
@@ -264,25 +385,32 @@ export const eventsService = {
       .insert([event])
       .select()
       .maybeSingle();
-    return { data: data as CampaignEvent | null, error };
+    return confirmCreatedRow(
+      data as CampaignEvent | null,
+      error,
+      'CAMPAIGN_EVENT_CREATE_NOT_CONFIRMED',
+      'Não foi possível confirmar o cadastro do evento. Verifique a lista antes de tentar novamente.',
+    );
   },
 
   async update(id: string, updates: Partial<CampaignEvent>) {
     const { data, error } = await supabase
       .from('campaign_events')
-      .update(updates)
+      .update(withoutOrganizationId(updates))
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as CampaignEvent | null, error };
+    return confirmUpdatedRow(data as CampaignEvent | null, error);
   },
 
   async delete(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('campaign_events')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
 
@@ -303,25 +431,32 @@ export const meetingsService = {
       .insert([meeting])
       .select()
       .maybeSingle();
-    return { data: data as Meeting | null, error };
+    return confirmCreatedRow(
+      data as Meeting | null,
+      error,
+      'MEETING_CREATE_NOT_CONFIRMED',
+      'Não foi possível confirmar o cadastro da reunião. Verifique a lista antes de tentar novamente.',
+    );
   },
 
   async update(id: string, updates: Partial<Meeting>) {
     const { data, error } = await supabase
       .from('meetings')
-      .update(updates)
+      .update(withoutOrganizationId(updates))
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as Meeting | null, error };
+    return confirmUpdatedRow(data as Meeting | null, error);
   },
 
   async delete(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('meetings')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
 
@@ -341,12 +476,19 @@ export const presenceService = {
   },
 
   async create(presence: Partial<FieldPresence>) {
+    const photoError = validatePhotoReference(presence);
+    if (photoError) return { data: null, error: photoError };
     const { data, error } = await supabase
       .from('field_presences')
       .insert([presence])
       .select()
       .maybeSingle();
-    return { data: data as FieldPresence | null, error };
+    return confirmCreatedRow(
+      data as FieldPresence | null,
+      error,
+      'FIELD_PRESENCE_CREATE_NOT_CONFIRMED',
+      'Não foi possível confirmar o registro de presença. Verifique a lista antes de tentar novamente.',
+    );
   },
 
   async createLog(presence: Partial<FieldPresence>) {
@@ -354,21 +496,25 @@ export const presenceService = {
   },
 
   async update(id: string, updates: Partial<FieldPresence>) {
+    const photoError = validatePhotoReference(updates);
+    if (photoError) return { data: null, error: photoError };
     const { data, error } = await supabase
       .from('field_presences')
-      .update(updates)
+      .update(withoutOrganizationId(updates))
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as FieldPresence | null, error };
+    return confirmUpdatedRow(data as FieldPresence | null, error);
   },
 
   async delete(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('field_presences')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   },
 
   async deleteLog(id: string) {
@@ -406,17 +552,22 @@ export const materialsService = {
       .insert([item])
       .select()
       .maybeSingle();
-    return { data: data as MaterialInventory | null, error };
+    return confirmCreatedRow(
+      data as MaterialInventory | null,
+      error,
+      'MATERIAL_CREATE_NOT_CONFIRMED',
+      'Não foi possível confirmar o cadastro do material. Verifique a lista antes de tentar novamente.',
+    );
   },
 
   async updateItem(id: string, updates: Partial<MaterialInventory>) {
     const { data, error } = await supabase
       .from('materials_inventory')
-      .update(updates)
+      .update(withoutOrganizationId(updates))
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as MaterialInventory | null, error };
+    return confirmUpdatedRow(data as MaterialInventory | null, error);
   },
 
   async createDistribution(dist: Partial<MaterialDistribution>) {
@@ -425,15 +576,42 @@ export const materialsService = {
       .insert([dist])
       .select()
       .maybeSingle();
-    return { data: data as MaterialDistribution | null, error };
+    return confirmCreatedRow(
+      data as MaterialDistribution | null,
+      error,
+      'MATERIAL_DISTRIBUTION_CREATE_NOT_CONFIRMED',
+      'Não foi possível confirmar a distribuição do material. Verifique a lista antes de tentar novamente.',
+    );
+  },
+
+  async distributeAtomically(input: {
+    material_id: string;
+    recipient_name: string;
+    territory: string;
+    quantity: number;
+  }) {
+    const { data, error } = await supabase.rpc('nexus_distribute_material', {
+      p_material_id: input.material_id,
+      p_recipient_name: input.recipient_name,
+      p_territory: input.territory,
+      p_quantity: input.quantity,
+    });
+    return confirmRpcUuid(
+      data,
+      error,
+      'MATERIAL_DISTRIBUTION_NOT_CONFIRMED',
+      'Não foi possível confirmar a baixa atômica do material. Verifique o estoque antes de tentar novamente.',
+    );
   },
 
   async deleteItem(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('materials_inventory')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
 
@@ -449,30 +627,41 @@ export const stickersService = {
   },
 
   async createCarSticker(sticker: Partial<CarSticker>) {
+    const photoError = validatePhotoReference(sticker);
+    if (photoError) return { data: null, error: photoError };
     const { data, error } = await supabase
       .from('car_stickers')
       .insert([sticker])
       .select()
       .maybeSingle();
-    return { data: data as CarSticker | null, error };
+    return confirmCreatedRow(
+      data as CarSticker | null,
+      error,
+      'CAR_STICKER_CREATE_NOT_CONFIRMED',
+      'Não foi possível confirmar o cadastro do adesivo de carro. Verifique a lista antes de tentar novamente.',
+    );
   },
 
   async updateCarSticker(id: string, updates: Partial<CarSticker>) {
+    const photoError = validatePhotoReference(updates);
+    if (photoError) return { data: null, error: photoError };
     const { data, error } = await supabase
       .from('car_stickers')
-      .update(updates)
+      .update(withoutOrganizationId(updates))
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as CarSticker | null, error };
+    return confirmUpdatedRow(data as CarSticker | null, error);
   },
 
   async deleteCarSticker(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('car_stickers')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   },
 
   async getHouseStickers(organizationId: string) {
@@ -485,30 +674,41 @@ export const stickersService = {
   },
 
   async createHouseSticker(sticker: Partial<HouseSticker>) {
+    const photoError = validatePhotoReference(sticker);
+    if (photoError) return { data: null, error: photoError };
     const { data, error } = await supabase
       .from('house_stickers')
       .insert([sticker])
       .select()
       .maybeSingle();
-    return { data: data as HouseSticker | null, error };
+    return confirmCreatedRow(
+      data as HouseSticker | null,
+      error,
+      'HOUSE_STICKER_CREATE_NOT_CONFIRMED',
+      'Não foi possível confirmar o cadastro do adesivo de casa. Verifique a lista antes de tentar novamente.',
+    );
   },
 
   async updateHouseSticker(id: string, updates: Partial<HouseSticker>) {
+    const photoError = validatePhotoReference(updates);
+    if (photoError) return { data: null, error: photoError };
     const { data, error } = await supabase
       .from('house_stickers')
-      .update(updates)
+      .update(withoutOrganizationId(updates))
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as HouseSticker | null, error };
+    return confirmUpdatedRow(data as HouseSticker | null, error);
   },
 
   async deleteHouseSticker(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('house_stickers')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
 
@@ -529,25 +729,32 @@ export const intelligenceService = {
       .insert([demand])
       .select()
       .maybeSingle();
-    return { data: data as PopularDemand | null, error };
+    return confirmCreatedRow(
+      data as PopularDemand | null,
+      error,
+      'POPULAR_DEMAND_CREATE_NOT_CONFIRMED',
+      'Não foi possível confirmar o cadastro da demanda. Verifique a lista antes de tentar novamente.',
+    );
   },
 
   async updateDemand(id: string, updates: Partial<PopularDemand>) {
     const { data, error } = await supabase
       .from('popular_demands')
-      .update(updates)
+      .update(withoutOrganizationId(updates))
       .eq('id', id)
       .select()
       .maybeSingle();
-    return { data: data as PopularDemand | null, error };
+    return confirmUpdatedRow(data as PopularDemand | null, error);
   },
 
   async deleteDemand(id: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('popular_demands')
       .delete()
-      .eq('id', id);
-    return { error };
+      .eq('id', id)
+      .select('id')
+      .maybeSingle();
+    return confirmDeletedRow(data, error);
   }
 };
 
@@ -562,9 +769,13 @@ export const auditService = {
     details?: any;
   }) {
     try {
-      await supabase.from('audit_logs').insert([entry]);
+      const { error } = await supabase.from('audit_logs').insert([entry]);
+      if (error) {
+        console.warn('[Audit] Erro ao registrar log de auditoria:', summarizeAuditError(error));
+      }
     } catch (err) {
-      console.warn('[Audit] Erro ao registrar log de auditoria:', err);
+      console.warn('[Audit] Erro ao registrar log de auditoria:', summarizeAuditError(err));
     }
   }
 };
+

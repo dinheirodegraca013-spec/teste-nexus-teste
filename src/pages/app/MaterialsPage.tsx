@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Package, Plus, ArrowUpRight, AlertTriangle, CheckCircle2, Trash2, Loader2, Send } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -11,6 +11,7 @@ import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { nonNegativeQuantity, positiveQuantity } from '../../utils/materialQuantities';
 
 export const MaterialsPage: React.FC = () => {
   const { organization } = useAuth();
@@ -22,6 +23,7 @@ export const MaterialsPage: React.FC = () => {
   const [coordinators, setCoordinators] = useState<Coordinator[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const loadGenerationRef = useRef(0);
 
   const [activeTab, setActiveTab] = useState<'inventory' | 'distributions'>('inventory');
 
@@ -45,7 +47,16 @@ export const MaterialsPage: React.FC = () => {
   });
 
   const loadData = useCallback(async () => {
-    if (!orgId) return;
+    const loadGeneration = ++loadGenerationRef.current;
+    const isCurrentLoad = () => loadGeneration === loadGenerationRef.current;
+    if (!orgId) {
+      if (!isCurrentLoad()) return;
+      setMaterials([]);
+      setDistributions([]);
+      setCoordinators([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const [matsRes, distRes, coordsRes] = await Promise.all([
@@ -53,6 +64,10 @@ export const MaterialsPage: React.FC = () => {
         materialsService.getDistributions(orgId),
         coordinatorsService.getAll(orgId),
       ]);
+      if (matsRes.error) throw matsRes.error;
+      if (distRes.error) throw distRes.error;
+      if (coordsRes.error) throw coordsRes.error;
+      if (!isCurrentLoad()) return;
       setMaterials(matsRes.data || []);
       setDistributions(distRes.data || []);
       setCoordinators(coordsRes.data || []);
@@ -65,9 +80,9 @@ export const MaterialsPage: React.FC = () => {
         }));
       }
     } catch (err: any) {
-      toastError('Erro ao carregar materiais: ' + err.message);
+      if (isCurrentLoad()) toastError('Erro ao carregar materiais: ' + err.message);
     } finally {
-      setIsLoading(false);
+      if (isCurrentLoad()) setIsLoading(false);
     }
   }, [orgId, toastError]);
 
@@ -78,6 +93,12 @@ export const MaterialsPage: React.FC = () => {
   const handleSaveItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!itemForm.name.trim()) return;
+    const totalQuantity = positiveQuantity(itemForm.total_quantity);
+    const minStockAlert = nonNegativeQuantity(itemForm.min_stock_alert);
+    if (totalQuantity === null || minStockAlert === null) {
+      toastError('Informe quantidades válidas: estoque inicial maior que zero e alerta não negativo.');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -85,10 +106,10 @@ export const MaterialsPage: React.FC = () => {
         organization_id: orgId,
         name: itemForm.name.trim(),
         category: itemForm.category,
-        total_quantity: Number(itemForm.total_quantity) || 0,
+        total_quantity: totalQuantity,
         distributed_quantity: 0,
         unit: itemForm.unit,
-        min_stock_alert: Number(itemForm.min_stock_alert) || 0,
+        min_stock_alert: minStockAlert,
       });
 
       if (error) {
@@ -113,7 +134,11 @@ export const MaterialsPage: React.FC = () => {
       return;
     }
 
-    const qty = Number(distForm.quantity) || 0;
+    const qty = positiveQuantity(distForm.quantity);
+    if (qty === null) {
+      toastError('Informe uma quantidade de distribuição maior que zero.');
+      return;
+    }
     const available = mat.total_quantity - mat.distributed_quantity;
     if (qty > available) {
       toastError(`Quantidade indisponível em estoque (Disponível: ${available} ${mat.unit})`);
@@ -122,26 +147,16 @@ export const MaterialsPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      // 1. Create distribution record
-      const { error: distErr } = await materialsService.createDistribution({
-        organization_id: orgId,
+      const { error } = await materialsService.distributeAtomically({
         material_id: mat.id,
-        material_name: mat.name,
-        recipient_name: distForm.recipient_name,
-        territory: distForm.territory,
+        recipient_name: distForm.recipient_name.trim(),
+        territory: distForm.territory.trim(),
         quantity: qty,
-        status: 'delivered',
       });
-
-      if (distErr) {
-        toastError('Erro ao registrar distribuição: ' + distErr.message);
+      if (error) {
+        toastError('Erro ao registrar distribuição: ' + error.message);
         return;
       }
-
-      // 2. Update material distributed_quantity
-      await materialsService.updateItem(mat.id, {
-        distributed_quantity: mat.distributed_quantity + qty,
-      });
 
       await loadData();
       setIsDistributeModalOpen(false);
@@ -306,7 +321,9 @@ export const MaterialsPage: React.FC = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <button
+                        type="button"
                         onClick={() => handleDeleteItem(mat.id)}
+                        aria-label="Excluir"
                         className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-slate-100 transition-colors cursor-pointer"
                         title="Excluir"
                       >

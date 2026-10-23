@@ -1,0 +1,340 @@
+# Checkpoint NEXUS
+
+- 2026-10-18 00:38 BRT: CI remoto `39078664793` confirmado verde no commit `1931084`; dois jobs concluídos.
+- Verificação local: `npm test` 228/228, `npm run lint` OK, `npm run build` OK.
+- Banco DEV `qidstqsbxwkbkwowhpab`: 13 migrations; `nexus_module_read_rls` já aplicada remotamente. Não reaplicar migração duplicada.
+- Alterações locais permanecem não publicadas e misturam mudanças do usuário com correções locais; não fazer commit/push sem separar o conjunto.
+- Pendências: homologação E2E autenticada, reconciliação branch/PR draft e revisão explícita de qualquer SQL estrutural adicional.
+- 2026-10-18: exportação CSV protegida contra CSV injection e delimitadores; testes 230/230, lint/build OK.
+- Tentativa de aplicar Storage privado foi recusada pelo gate de SQL estrutural/RLS; nenhuma alteração no banco ocorreu. Script pendente de aprovação específica.
+- 2026-10-18: dupla decodificação dos parâmetros de convite corrigida; suíte 232/232, lint/build OK. Sem Auth/banco real.
+- 2026-10-18: carregamento de metas corrigido para erro e ausência de organização; suíte 234/234, lint/build OK.
+- 2026-10-18: distribuição de materiais deixou de confirmar sucesso após falha no saldo; suíte 235/235, lint/build OK. Operação atômica no servidor segue pendente.
+- 2026-10-18: auditoria de adesivos/evidências não encontrou nova falha; confirmações de CRUD e validação de foto já existem.
+- 2026-10-18: carregamento de estoque corrigido para erros e ausência de organização; suíte 237/237, lint/build OK.
+- 2026-10-18: carregamento de relatórios corrigido para erros e ausência de organização; suíte 239/239, lint/build OK.
+- 2026-10-18: carregamento de coordenação corrigido para erros e ausência de organização; suíte 241/241, lint/build OK.
+- 2026-10-18: carregamento do CRM corrigido para erros e ausência de organização; suíte 243/243, lint/build OK.
+- 2026-10-18: carregamento do modo de campo limpa dados ao trocar/ausentar organização; suíte 244/244, lint/build OK.
+- 2026-10-18: carregamento de presença corrigido para erros e ausência de organização; suíte 246/246, lint/build OK.
+- 2026-10-18: carregamento de reuniões corrigido para erro e ausência de organização; suíte 248/248, lint/build OK.
+- 2026-10-18: carregamento de inteligência territorial corrigido; suíte 250/250, lint/build OK.
+- 2026-10-18: Dashboard passou a exibir falha parcial em vez de zeros silenciosos; suíte 251/251, lint/build OK.
+- 2026-10-18: DEV confirmou RLS de profiles habilitado e sem policy INSERT atual; descrição da PR contém evidência antiga não confirmada. Nenhum SQL aplicado.
+- 2026-10-18: PR #1 remoto confirmado no head 4ecc5161 (150 commits/101 arquivos), CI action_required; local e remoto divergentes. Sem reset/rebase/merge/push.
+- 2026-10-18: runner horário remoto existe, mas permanece condicionado a `NEXUS_AUTONOMY_ENABLED` e `OPENAI_API_KEY`; configuração não verificada nem alterada.
+## Consolidação solicitada pelo usuário — 2026-10-18
+- Confirmado: correções de código e testes estão aplicadas no workspace local; `git diff --check` passou.
+- Validação mais recente: `npm test` 251/251, lint e build concluídos com sucesso.
+- Publicação ainda pendente: não há `user.name`/`user.email` Git configurados, portanto não criei commit nem push.
+- Banco: migration de RLS de módulos já consta como aplicada no DEV; proposta de Storage privado permanece somente em `docs/proposed-migrations/NEXUS_PRIVATE_STORAGE_REVIEW_ONLY.sql` e não foi executada pelo bloqueio de aprovação específica do SQL.
+- Auditoria direcionada de criação de lideranças/cadastro inicial: `leadersService.create` usa confirmação de linha persistida (`CREATE_NOT_CONFIRMED`) e o fluxo de cadastro exige RPC de provisionamento e perfil/organização carregados; nenhum defeito novo comprovado nesta rodada.
+- Validação direcionada: `npm test -- --runInBand` passou com 251/251 testes.
+- 2026-10-18: corrigido tratamento de erro/limpeza de tenant em `LeadersPage` e `StickersPage`; adicionados 2 testes. Validação: 253/253, lint e build aprovados.
+- 2026-10-18: `UsersPage` agora limpa membros sem organização; teste adicionado. Validação: 254/254, lint e build aprovados.
+- 2026-10-18: `profilesService.create` agora rejeita INSERT sem linha persistida; teste adicionado. Validação: 255/255, lint e build aprovados.
+- 2026-10-18: auditoria pontual de segurança não encontrou `dangerouslySetInnerHTML` nem persistência de `organization_id` em `localStorage`/`sessionStorage`; sem correção necessária.
+- 2026-10-18: auditoria de arquitetura confirmou que telas não fazem chamadas diretas ao Supabase; acessos permanecem concentrados em serviços/contexto, preservando validações de tenant.
+- 2026-10-18: revisão final de padrões `if (!orgId) return` confirmou que a única ocorrência restante em `EventsPage` é guarda de abertura de modal, não carregamento; nenhum defeito novo.
+- 2026-10-18: revalidação de `EventsPage` confirmou limpeza de eventos, erro visível e guarda contra respostas antigas ao trocar de organização; nenhuma alteração necessária.
+- 2026-10-18: `npm audit --omit=dev --audit-level=high` não conseguiu consultar o endpoint de advisories (falha de rede/cache); nenhuma conclusão de segurança de dependências foi inferida e não houve alteração.
+- 2026-10-18: workflow `autonomous-nexus.yml` não existe no checkout local; executor horário citado em auditorias remotas não está disponível para validação local. Nenhuma automação foi criada ou alterada.
+- 2026-10-18: corrigido apenas o formato de finais de linha no bloco de confirmação de criação de perfil; `git diff --check` passou. Revalidação: 255/255, lint e build aprovados.
+- 2026-10-18: integridade local de migrations: 10 arquivos, nenhum timestamp duplicado. Divergência com as 13 migrations remotas permanece apenas como reconciliação pendente; nenhum SQL foi aplicado.
+- 2026-10-18: revisão de nomes de políticas RLS locais encontrou políticas estáticas distintas; as ocorrências dinâmicas usam DROP/CREATE intencionalmente. Nenhuma alteração necessária.
+- 2026-10-18: marcadores `NotImplementedError` encontrados apenas em exclusão de perfil e revogação de membro; ambos são bloqueios fail-closed documentados e exigem fluxo privilegiado seguro, não correção client-side.
+- 2026-10-18: correção de acessibilidade do Modal validada com 257/257 testes; lint/build aprovados. SQL `nexus_private_storage_reviewed` aplicado e verificado no Supabase DEV: bucket privado e políticas SELECT/INSERT/DELETE confirmados.
+- 2026-10-18: commit local `05b0376` criado após validar correção do Modal e SQL DEV. `git push` recusado por 403: remoto autentica como `Cabanas01`, sem permissão no repositório. Não repetido nem contornado.
+- 2026-10-18: após Storage, advisories DEV reportaram 2 tabelas privadas com RLS sem políticas (INFO), 3 funções SECURITY DEFINER executáveis por `authenticated` (WARN) e proteção contra senhas comprometidas desativada (WARN). Nenhuma alteração aplicada: exige revisão/aprovação específica de SQL/Auth.
+- 2026-10-18: advisories de performance DEV: 2 FKs privadas sem índice cobridor e 12 índices públicos marcados como não usados. Não removi nem criei índices; exige análise de carga e SQL específico.
+- 2026-10-18: após integração e push do commit `b8d520a95765bba7990f662945a097eb219471bd`, checks remotos confirmados verdes: typecheck/build, Edge Functions, GitGuardian e Vercel Preview. E2E autenticado e advisories de banco/Auth continuam pendentes; nenhuma alteração estrutural aplicada nesta rodada.
+- 2026-10-18: auditoria read-only dos logs DEV (janela padrão de 24h) encontrou apenas eventos de inicialização/cache do PostgREST e nenhum `error:`, `fatal:` ou `panic`. Um registro contém texto histórico de script SQL; não foi tratado como instrução nem reaplicado.
+- 2026-10-18: checks do commit `bc559e51edc66b8ffdb78b621366b7d69a1b9f16` concluídos com sucesso (build/typecheck, Edge Functions, GitGuardian e Vercel). Advisories DEV permanecem inalterados: 2 tabelas privadas sem policy, 3 SECURITY DEFINER expostas, proteção de senha vazada desativada, 2 FKs sem índice e 12 índices não usados; nenhuma mudança aplicada.
+- 2026-10-18: script E2E read-only `scripts/e2e/tenant-auth-readonly.mjs` auditado. Execução foi corretamente bloqueada antes da rede porque não há autorização explícita nem variáveis de duas contas TEST em tenants distintos. Nenhum segredo foi solicitado, criado ou registrado.
+- 2026-10-18: auditoria estática direcionada dos serviços confirmou que leituras em lote recebem `organizationId` e aplicam filtro de tenant; operações por ID dependem de RLS e não expõem consulta direta fora do serviço. Nenhuma falha nova comprovada; sem alteração de código.
+- 2026-10-18: checks remotos do commit `5c94744b385591ce45320ecf25d81022cf3a9d66` concluídos com sucesso: typecheck/build, Edge Functions, GitGuardian e Vercel. Nenhuma annotation de falha foi reportada.
+- 2026-10-18: consulta read-only confirmou `authenticated` com EXECUTE nas 3 funções SECURITY DEFINER e privilégios DML amplos em organizations/profiles/user_module_permissions; não alterado porque o impacto funcional exige script específico e aprovação SQL/Auth.
+- 2026-10-18: verificação `has_table_privilege` refinou o achado: `authenticated` não possui TRUNCATE/TRIGGER/REFERENCES nas 3 tabelas críticas; `profiles` também não possui UPDATE. O alerta de funções SECURITY DEFINER é intencional para RPCs administrativas com validação de tenant e deve permanecer sob revisão, sem revogação automática.
+- 2026-10-18: Supabase DEV registra 14 migrations, enquanto o checkout contém 10 arquivos. Foram identificados sete arquivos remotos ausentes (incluindo DDL/RLS/funções privilegiadas e a migration de Storage). Não reconstruí nem apliquei SQL; reconciliação requer revisão/aprovação específica. Consulta de checks do PR retornou HTTP 409 por mudança da revisão.
+- 2026-10-18: corrigidos avisos do CI atualizando checkout/setup-node para v5 nos workflows. `npm test` 198/198, lint e build passaram. Checks anteriores estavam verdes; anotações eram aviso de Node 20 depreciado e notice de Ubuntu, sem falha funcional. Novo CI pendente.
+- 2026-10-18: fixado `runs-on` em ubuntu-24.04 no CI e E2E manual para evitar migração automática para Ubuntu 26. Aviso anterior era operacional; nenhuma alteração em código ou banco.
+- 2026-10-18: advisories DEV revalidados sem mudança; nenhum SQL aplicado. Vercel/GitGuardian do commit 0fdbd56 aprovados; typecheck/build e Edge Functions ainda em execução na consulta.
+- 2026-10-18: workflows CI/E2E passaram a usar `npm ci` com lockfile; dry-run local aprovado. Nenhuma alteração em código de aplicação ou banco.
+- 2026-10-18: auditoria estática direcionada não encontrou segredo administrativo no frontend, `dangerouslySetInnerHTML` nem persistência de organization_id; CI do commit c368093 ainda estava em execução.
+- 2026-10-18: checks do commit 7c31bfb concluídos com sucesso: Vercel, GitGuardian, typecheck/build e Edge Functions. Nenhuma annotation de falha; sem merge ou produção alterada.
+- 2026-10-18: auditoria de logs pós-CI encontrou as fontes esperadas, mas o conector rejeitou a consulta agregada e informou campo inexistente na consulta detalhada. Não inferi ausência de erros nem repeti a mesma estratégia; última auditoria válida segue como referência.
+- 2026-10-18: nova consulta usando `event_message` encontrou zero `error`/`fatal`/`panic` em postgres/postgrest. Mensagens históricas de bucket_id/rowsecurity/transação são artefatos de auditorias anteriores, não falhas da aplicação.
+- 2026-10-18: checks do commit e0e985a concluídos com sucesso em Vercel, GitGuardian, typecheck/build e Edge Functions; sem secrets, annotations ou produção alterada.
+- 2026-10-18: preparado `docs/proposed-migrations/MIGRATION_RECONCILIATION_PLAN.md` com as 7 migrations DEV ausentes e procedimento seguro. Nenhum SQL executável criado/aplicado; DDL/RLS/funções aguardam aprovação específica.
+- 2026-10-18: conversa de auditoria horária confirmou regex incorreta (`\\\\.`) nas três policies existentes do bucket `nexus-evidence-private`, rejeitando caminhos JPG válidos. Preparado `docs/proposed-migrations/FIX_PRIVATE_STORAGE_POLICY_REGEX.sql` para revisão; não aplicado. Aguarda aprovação específica para DROP/CREATE das três policies.
+- 2026-10-18: corrigido o gate de frontend para `/app/onboarding` e `/app/planos`, restrito a `admin`/`superadmin`; adicionados testes de regressão. Suíte 200/200, lint e build aprovados. Nenhum SQL ou ambiente foi alterado.
+- 2026-10-18: Sidebar passou a ocultar o item Planos para perfis não administrativos; suíte 200/200, lint e build repetidos após a mudança, todos aprovados.
+- 2026-10-18: após autorização específica, aplicada migration `fix_private_storage_policy_regex` somente no DEV `qidstqsbxwkbkwowhpab`. Verificação read-only confirmou três policies corretas e teste sintético `corrected=true`, `legacy=false`; nenhum dado ou produção alterado.
+- 2026-10-18: perímetro DEV atualizado para `qwvbvqlzcyfkuszxrlgv`; bootstrap/schema, Storage privado e índices de FKs aplicados e verificados. Commit `ab6b54c` publicado em `fix/persist-rbac-permissions`. Validação local: 200/200 testes, lint e build aprovados. E2E autenticado permanece pendente por falta de duas contas sintéticas em organizações distintas.
+- 2026-10-18: auditoria read-only do DEV confirmou 16 tabelas públicas com RLS, 1 bucket privado, 3 policies de Storage e 9 índices tenant-scoped. `auth.users` permanece com 0 contas; E2E não pode ser executado até a criação de duas contas sintéticas em organizações distintas.
+- 2026-10-18: revisão read-only das 3 funções `SECURITY DEFINER` alertadas pelo advisor confirmou `search_path=''` e validação de tenant/admin em todas; nenhuma exploração comprovada e nenhuma revogação automática aplicada.
+- 2026-10-18: E2E read-only ampliado para listar caminhos próprios e estrangeiros do bucket privado `nexus-evidence-private`; novo teste de contrato aprovado. Suíte: 201/201, lint e build aprovados. Execução autenticada real segue pendente por `auth.users=0`.
+- 2026-10-18: diagnóstico do erro na captura confirmado no domínio principal `teste-nexus-teste.vercel.app`: o bundle de produção ainda aponta para o projeto Supabase antigo `wrovg...`; o Preview da branch usa `qwvbvqlzcyfkuszxrlgv`. Não alterei produção sem homologação E2E.
+- 2026-10-18: Preview mais recente (`f888dda`) respondeu HTTP 200 em `/cadastro`; a divergência permanece exclusiva do domínio principal/Production.
+- 2026-10-18: reconciliação read-only confirmou 13 migrations no DEV, com nomes correspondentes aos 13 arquivos locais; os timestamps remotos são gerados pelo executor e não indicam divergência estrutural.
+- 2026-10-18: consulta read-only da janela padrão de logs DEV não encontrou ocorrências de `error:`, `fatal:` ou `panic` em nenhuma fonte retornada.
+- 2026-10-18: advisors DEV revalidados; permanecem 2 tabelas privadas sem policies (deny-by-default), 3 RPCs `SECURITY DEFINER` protegidas por validações, 19 índices sem uso por ausência de carga e 2 pares de policies permissivas intencionais. Nenhuma alteração automática aplicada.
+- 2026-10-18: corrigido defeito comprovado em `profilesService.create`: resposta `data:null,error:null` agora retorna `PROFILE_CREATE_NOT_CONFIRMED`. Teste de regressão criado; suíte 203/203, lint e build aprovados.
+- 2026-10-18: centralizada confirmação de criação nos cadastros operacionais; metas, eventos, reuniões, presenças, materiais, distribuições, adesivos, CRM e demandas agora rejeitam `data:null,error:null`. Suíte 204/204, lint e build aprovados.
+- 2026-10-18: corrigida confirmação de persistência do RBAC; `upsertPermissions()` agora rejeita respostas vazias ou incompletas e retorna códigos explícitos. Suíte 206/206, lint e build aprovados.
+- 2026-10-18: revisão direcionada dos serviços confirmou que todas as operações de criação retornam confirmação persistida; PR no commit `4e84e02` está com Vercel, typecheck/build, Edge Functions e GitGuardian aprovados. E2E autenticado e produção seguem pendentes por escopo.
+- 2026-10-18: mensagem de erro do cadastro aprimorada para distinguir falha de conexão de configuração Supabase incorreta, orientando a verificar as variáveis da Vercel e o projeto-alvo. Suíte 206/206, lint e build aprovados.
+- 2026-10-18: documentação operacional reconciliada; o Supabase DEV atual `qwvbvqlzcyfkuszxrlgv` foi destacado como única fonte autorizada e referências a `qidstqsbxwkbkwowhpab` foram marcadas como históricas para evitar execução no projeto antigo.
+- 2026-10-18: comentário do serviço de Storage privado atualizado para refletir o estado real: bucket/policies estão no DEV autorizado; a UI continua opt-in até homologação E2E autenticada. Suíte 206/206, lint e build aprovados.
+- 2026-10-18: removidas dos cabeçalhos das migrations as referências operacionais a projetos Supabase antigos; os arquivos agora deixam claro que o destino é definido pela configuração do deploy. Suíte 206/206, lint e build aprovados.
+- 2026-10-18: corrigida condição de corrida em `PresencePage`: respostas antigas não sobrescrevem dados após troca de organização; erros e loading obsoletos também são ignorados. Teste de regressão adicionado; suíte 207/207, lint e build aprovados.
+- 2026-10-18: aplicada a mesma proteção contra respostas obsoletas em `CrmPage` e `GoalsPage`, evitando mistura visual de organizações durante trocas rápidas. Dois testes de contrato adicionados; suíte 209/209, lint e build aprovados.
+- 2026-10-18: aplicada a proteção contra respostas obsoletas também em `CoordinatorsPage` e `LeadersPage`, evitando mistura de hierarquia entre organizações. Contrato ampliado para quatro telas; suíte 211/211, lint e build aprovados.
+- 2026-10-18: protegidas também as cargas de `MaterialsPage`, `MeetingsPage` e `StickersPage` contra respostas de organização anterior. Contrato ampliado para sete telas; suíte 214/214, lint e build aprovados.
+- 2026-10-18: protegidas as cargas de `UsersPage` e `ReportsPage` contra respostas obsoletas entre organizações. Contrato ampliado para nove telas; suíte 216/216, lint e build aprovados.
+- 2026-10-18: protegida a carga paralela da `DashboardPage` contra respostas obsoletas entre organizações; ao perder a organização, os dados anteriores também são limpos. Contrato ampliado para dez telas; suíte 217/217, lint e build aprovados.
+- 2026-10-18: protegida a carga de `OrganizationsPage` contra respostas obsoletas após troca de organização; contrato ampliado para onze telas. Suíte 218/218, lint e build aprovados.
+- 2026-10-18: protegida a carga paralela do `FieldPage` contra respostas obsoletas entre organizações; erros, loading, líderes e registros antigos não são publicados após troca de tenant. Contrato ampliado para doze telas; suíte 219/219, lint e build aprovados.
+- 2026-10-18: o cadastro agora bloqueia o envio enquanto os dados assíncronos de um convite ainda estão sendo resolvidos, evitando registrar convite como cadastro comum ou no tenant incorreto. Novo contrato; suíte 220/220, lint e build aprovados.
+- 2026-10-18: corrigido o provisionamento de contas convidadas: convite com `organization_id` válido não chama mais `provision_new_user` (que criaria tenant novo), e IDs de organização inválidos são rejeitados. Suíte 221/221, lint e build aprovados.
+- 2026-10-18: ampliada a validação de convites para rejeitar `leader_id` e `coordinator_id` inválidos antes de criar a conta. Suíte 221/221, lint e build aprovados.
+- 2026-10-18: a Edge Function de convite agora remove o usuário Auth criado quando a inserção do perfil falha; se a limpeza também falhar, o incidente fica registrado para intervenção técnica. Suíte 222/222, lint e build aprovados.
+- 2026-10-18: o provisionamento via RPC agora exige retorno de organização UUID válido; respostas vazias ou inválidas não são tratadas como sucesso. Suíte 222/222, lint e build aprovados.
+- 2026-10-18: `organizationsService.update` passou a enviar somente `name` e `settings`, rejeitando payload vazio e impedindo alterações client-side de `id`, `plan` ou outros campos protegidos. Suíte 223/223, lint e build aprovados.
+- 2026-10-18: auditoria read-only confirmou que `organizations` ainda não possui policy `UPDATE`; script seguro foi preparado em `docs/proposed-migrations/ADD_ORGANIZATIONS_UPDATE_POLICY.sql` e aguarda aprovação específica, sem execução.
+- 2026-10-18: alinhada a validação de senha do cadastro com o AuthContext: mínimo de 8 caracteres tanto na tela quanto no envio. Suíte 223/223, lint e build aprovados.
+- 2026-10-18: reconciliação read-only confirmou os mesmos 13 nomes de migrations no DEV `qwvbvqlzcyfkuszxrlgv` e no diretório local; nenhuma divergência impede a policy proposta.
+- 2026-10-18: auditoria do bundle confirmou a causa do erro no domínio público: `teste-nexus-teste.vercel.app` está em deployment de `main` (`39f05a7`) e referencia o Supabase histórico `wrovgjhpyacmmetejiqk`; o preview da branch já referencia `qwvbvqlzcyfkuszxrlgv`. Promover/publicar em produção permanece pendente por escopo.
+- 2026-10-18: atualizações dos serviços operacionais passaram a remover `organization_id` dos payloads client-side; 234 testes, lint e build aprovados. Commit/push pendentes neste ciclo.
+- 2026-10-18: consulta SQL somente leitura confirmou que o DEV `qwvbvqlzcyfkuszxrlgv` ainda possui apenas `organizations_read`; a policy `UPDATE` segue pendente de aprovação específica.
+- 2026-10-18: consulta read-only confirmou ausência de INSERT/UPDATE/DELETE nas 12 tabelas operacionais; preparado SQL admin-only em `docs/proposed-migrations/ADD_OPERATIONAL_ADMIN_WRITE_POLICIES.sql`, sem execução, aguardando aprovação específica.
+- 2026-10-18: adicionado contrato automatizado para validar a migration operacional proposta antes de qualquer execução estrutural.
+- 2026-10-18: auditoria read-only dos logs DEV refinou o resultado de erros: 6 `ERROR` e 4 `FATAL` são eventos históricos de bootstrap/infraestrutura (FK inválida `42830`, consultas a tabelas internas ausentes `42P01` e reinícios controlados `57P01`); nenhuma evidência de falha atual da aplicação. Advisors permanecem sem mudança; nenhum SQL aplicado.
+- 2026-10-18: advisors read-only do DEV: segurança reporta 2 tabelas privadas RLS sem policy e 3 funções SECURITY DEFINER executáveis por `authenticated`; as funções têm guards de tenant/admin e são chamadas pelo frontend, então não foram revogadas sem revisão estrutural. Performance reporta 12 índices ainda não usados e 2 pares de policies permissivas sobrepostas; itens aguardam revisão antes de qualquer DDL/RLS.
+- 2026-10-18: corrigido export CSV em `ReportsPage`/`csv.ts`: Blob revogável, proteção de fórmulas após espaços iniciais e sem data URL. Suíte integrada 243/243, lint e build aprovados.
+- 2026-10-18: commits remotos foram integrados sem reescrever histórico; commit `c3d6ec9` publicado na branch. CI remoto confirmou Vercel, typecheck/build e Edge Functions como sucesso; GitGuardian ficou `neutral` por limite de tamanho, sem indicação de segredo.
+- 2026-10-18: consulta read-only do DEV confirmou `auth.users=0`; portanto a homologação E2E multitenant não pode iniciar. Policies públicas seguem somente SELECT nas 12 tabelas operacionais e em organizations; as 13 migrations DEV estão registradas e alinhadas ao checkout.
+- 2026-10-18: Vercel confirmou Preview READY para o commit `3dca09f` da branch; o domínio público/produção não foi alterado.
+- 2026-10-18: checks do commit `74d6b23` concluídos: Vercel, typecheck/build e Edge Functions passaram; Supabase Preview foi ignorado por não haver branch Supabase; GitGuardian ficou `neutral` por limite de tamanho.
+- 2026-10-18: Vercel confirmou que `teste-nexus-teste.vercel.app` está cadastrado no projeto, mas não é alias do deployment READY da branch (`4dd43c6`); o alias atual da branch é `nexusteste-git-fix-per-35d7b5-dinheirodegraca013-specs-projects.vercel.app`. Reatribuir o domínio público exigiria alteração de produção, não executada.
+- 2026-10-18: após autorização explícita, o alias `teste-nexus-teste.vercel.app` foi reatribuído ao deployment READY da branch no commit `16eda14`; verificação HTTP retornou 200 e o bundle público contém `qwvbvqlzcyfkuszxrlgv` e não contém o projeto antigo `wrovgjhpyacmmetejiqk`.
+- 2026-10-18: causa do erro público confirmada: produção não possuía `VITE_SUPABASE_URL` nem `VITE_SUPABASE_ANON_KEY`. As duas variáveis foram recriadas no Vercel para o DEV `qwvbvqlzcyfkuszxrlgv`; novo deployment `dpl_A6iKK2Pv7UJZniJtwYQMBZhZQE1N` ficou READY, recebeu o alias público e o bundle respondeu HTTP 200 usando o projeto correto.
+- 2026-10-18: validação posterior local concluída: `npm test` 243/243, `npm run lint` e `npm run build` aprovados. Aviso local de variáveis ausentes não afeta o deployment, que recebeu as variáveis no Vercel.
+- 2026-10-18: auditoria read-only no DEV `qwvbvqlzcyfkuszxrlgv` confirmou `auth.users=0` e `organizations=0`; o bucket privado `nexus-evidence-private` existe e as três policies de Storage existem, sem barra duplicada detectada. E2E continua bloqueado apenas pela ausência de contas/organizações sintéticas.
+- 2026-10-18: nova verificação read-only encontrou `auth.users=1`, `organizations=1` e `profiles=1`; a primeira conta sintética foi criada. E2E multitenant ainda aguarda uma segunda conta em organização distinta.
+- 2026-10-18: nova auditoria encontrou `auth.users=2`, `organizations=2` e `profiles=2`, mas o E2E autorizado parou na autenticação da conta A. Verificação read-only confirmou que `guicabanas13@gmail.com` não existe no Auth DEV; a conta B existe e está confirmada. Nenhuma leitura cross-tenant foi executada.
+- 2026-10-18: após identificação da segunda conta sintética, E2E somente leitura passou com duas sessões (`dinheirodegraca013@gmail.com` e `vazquezvendasonline@gmail.com`): isolamento de organizações, perfis, CRM e Storage privado aprovado para ambas. Nenhum dado foi criado, alterado ou excluído.
+- 2026-10-18: auditoria confirmou validação ausente para quantidades não positivas em `MaterialsPage`; adicionada proteção local e testes. A inconsistência entre distribuição e estoque permanece dependente da migration/RPC proposta em `docs/proposed-migrations/ADD_ATOMIC_MATERIAL_DISTRIBUTION.sql`, não aplicada.
+- 2026-10-18: autorização recebida; RPC `nexus_distribute_material` aplicada somente no DEV `qwvbvqlzcyfkuszxrlgv` e frontend integrado para usar a baixa transacional. Verificação estrutural posterior pendente nesta rodada; produção/main não foram alterados.
+- 2026-10-18: verificação read-only confirmou `nexus_distribute_material(uuid,text,text,integer)` como `SECURITY DEFINER` com execução concedida somente a `authenticated`/`service_role` (sem PUBLIC/anon). Suíte 247/247, lint e build aprovados após integração.
+- 2026-10-18: Vercel confirmou preview READY para o commit `2bdcc16` da branch; o domínio público não foi reatribuído nesta rodada.
+- 2026-10-18: E2E somente leitura repetido após a RPC: duas sessões continuam isoladas por RLS em organizações, perfis, CRM e Storage privado. Nenhum dado foi alterado.
+- 2026-10-18: alinhado o cabeçalho da migration transacional ao estado real: RPC aplicada somente no DEV após aprovação explícita; 247 testes, lint e build aprovados.
+- 2026-10-18: Security Advisor read-only do DEV reportou 2 tabelas privadas RLS sem policies, 4 funções SECURITY DEFINER para authenticated e leaked-password protection desativada; mudanças estruturais/Auth permanecem pendentes de revisão específica.
+- 2026-10-18: PR #1 revisada como DRAFT no head `d78b48d`; publicação de detalhes internos foi bloqueada por controle de risco e não foi contornada.
+- 2026-10-18: Vercel confirmou preview READY para `0ac01d5` (`dpl_7KwtxBWJStDS38ZCcPMRRSM9B2V7`); produção não foi promovida.
+- 2026-10-18: Vercel revalidou o head atual `d0b8d2c` da branch como `READY` (`dpl_7JFu9igKuPAfuev4QBzE7B3EUeUY`); nenhuma promoção foi executada.
+- 2026-10-18: rota pública `/cadastro` do preview atual respondeu HTTP 200 e conteúdo NEXUS; teste somente leitura, sem autenticação ou escrita.
+- 2026-10-18: SQL somente leitura no DEV confirmou 2 usuários Auth, 2 organizações, 2 perfis, bucket privado presente e RPC transacional presente; nenhum dado foi alterado.
+- 2026-10-18: migrations RLS autorizadas aplicadas somente no DEV: policy `organizations_update` e 36 policies admin nas 12 tabelas operacionais; verificação read-only, E2E multitenant, 250 testes, lint e build aprovados. Advisors residuais registrados; produção/main intactas.
+- 2026-10-18: preview Vercel do head `7e49ffd` concluiu `READY`; produção permanece sem promoção.
+- 2026-10-18: corrigido isolamento visual em Metas e Adesivagens (limpeza ao trocar tenant e fechamento de UI); `FileUpload` agora ignora resultados assíncronos obsoletos. Foram adicionados 3 testes. `npm test` 253/253, lint e build aprovados. Nenhuma alteração em banco, Auth, produção ou main.
+- 2026-10-18: preview Vercel do commit `bdb6506` ficou READY e `/cadastro` respondeu HTTP 200.
+- 2026-10-18: `EventsPage` passou a validar público não negativo e consistência entre estimado/confirmado; suíte 254/254, lint e build aprovados.
+- 2026-10-18: `LeadersPage` passou a rejeitar metas inválidas/negativas; suíte 255/255, lint e build aprovados.
+- 2026-10-18: preparada, mas não executada, a migration `ADD_ATOMIC_GOAL_INCREMENT.sql` para eliminar perda de incrementos concorrentes em metas. Suíte 256/256, lint e build aprovados; aguarda aprovação SQL específica.
+- 2026-10-18: links de convite do WhatsApp passaram a usar `noopener,noreferrer`; suíte 257/257, lint e build aprovados.
+- 2026-10-18: advisories read-only do DEV revalidados; achados estruturais permanecem inalterados e documentados.
+- 2026-10-18: migration `ADD_ATOMIC_GOAL_INCREMENT.sql` aplicada somente no DEV após autorização; ACL verificada e `GoalsPage` integrado à RPC. Suíte 258/258, lint e build aprovados.
+- 2026-10-18: CI `NEXUS CI` #39167147169 do head `772a93a` concluiu com sucesso; PR #1 permanece DRAFT e sem merge.
+- 2026-10-18: `npm ls --depth=0` consistente; `npm audit` bloqueado por falha de acesso ao endpoint do registry. Nenhuma dependência alterada.
+- 2026-10-18: auditoria de dependências repetida com acesso autorizado ao registry; resultado `0 vulnerabilidades`. Nenhum pacote alterado.
+- 2026-10-18: `GoalsPage` passou a rejeitar meta inválida/não positiva e progresso negativo/não numérico antes de salvar; contrato de regressão adicionado. `npm test` 259/259, lint e build aprovados. Alteração somente na branch de desenvolvimento; produção/main e banco intactos.
+- 2026-10-18: `LeadersPage` e `CoordinatorsPage` passaram a informar falha quando o cadastro não retorna registro confirmado; contrato de regressão adicionado. `npm test` 260/260, lint e build aprovados. Banco, produção e main intactos.
+- 2026-10-18: revisão read-only confirmou acessibilidade atual de `Modal.tsx` e os advisors residuais (2 tabelas privadas sem policy, 5 SECURITY DEFINER para authenticated, leaked-password protection desativada). Consulta agregada de logs falhou com erro transitório do backend; sem alteração estrutural ou de Auth.
+- 2026-10-18: GitHub Actions `NEXUS CI` run `39168452621` (#498) confirmou sucesso para o commit documental `a44950d`; PR continua sem merge e produção intacta.
+- 2026-10-18: `Drawer` recebeu semântica acessível, foco inicial, trap de Tab/Escape e restauração de foco; dois contratos adicionados. `npm test` 262/262, lint e build aprovados. Banco/Auth/produção intactos.
+- 2026-10-18: CI #502 (`39168995738`) passou e o preview Vercel `dpl_D6V2hBXbYa3yRcFEG4hx6v3MKg4d` ficou READY para `871d66d`; sem merge ou promoção.
+- 2026-10-18: `CrmPage` passou a informar cadastro não confirmado; contrato de regressão ampliado. `npm test` 262/262, lint e build aprovados. Banco/Auth/produção intactos.
+- 2026-10-18: CI #506 (`39169229167`) passou e o preview Vercel `dpl_HzqhjNVoSyvH4iQy2tJcxLpasiqS` ficou READY para `0d0d5eb`; sem merge ou promoção.
+- 2026-10-18: Performance Advisor DEV confirmou 12 índices sem uso observado e 2 pares de policies permissivas; nenhuma alteração estrutural foi executada sem plano e aprovação.
+- 2026-10-18: stream de logs DEV respondeu com contagens por fonte; filtros por timestamp/nível ainda falham no backend. Sem evidência suficiente para intervenção e sem alterações externas.
+- 2026-10-18: `RegisterPage` passou a falhar fechado para convites incompletos antes do `signUp`; regressão adicionada. `npm test` 263/263, lint e build aprovados; Auth/banco/produção intactos.
+- 2026-10-18: CI #514 (`39169738113`) passou e preview Vercel `dpl_4FKYvgxG12uuyq8E29xb15XyL8cA` ficou READY para `43e96d1`; sem merge/promoção.
+- 2026-10-18: `OnboardingPage` passou a rejeitar nome de organização vazio antes do UPDATE; regressão adicionada. `npm test` 264/264, lint e build aprovados; banco/Auth/produção intactos.
+- 2026-10-18: CI #518 (`39169936965`) passou e preview Vercel `dpl_6CzkLzXMFjsJNo3YFrsN8zWDD5aM` ficou READY para `1b28d54`; sem merge/promoção.
+- 2026-10-18: `SettingsPage` passou a exibir status real de configuração Supabase e removeu endpoint fictício; regressão adicionada. `npm test` 265/265, lint e build aprovados; banco/Auth/produção intactos.
+- 2026-10-18: `Header` e `LoginPage` deixaram de afirmar conectividade Supabase/RLS sem verificação; contrato adicionado. `npm test` 266/266, lint e build aprovados. Banco/Auth/produção intactos.
+- 2026-10-18: preview Vercel `dpl_7W8cqAMy4Uh84iRzwWYqdnWv8xhc` READY para `1912b5e`; status combinado retornou somente Vercel, sem workflow GitHub Actions disponível nesta consulta.
+- 2026-10-18: Vercel recebeu `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` do Supabase DEV somente no alvo preview; próximo deploy deve validar o erro de conexão do cadastro.
+- 2026-10-18: deployment `dpl_AxXAaVnRYAQkwK4ymAvyVb1UXwZ9` concluiu READY para `2c97164`; listagem confirmou as duas variáveis VITE no alvo preview.
+- 2026-10-18: GitHub Actions `NEXUS CI` #532 (`39171043911`) concluiu success para `8c0c283`; preview segue com check Vercel success.
+- 2026-10-18: `AuthContext.signUp` passou a falhar fechado quando o Auth não retorna usuário; regressão adicionada. `npm test` 267/267, lint e build aprovados; sem alteração de Auth remoto ou produção.
+- 2026-10-18: CI #536 (`39171464246`) passou e preview Vercel `dpl_6ajoaZ8Z35pztNSD46yU74uNYMuo` ficou READY para `ca50c6c`; sem merge/promoção.
+- 2026-10-18: mensagem de senha do cadastro alinhada ao mínimo real de 8 caracteres; `npm test` 267/267, lint e build aprovados; sem alteração remota.
+- 2026-10-18: `ResetPasswordPage` alinhada ao mínimo de 8 caracteres; regressão adicionada. `npm test` 268/268, lint e build aprovados; sem alteração remota.
+- 2026-10-18: `AuthContext.updatePassword` passou a rejeitar senha curta antes do Supabase; regressão adicionada. `npm test` 269/269, lint e build aprovados; sem alteração remota.
+- 2026-10-18: `ProfilePage` passou a informar o mínimo de 8 caracteres no campo de senha; regressão adicionada. `npm test` 270/270, lint e build aprovados; sem alteração remota.
+- 2026-10-18: `permissionsService.upsertPermissions` passou a rejeitar payload vazio antes do Supabase; regressão adicionada. `npm test` 271/271, lint e build aprovados; sem alteração remota.
+- 2026-10-18: CI #562 (`39173322713`) passou e preview Vercel `dpl_8B4LqTUyeCbAwGWULfhgbgW9Fso5` ficou READY para `aaffdbe`; sem merge/promoção.
+- 2026-10-18: CI #556 (`39172891641`) passou e preview Vercel `dpl_AQjwiTMyRpQq5QhnAhvdsZ2APfEg` ficou READY para `4405d9f`; sem merge/promoção.
+- 2026-10-18: CI #548 (`39172360883`) passou e preview Vercel `dpl_Azhz6TPiUQArTGnJwBtYVJ2gWMhP` ficou READY para `5503f97`; sem merge/promoção.
+- 2026-10-18: auditoria de dependências de produção (`npm audit --omit=dev --audit-level=moderate`) encontrou 0 vulnerabilidades; nenhum pacote foi alterado.
+- 2026-10-18: advisors read-only do Supabase DEV confirmaram 2 tabelas privadas sem policies, 5 SECURITY DEFINER expostas, leaked-password protection desativada, 12 índices sem uso e 2 pares de policies permissivas; alterações estruturais permanecem pendentes de script/aprovação específica.
+- 2026-10-18: PR #1 foi atualizada com os checks atuais (270 testes, lint, build, CI #556 e previews Vercel); permanece DRAFT, aberta e sem merge.
+- 2026-10-18: CI #544 (`39172014734`) passou e preview Vercel `dpl_BEepfpjoQV8QMhWEgTisQe9N7FFN` ficou READY para `f0e1341`; sem merge/promoção.
+- 2026-10-18: CI #540 (`39171750214`) passou e preview Vercel `dpl_6k5sM7Lv9gjd3ivim7Q9FUUpCc6v` ficou READY para `e4faea7`; sem merge/promoção.
+- 2026-10-18: CI #522 (`39170125281`) passou e preview Vercel `dpl_AnkUkQSBDKrPQq8FMPKHQqaeRz8n` ficou READY para `53f23cf`; sem merge/promoção.
+- 2026-10-18: Aplicadas no Supabase DEV `qwvbvqlzcyfkuszxrlgv` as migrations autorizadas `add_organizations_update_policy` e `add_operational_admin_write_policies`; verificação read-only confirmou 1 policy de organizações e 36 policies operacionais. Produção/main/Auth/funções privilegiadas intactos.
+- 2026-10-18: Revalidação read-only do DEV confirmou as 37 policies administrativas. Storage privado ainda tem regex com barra duplicada; script disponível referencia projeto antigo qidstqsbxwkbkwowhpab, portanto não aplicado no DEV atual qwvbvqlzcyfkuszxrlgv. Advisors permanecem com os 2/5/1/12/2 achados já registrados.
+- 2026-10-18: Preparada migration `FIX_PRIVATE_STORAGE_POLICY_REGEX_QWVB.sql` para o DEV atual, sem execução. Testes atuais: 271/271, lint e build aprovados. Aguardando autorização específica para aplicar somente as três policies Storage.
+- 2026-10-18: PR #1 revisada e descrição atualizada para 271 testes e policies DEV aplicadas; permanece DRAFT, sem merge. Validação local 271/271, lint e build aprovados.
+- 2026-10-18: Vercel deployment dpl_ADrUcM7Gis3iJYWRwa48UhLopLco READY para 5db1aca; commit documental sem workflow GitHub associado.
+- 2026-10-18: Auditoria Vercel confirmou `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` somente em Preview; Production usa nomes diferentes e pode gerar o erro de conexão. Nenhuma alteração em Production foi feita.
+- 2026-10-18: Versionadas localmente as 3 migrations já aplicadas no DEV e ausentes do repositório; diretório agora tem 16 arquivos, igual à contagem remota. Nenhum SQL executado nesta rodada.
+- 2026-10-18: Pós-push de a053e22 sem workflow GitHub ou deployment Vercel associado; último preview funcional permanece READY.
+- 2026-10-18: PR #1 continua DRAFT/mergeable; check Vercel success e deployment dpl_XVLuW4HLTWKERRzf7xgHbvAW4k5c READY para 34b722b.
+- 2026-10-18: Auditoria estática confirmou que o frontend Vite lê somente as duas variáveis VITE_*; divergência em Production é configuração, sem novo defeito de código.
+- 2026-10-18: Revalidação confirmou 16 migrations no DEV e 16 arquivos locais; nenhum reset ou reexecução executado.
+- 2026-10-18: PR #1 atualizada com paridade de 16 migrations e estado DEV; continua DRAFT, mergeable e sem merge.
+- 2026-10-18: Code Review/CI do head 714646c aprovou build/typecheck, Edge Functions, GitGuardian (250 commits sem segredos) e Vercel; Supabase Preview skipped por ausência de branch associada.
+- 2026-10-18: Rechecagem do head 26b79b2 aprovou Vercel, GitGuardian, Edge Functions e typecheck/build; Supabase Preview skipped por ausência de branch associada.
+- 2026-10-18: Logs DEV enumerados somente leitura; contagens por fonte disponíveis, mas filtro por level/schema falhou no backend. Nenhuma intervenção baseada em contagens.
+- 2026-10-18: Supabase DEV qwvbvqlzcyfkuszxrlgv confirmado ACTIVE_HEALTHY em PostgreSQL 17.11; verificação read-only.
+- 2026-10-18: Criada documentação operacional para configurar VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY em Production sem expor chaves; nenhum ambiente alterado.
+- 2026-10-18: Adicionada regressão para o contrato VITE_* do Supabase; testes 272/272, lint e build aprovados.
+- 2026-10-18: Adicionado guard para migration Storage (DEV atual e 3 policies); testes 273/273, lint e build aprovados. Migration não executada.
+- 2026-10-18 23:25 BRT: revalidação read-only confirmou Supabase DEV `qwvbvqlzcyfkuszxrlgv` ACTIVE_HEALTHY, 16 migrations e Vercel com deployment READY; Production lista as duas variáveis VITE necessárias.
+- 2026-10-18 23:25 BRT: advisors permanecem com 2 tabelas privadas sem policies, 5 funções SECURITY DEFINER executáveis por authenticated e leaked-password protection desativada; nenhuma alteração estrutural executada.
+- 2026-10-18 23:25 BRT: consulta de logs enumerou streams das últimas 24h; consulta detalhada falhou no backend e não gerou evidência acionável.
+- 2026-10-18 23:27 BRT: `npm test` 273/273, `npm run lint` e `npm run build` aprovados.
+- 2026-10-18 23:30 BRT: Code Review confirmou Vercel, typecheck/build, Edge Functions e GitGuardian `success` no head `7cf2614c`; Supabase Preview `skipped` por ausência de branch associada; PR #1 DRAFT.
+- 2026-10-18 23:42 BRT: corrigido `auditService.log` para reportar erros PostgREST retornados; regressão adicionada. `npm test` 274/274, lint e build aprovados.
+- 2026-10-18 23:45 BRT: CI do head `837385ba` aprovou build/typecheck, Edge Functions e GitGuardian; Vercel está temporariamente rate-limited por 24h, sem evidência de falha do código.
+- 2026-10-18 23:50 BRT: rechecagem read-only encontrou deployment Vercel `dpl_HaKgduYgTLiiwP8qHXPiDoFvXypp` READY, domínio HTTP 200 e bundle contendo o Supabase DEV correto; não houve deploy manual.
+- 2026-10-18 23:55 BRT: teste de navegador bloqueado pela política de egress do ambiente; nenhuma tentativa de contorno. Validação HTTP read-only permanece aprovada.
+- 2026-10-18 23:58 BRT: PR head `feeaf62c` manteve checks de código/Edge/GitGuardian aprovados; check Vercel segue rate-limited, apesar de deployment READY separado. Nenhuma ação de deploy repetida.
+- 2026-10-19 00:02 BRT: descrição da PR #1 sincronizada com 274 testes, correção de auditService.log, deployment READY e pendências estruturais; PR permanece DRAFT/sem merge.
+- 2026-10-19 00:12 BRT: autorizada e aplicada no DEV a migration `20261018235446_fix_private_storage_policy_regex_qwvb`; bucket/policies verificados read-only, advisor de Storage resolvido. `npm test` 274/274, lint e build aprovados.
+- 2026-10-19: Code Review do head `2c7d0a8` confirmou Vercel, typecheck/build, Edge Functions e GitGuardian `success`; Supabase Preview `skipped` por ausência de branch associada. Nenhuma alteração remota.
+- 2026-10-19: corrigidos os cabeçalhos dos dois contratos SQL ativos em `supabase/tests` para apontar somente ao DEV `qwvbvqlzcyfkuszxrlgv`; `npm test` 274/274, lint, build e diff-check aprovados. Próximo foco: revisar os advisories estruturais sem executar SQL não aprovado.
+- 2026-10-19: Security Advisor read-only confirmou 2 tabelas privadas sem policies, 5 SECURITY DEFINER para authenticated e leaked-password protection desativada; Storage permanece resolvido. Nenhuma alteração estrutural executada.
+- 2026-10-19: reconciliada localmente a RPC `nexus_increment_goal` ausente do histórico de migrations; contrato versionado sem execução remota. `npm test` 275/275, lint e build aprovados.
+- 2026-10-19: CI do head `815ba0f` aprovou build/typecheck, Edge Functions e GitGuardian; Vercel ficou rate-limited por 24h. Sem retry/deploy manual.
+- 2026-10-19: corrigido cadastro que mantinha sessão parcial quando provisionamento falhava; regressão adicionada. `npm test` 276/276, lint e build aprovados.
+- 2026-10-19: CI do head `afe5aa5` finalizou com build/typecheck, Edge Functions e GitGuardian aprovados; Supabase Preview skipped e Vercel rate-limited.
+- 2026-10-19: auditoria direcionada dos serviços confirmou validação de linhas retornadas em criações/atualizações; sem novo falso sucesso identificado.
+- 2026-10-19: auditoria de dependências de produção encontrou 0 vulnerabilidades (`npm audit --omit=dev --audit-level=moderate`); nenhum pacote alterado.
+- 2026-10-19: reconciliação read-only confirmou 17 migrations remotas e 18 locais; a 18ª é a RPC de metas versionada para revisão, sem execução no DEV.
+- 2026-10-19: auditoria estática de logs não encontrou credenciais ou tokens; e-mail de login é mascarado antes do console.
+- 2026-10-19: contrato SQL read-only executado no DEV sem exceções; RLS, grants e policies cobertos permaneceram válidos.
+- 2026-10-19: integrada correção de recuperação de senha com `redirectTo` para `/redefinir-senha`; `npm test` 277/277, lint e build aprovados. Branch sincronizada após commit externo.
+- 2026-10-19: Code Review do head `de9d108` confirmou Vercel, preview comments, GitGuardian, build/typecheck e Edge Functions `success`; Supabase Preview `skipped` por ausência de branch.
+- 2026-10-19: marcadas como legado/DO NOT EXECUTE quatro propostas SQL que apontavam ao projeto antigo `qidstqsbxwkbkwowhpab`; scripts atuais do DEV permanecem separados. Nenhum SQL remoto executado.
+- 2026-10-19: quinta proposta SQL legada (`restrict_table_privileges`) também foi marcada como DO NOT EXECUTE; nenhum script ativo continua referenciando o projeto antigo.
+- 2026-10-19: validação HTTP read-only do preview público `/cadastro` retornou `200 OK`; nenhuma alteração remota ou automação de navegador.
+- 2026-10-19: Code Review do head `a9f4ade` confirmou Vercel, preview comments, Edge Functions, typecheck/build e GitGuardian `success`; Supabase Preview `skipped` por ausência de branch associada.
+- 2026-10-19: leitura da configuração Vercel confirmou `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` no alvo Production (DEV autorizado); `/cadastro` retornou HTTP 200. Nenhuma variável foi alterada.
+- 2026-10-19: consultas read-only confirmaram duas contas Auth e dois perfis em organizações distintas no DEV; smoke E2E não iniciado porque variáveis locais `NEXUS_E2E_*` estão ausentes.
+- 2026-10-19: Vercel preview do head `dd68138` ficou `READY`; nenhuma promoção, merge ou alteração de variáveis.
+- 2026-10-19: checks do head `ac8091f` passaram em Vercel, build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped` sem branch associada.
+- 2026-10-19: marco local aprovado: `npm test` 277/277, lint, build e diff-check passaram; aviso de Vite ocorreu somente por ausência de variáveis no executor local.
+- 2026-10-19: inventário read-only de logs DEV confirmou fontes e volumes; análise por nível ficou pendente por schema/backend transitório, sem alteração remota.
+- 2026-10-19: checks do head `990d47c` passaram em Edge/build/GitGuardian; Vercel ficou rate-limited por 24h. Sem retry ou deploy manual.
+- 2026-10-19: corrigido escape de foco no `Modal`; regressão e suíte 277/277, lint e build aprovados; commit `516e674` enviado.
+- 2026-10-19: corrigido escape de foco também no `Drawer`; suíte 277/277, lint e build aprovados; commit `dcb60f1` enviado.
+- 2026-10-19: checks do head `7c0ab8d` confirmaram build/typecheck, Edge e GitGuardian; Vercel segue rate-limited sem retry.
+- 2026-10-19: advisor de performance read-only reportou 11 índices sem uso e 2 pares de policies permissivas; nenhuma remoção/consolidação automática.
+- 2026-10-19: reconciliação read-only confirmou 17 migrations remotas e 18 locais; a migration da RPC de metas segue apenas como reconciliação, sem execução remota.
+- 2026-10-19: corrigidos controles `div` clicáveis nas páginas de recuperação/redefinição de senha; teste 279/279, lint e build aprovados; commit `f73b463` enviado.
+- 2026-10-19: checks do head `0a49bc7` passaram em Edge/build/GitGuardian; Supabase Preview `skipped` e Vercel rate-limited, sem retry.
+- 2026-10-19: corrigidos controles `div` clicáveis nas páginas de login/cadastro; contrato público e suíte 281/281, lint/build/diff-check aprovados. Vercel segue rate-limited.
+- 2026-10-19: corrigido logotipo clicável do `PublicLayout`; contrato público e suíte 282/282, lint/build/diff-check aprovados. Vercel segue rate-limited.
+- 2026-10-19: corrigido dropzone não teclado-acessível do `FileUpload`; contrato e suíte 283/283, lint/build/diff-check aprovados. Vercel segue rate-limited.
+- 2026-10-19: corrigidos marca e perfil clicáveis da `Sidebar`; contrato e suíte 284/284, lint/build/diff-check aprovados. Vercel segue rate-limited.
+- 2026-10-19: revisão externa do head `ca6d8cf` aprovou Vercel, build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped` sem branch associada.
+- 2026-10-19: auditoria estática não encontrou injeção HTML, eval ou URLs externas inseguras; WhatsApp usa encoding e noopener. `npm audit --omit=dev` encontrou 0 vulnerabilidades.
+- 2026-10-19: botões compartilhados passaram a declarar `type="button"` por padrão; suíte 285/285, lint/build/diff-check aprovados.
+- 2026-10-19: CI do head `c778a92` aprovou build/typecheck, Edge Functions e GitGuardian; Vercel rate-limited por 24h, Supabase Preview `skipped`.
+- 2026-10-19: contrato E2E confirmou DEV `qwvb...`, aprovação explícita, duas contas e ausência de logs de segredos; suíte 285/285, lint/build/diff-check aprovados.
+- 2026-10-19: auditoria dos logs frontend confirmou ausência de senha, token, chave e sessão; hostname e erros são os únicos dados de rede registrados.
+- 2026-10-19: menu móvel e limpar busca receberam `aria-label`; suíte 286/286, lint/build/diff-check aprovados.
+- 2026-10-19: fechamentos de previews de imagem receberam `aria-label`; suíte 287/287, lint/build/diff-check aprovados.
+- 2026-10-19: CI do head `e6e08b7` aprovou Vercel, preview comments, build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped`.
+- 2026-10-19: fechar toast e sair receberam nomes acessíveis; suíte 288/288, lint/build/diff-check aprovados.
+- 2026-10-19: campos nativos operacionais receberam `aria-label`; suíte 289/289, lint/build/diff-check aprovados.
+- 2026-10-19: CI do head `82eb38a` aprovou build/typecheck, Edge Functions e GitGuardian; Vercel rate-limited e Supabase Preview `skipped`.
+- 2026-10-19: `FileUpload` associou label/input com ID único; suíte 290/290, lint/build/diff-check aprovados.
+- 2026-10-19: CI do head `e93ff16` aprovou build/typecheck, Edge Functions e GitGuardian; Vercel rate-limited e Supabase Preview `skipped`.
+- 2026-10-19: nova checagem do head `5ea53de` manteve build/typecheck, Edge Functions e GitGuardian aprovados; Vercel segue rate-limited.
+- 2026-10-19: CI do head `c34cb36` aprovou build/typecheck, Edge Functions e GitGuardian; Vercel rate-limited por 24h e Supabase Preview `skipped`.
+- 2026-10-19: ações de ícone em módulos operacionais receberam `aria-label` explícito; suíte 290/290, lint/build/diff-check aprovados; Vercel segue rate-limited.
+- 2026-10-19: revisão externa do head `084440e` aprovou build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel segue rate-limited.
+- 2026-10-19: exclusões de Inteligência e Materiais receberam nomes acessíveis; suíte 290/290, lint/build/diff-check aprovados; Vercel segue rate-limited.
+- 2026-10-19: CI do head `3cc0b20` aprovou build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel segue rate-limited.
+- 2026-10-19: botões nativos de ações e navegação receberam `type="button"`; suíte 290/290, lint/build/diff-check aprovados; Vercel segue rate-limited.
+- 2026-10-19: CI do head `3d866d7` aprovou build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel segue rate-limited.
+- 2026-10-19: auditoria de navegação externa sem achados; botões nativos restantes receberam `type="button"`; suíte 290/290, lint/build/diff-check aprovados.
+- 2026-10-19: adicionado contrato que exige `type` explícito em botões nativos; suíte 291/291, lint/build/diff-check aprovados.
+- 2026-10-19: `SearchInput` recebeu nome acessível e contrato de regressão; suíte 292/292, lint/build/diff-check aprovados.
+- 2026-10-19: CI do head `e2c258c` aprovou build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel segue rate-limited.
+- 2026-10-19: auditoria de `textarea`, `select` e `<img>` sem achados; nenhuma alteração adicional necessária.
+- 2026-10-19: `Input` passou a usar IDs únicos via `useId`; suíte 293/293, lint/build/diff-check aprovados.
+- 2026-10-19: `Select` passou a usar IDs únicos via `useId`; suíte 294/294, lint/build/diff-check aprovados.
+- 2026-10-19: `Input` e `Select` passaram a associar erros/ajuda via ARIA; suíte 295/295, lint/build/diff-check aprovados.
+- 2026-10-19: fluxos públicos receberam autocomplete explícito e contrato de regressão; suíte 296/296, lint/build/diff-check aprovados.
+- 2026-10-19: troca de senha autenticada recebeu autocomplete `new-password`; suíte 297/297, lint/build/diff-check aprovados.
+- 2026-10-19: CI do head `e98ba61` aprovou build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel segue rate-limited.
+- 2026-10-19: CI do head `d086e3b` aprovou build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel segue rate-limited.
+- 2026-10-19: CI do head `89ef48c` aprovou Vercel Preview sem feedback, build/typecheck, Edge Functions e GitGuardian; produção inalterada.
+- 2026-10-19: head `89f8617` manteve build/typecheck, Edge Functions e GitGuardian aprovados; Vercel voltou a rate-limit após documentação.
+- 2026-10-19: CI do head `9dc2b07` aprovou build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel segue rate-limited.
+- 2026-10-19: CI do head `ad719b2` aprovou build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel segue rate-limited.
+- 2026-10-19: auditoria de rede sem chamadas `fetch`/Axios/XHR diretas; nenhuma alteração adicional necessária.
+- 2026-10-19: CI do head `c283b94` aprovou build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel segue rate-limited.
+- 2026-10-19: auditoria de IDs HTML estáticos sem duplicidades; nenhuma alteração adicional necessária.
+- 2026-10-19: CI do head `d4c9905` aprovou build/typecheck, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel segue rate-limited.
+- 2026-10-19: revisão do head `c45e6a1` aprovou Vercel Preview, build/typecheck, Edge Functions, GitGuardian e feedback sem pendências; produção inalterada.
+- 2026-10-19: head `b4636d2` manteve build/typecheck, Edge Functions e GitGuardian aprovados; Vercel voltou a rate-limit após commit documental; preview `c45e6a1` segue aprovado.
+- 2026-10-19: auditoria direcionada de logs do frontend sem exposição comprovada de credenciais; `details`/`hint` permanecem como pendência de endurecimento, sem alteração aplicada.
+- 2026-10-19: CI do head `19f5a83` aprovou typecheck/build, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel segue rate-limited.
+- 2026-10-19: `AuthContext` passou a resumir erros sem objetos brutos; suíte 298/298, lint/build/diff-check aprovados; CI do head `0b1dd1b` verde, Vercel segue rate-limited.
+- 2026-10-19: `coreServices` passou a limitar logs de criação de perfil a status/código/mensagem; suíte 299/299, lint/build/diff-check aprovados; CI do head `8e7f0e3` verde.
+- 2026-10-19: `DashboardPage` passou a limitar logs a serviço/status/código/mensagem; suíte 300/300, lint/build/diff-check aprovados; CI e Vercel Preview do head `76689ee` verdes.
+- 2026-10-19: serviço de auditoria passou a resumir erros; suíte 300/300, lint/build/diff-check aprovados; CI do head `1337d12` verde, Vercel voltou a rate-limit.
+- 2026-10-19: validações de entrada e parsing de convite deixaram de registrar valores fornecidos; suíte 301/301, lint/build/diff-check aprovados; CI do head `6e2bd0d` verde.
+- 2026-10-19: `SettingsPage` deixou de declarar RLS validado sem prova; suíte 301/301, lint/build/diff-check aprovados; CI do head `487ffe8` verde, Vercel segue rate-limited.
+- 2026-10-19: removido push duplicado da branch de desenvolvimento; PR/main/manual continuam cobertos; head `2ab2f10` passou CI e Vercel Preview.
+- 2026-10-19: referências antigas do Supabase foram marcadas como históricas; código e testes seguem no DEV `qwvbvqlzcyfkuszxrlgv`; diff-check aprovado.
+- 2026-10-19: PR do head `08b91f1` executou typecheck/build, Edge Functions e GitGuardian com sucesso após remoção do push duplicado; Vercel documental segue rate-limited.
+- 2026-10-19: auditoria de dependências e busca direcionada por segredos/TODOs sem achados acionáveis; `npm audit --omit=dev --audit-level=moderate` reportou 0 vulnerabilidades; árvore limpa.
+- 2026-10-19: consulta somente leitura aos advisors do Supabase DEV `qwvbvqlzcyfkuszxrlgv` confirmou duas tabelas privadas com RLS sem policies, cinco funções `SECURITY DEFINER` executáveis por `authenticated` e proteção contra senhas vazadas desativada. Logs agregados falharam com erro transitório do backend. Nenhuma alteração estrutural foi aplicada; correções dependem de script e aprovação específica.
+- 2026-10-19: CI do head `eae2835` aprovou Vercel Preview, typecheck/build, Edge Functions e GitGuardian; Supabase Preview permaneceu `skipped` por ausência de branch associada.
+- 2026-10-19: auditoria Vercel confirmou `teste-nexus-teste.vercel.app` apontando para deployment `READY` de produção no commit ancestral `ac4df21`; a branch autorizada está no head `738cd74`. Nenhum alias, promote ou deploy de produção foi alterado.
+- 2026-10-19: CI do head `a243283` aprovou typecheck/build, Edge Functions e GitGuardian; Supabase Preview `skipped`; Vercel informou rate limit com retry somente após 24h.
+- 2026-10-19: advisor de performance confirmou duas duplicações permissivas de RLS (`profiles` UPDATE e `user_module_permissions` SELECT). Script de consolidação foi preparado em `docs/proposed-migrations/CONSOLIDATE_DUPLICATE_RLS_POLICIES.sql`, sem execução; aguarda aprovação específica.
+- 2026-10-19: comparação somente leitura encontrou divergência de histórico: DEV registra 17 migrations aplicadas; o repositório contém 18 arquivos. `nexus_bootstrap_schema` e `nexus_private_storage` aparecem no banco com versões geradas diferentes, e `20261019000000_add_atomic_goal_increment` ainda não foi aplicado. Nenhuma reconciliação automática foi feita.
+- 2026-10-19: incorporada correção de privacidade no `LoginPage`: `LOGIN_SUCCESS` não registra mais e-mail. Teste específico 2/2, suíte 303/303, lint e build aprovados; head `c0cefbc`. Preview Vercel e GitGuardian aprovados; Supabase Preview `skipped`.
+- 2026-10-19: CI do head `8c93de4` aprovou Preview Vercel, typecheck/build e Edge Functions; Supabase Preview `skipped`. GitGuardian ficou `neutral` porque a PR excedeu o limite de varredura, sem indicação de segredo.
+- 2026-10-19: auditoria confirmou que `AuthContext` ainda registrava mensagens brutas de erros do provedor; corrigido para resumo redigido (`redacted`) com nome/código/status validados. Suíte 305/305, lint e build aprovados; nenhuma alteração em banco/produção.
+- 2026-10-19: CI do head `704e914` aprovou Vercel Preview, typecheck/build e Edge Functions; Supabase Preview `skipped`; GitGuardian `neutral` por limite de tamanho da PR, sem indicação de segredo.
+- 2026-10-19: teste comportamental adicionou e-mail, token e senha sintéticos ao erro de autenticação e confirmou redaction; suíte 306/306, lint/build/diff-check aprovados. Nenhuma alteração em banco/produção.
+- 2026-10-19: CI do head `da572f3` confirmou typecheck/build, Edge Functions e Vercel Preview aprovados; Supabase Preview `skipped`; GitGuardian `neutral` por limite da PR.
+- 2026-10-19: Task 1 E2E read-only aprovada com duas contas sintéticas no DEV `qwvbvqlzcyfkuszxrlgv`: autenticação, tenants distintos, bloqueio cross-tenant e Storage privado confirmados.
+- 2026-10-19: Task 2 aplicou e verificou `consolidate_duplicate_rls_policies`; Task 3 aplicou e verificou `add_atomic_goal_increment` (anon sem EXECUTE; authenticated/service_role permitidos). Nenhuma escrita de dados reais.
+- 2026-10-19: Task 4 depende de login administrativo no painel Supabase para ativar leaked password protection; nenhuma senha de painel foi solicitada ou armazenada.
+- 2026-10-19: usuário decidiu não ativar leaked password protection no plano Free do DEV neste momento; risco residual aceito e documentado. Mantidas senha mínima, validações locais e testes de autenticação; produção inalterada.
+- 2026-10-19: Inteligência recebeu mapa de calor territorial agregado e resumo de lideranças/frentes de trabalho; navegação mobile recebeu fechamento por ESC, botão de fechar e scroll isolado. `npm test` 308/308, lint e build OK. Nenhuma alteração no banco, produção ou main.
+- 2026-10-19: erro dos uploads das abas Campo/Presença/Adesivos corrigido no código: imagens agora passam pelo Storage privado e só o caminho tenant-scoped vai para as tabelas; admins podem selecionar arquivos e demais perfis permanecem bloqueados. Policy regex corrigida no DEV `qwvbvqlzcyfkuszxrlgv`; teste read-only confirmou JPG válido e regex antiga inválida.
+- 2026-10-19: validação da correção de upload concluída: `npm test` 310/310, lint, build e diff-check OK. Commit `be4b18e` publicado na branch; Preview Vercel READY e HTTP 200. Produção/main não alteradas.
+- 2026-10-21: corrigido o fluxo de convite quando o metadata de papel não chega após a confirmação de e-mail; contas com `organization_id` de convite agora também tentam a RPC segura de claim por e-mail verificado. Regressão, `npm test` 311/311, lint e build aprovados. Aplicação da função/migration no Supabase ainda requer aprovação SQL específica.
+- 2026-10-20: corrigida a trava fixa que ignorava grants adicionais de coordenadores; leitura agora respeita permissões explícitas persistidas. Regressão, 310/310 testes, lint e build aprovados. Branch local sincronizada até `e9a703d`; publicação ainda pendente de revisão da função `SECURITY DEFINER` remota.
+2026-10-21 — Convite de liderança ainda bloqueado: auditoria read-only confirmou liderança ativa sem e-mail no DEV. A RPC segura exige correspondência por e-mail confirmado; não há correção segura por nome. UI ajustada para incluir e-mail no link e bloquear convite sem e-mail. Próximo: testes completos, commit e push; depois administrador deve preencher o e-mail da liderança.
+2026-10-21 — Diagnóstico de metas: metas existem e vínculo/permissões estão no DEV, mas leaders_read/coordinators_read exigem módulo administrativo até para o próprio vínculo. Migration preparada para leitura própria com grants operacionais, sem escrita ou acesso cruzado. Testes 314/314, lint/build OK. Aguardar aprovação específica para executar RLS no DEV.
+2026-10-21 — Privacidade aplicada no frontend: liderança/coordenador veem registro curto e e-mail, não o nome administrativo; edição do nome bloqueada. Testes 315/315, lint/build OK. Migration RLS continua pendente de aprovação específica para execução no DEV.
+2026-10-21 — Migration `20261021190000_nexus_self_scoped_team_read_policies.sql` aplicada exclusivamente no Supabase DEV `qwvbvqlzcyfkuszxrlgv`; verificação read-only confirmou `leaders_read` e `coordinators_read` como SELECT autenticado com isolamento por organização, vínculo próprio e grant operacional. Produção/main inalteradas.
+2026-10-21 — Logs confirmaram regressão: policies públicas consultavam diretamente `private.nexus_team_memberships`, causando `permission denied` no SELECT de lideranças/coordenadores. Migration corretiva `20261021220000_nexus_self_scoped_team_read_policy_privilege_fix.sql` aplicada exclusivamente no DEV `qwvbvqlzcyfkuszxrlgv`; verificação read-only confirmou que ambas as policies não leem diretamente a tabela privada. Produção/main inalteradas.
+2026-10-21 — Upload privado ampliado para membros ativos; novos objetos usam `<organização>/<papel>/<id-do-usuário>/<tipo>/<arquivo>`. Testes 316/316, lint/build/diff-check aprovados. Migration `20261021230000_nexus_private_storage_hierarchical_access.sql` preparada e aplicada no DEV após aprovação.
+2026-10-21 — Migration `20261021230000_nexus_private_storage_hierarchical_access.sql` aplicada exclusivamente no Supabase DEV `qwvbvqlzcyfkuszxrlgv`; verificação read-only confirmou bucket privado, três policies Storage e duas funções auxiliares SECURITY DEFINER. Produção/main inalteradas.
+2026-10-21 — Promoção Vercel autorizada: alias `teste-nexus-teste.vercel.app` movido para deployment READY `dpl_9Ms4B3LVnYMnT17sC18fZQmD6XsS` (commit `568550c`); HTTP 200 confirmado.
+2026-10-23 — Painel executivo redesenhado no frontend com tema escuro, cards dos quatro eixos, abas Mapa da operação/Relatório, alertas e layout responsivo; dados reais preservados. `npm test` 316/316, lint/build/diff-check OK. Supabase, produção e main inalterados.

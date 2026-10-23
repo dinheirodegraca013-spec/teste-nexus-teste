@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { UsersRound, Plus, Phone, Mail, MapPin, Edit2, Trash2, Eye, UserCheck, Share2, Copy, Check, MessageSquare, Link, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -23,6 +23,7 @@ export const CoordinatorsPage: React.FC = () => {
   const [allLeaders, setAllLeaders] = useState<Leader[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const loadGenerationRef = useRef(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
@@ -50,19 +51,30 @@ export const CoordinatorsPage: React.FC = () => {
   });
 
   const loadData = useCallback(async () => {
-    if (!orgId) return;
+    const loadGeneration = ++loadGenerationRef.current;
+    const isCurrentLoad = () => loadGeneration === loadGenerationRef.current;
+    if (!orgId) {
+      if (!isCurrentLoad()) return;
+      setCoordinators([]);
+      setAllLeaders([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const [coordsRes, leadersRes] = await Promise.all([
         coordinatorsService.getAll(orgId),
         leadersService.getAll(orgId),
       ]);
+      if (coordsRes.error) throw coordsRes.error;
+      if (leadersRes.error) throw leadersRes.error;
+      if (!isCurrentLoad()) return;
       setCoordinators(coordsRes.data || []);
       setAllLeaders(leadersRes.data || []);
     } catch (err: any) {
-      toastError('Erro ao carregar dados de coordenadores: ' + err.message);
+      if (isCurrentLoad()) toastError('Erro ao carregar dados de coordenadores: ' + err.message);
     } finally {
-      setIsLoading(false);
+      if (isCurrentLoad()) setIsLoading(false);
     }
   }, [orgId, toastError]);
 
@@ -142,7 +154,7 @@ export const CoordinatorsPage: React.FC = () => {
       ? `https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${encodeURIComponent(text)}`
       : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
 
-    window.open(waUrl, '_blank');
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handleSendWhatsAppLeader = (lead: Leader, coord?: Coordinator) => {
@@ -153,7 +165,7 @@ export const CoordinatorsPage: React.FC = () => {
     const waUrl = cleanPhone 
       ? `https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${encodeURIComponent(text)}`
       : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
-    window.open(waUrl, '_blank');
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handleOpenCreate = (coord?: Coordinator) => {
@@ -231,6 +243,8 @@ export const CoordinatorsPage: React.FC = () => {
           setTimeout(() => {
             handleOpenCoordInvite(created, 'coord_access');
           }, 350);
+        } else {
+          toastError('Não foi possível confirmar o cadastro do coordenador. Verifique a lista antes de tentar novamente.');
         }
       }
     } catch (err: any) {
@@ -399,28 +413,36 @@ export const CoordinatorsPage: React.FC = () => {
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1.5">
                     <button
+                      type="button"
                       onClick={() => handleOpenCoordInvite(coord, 'coord_access')}
+                      aria-label="Enviar link de cadastro ao coordenador"
                       title="Enviar link de cadastro ao coordenador"
                       className="p-1.5 rounded text-slate-500 hover:text-indigo-600 hover:bg-slate-100 transition-colors cursor-pointer"
                     >
                       <Share2 className="w-3.5 h-3.5" />
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleViewDetails(coord)}
+                      aria-label="Ver detalhes"
                       title="Ver detalhes"
                       className="p-1.5 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
                     >
                       <Eye className="w-3.5 h-3.5" />
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleOpenCreate(coord)}
+                      aria-label="Editar"
                       title="Editar"
                       className="p-1.5 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleDelete(coord.id)}
+                      aria-label="Excluir"
                       title="Excluir"
                       className="p-1.5 rounded text-slate-500 hover:text-rose-600 hover:bg-slate-100 transition-colors cursor-pointer"
                     >
@@ -503,6 +525,7 @@ export const CoordinatorsPage: React.FC = () => {
                   <input
                     type="text"
                     readOnly
+                    aria-label="Link de cadastro do coordenador"
                     value={getCoordinatorRegistrationLink(inviteCoord)}
                     className="flex-1 bg-white border border-slate-200 rounded-lg p-2.5 text-xs text-slate-800 font-mono focus:outline-none"
                   />
@@ -544,6 +567,7 @@ export const CoordinatorsPage: React.FC = () => {
                   <input
                     type="text"
                     readOnly
+                    aria-label="Link do polo para lideranças"
                     value={getCoordPoloLink(inviteCoord)}
                     className="flex-1 bg-white border border-slate-200 rounded-lg p-2.5 text-xs text-slate-800 font-mono focus:outline-none"
                   />
@@ -635,6 +659,7 @@ export const CoordinatorsPage: React.FC = () => {
           <div className="space-y-1.5">
             <label className="block text-xs font-medium text-slate-700">Observações Estratégicas</label>
             <textarea
+              aria-label="Observações Estratégicas"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               placeholder="Anotações sobre perfil de liderança, contatos e articulação..."
@@ -746,6 +771,7 @@ export const CoordinatorsPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleSendWhatsAppLeader(lead, selectedCoord)}
+                          aria-label="Enviar convite via WhatsApp"
                           title="Enviar convite via WhatsApp"
                           className="px-2 py-1 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200 text-[11px] flex items-center gap-1 cursor-pointer"
                         >

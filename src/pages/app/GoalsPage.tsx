@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Target, Plus, TrendingUp, Calendar, CheckCircle2, Clock, AlertTriangle, Edit2, Trash2, Users, Car, Home, UserCheck, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -10,6 +10,7 @@ import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { nonNegativeQuantity, positiveQuantity } from '../../utils/materialQuantities';
 
 export const GoalsPage: React.FC = () => {
   const { organization } = useAuth();
@@ -20,6 +21,7 @@ export const GoalsPage: React.FC = () => {
   const [coordinators, setCoordinators] = useState<Coordinator[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const loadGenerationRef = useRef(0);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
@@ -38,25 +40,46 @@ export const GoalsPage: React.FC = () => {
   });
 
   const loadData = useCallback(async () => {
-    if (!orgId) return;
+    const loadGeneration = ++loadGenerationRef.current;
+    const isCurrentLoad = () => loadGeneration === loadGenerationRef.current;
+    if (!orgId) {
+      if (!isCurrentLoad()) return;
+      setGoals([]);
+      setCoordinators([]);
+      setIsLoading(false);
+      return;
+    }
+    if (isCurrentLoad()) {
+      // Evita que a organização anterior permaneça visível durante a troca de tenant.
+      setGoals([]);
+      setCoordinators([]);
+    }
     setIsLoading(true);
     try {
       const [goalsRes, coordsRes] = await Promise.all([
         goalsService.getAll(orgId),
         coordinatorsService.getAll(orgId),
       ]);
+      if (goalsRes.error) throw goalsRes.error;
+      if (coordsRes.error) throw coordsRes.error;
+      if (!isCurrentLoad()) return;
       setGoals(goalsRes.data || []);
       setCoordinators(coordsRes.data || []);
     } catch (err: any) {
-      toastError('Erro ao carregar metas: ' + err.message);
+      if (isCurrentLoad()) toastError('Erro ao carregar metas: ' + err.message);
     } finally {
-      setIsLoading(false);
+      if (isCurrentLoad()) setIsLoading(false);
     }
   }, [orgId, toastError]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    setIsModalOpen(false);
+    setSelectedGoal(null);
+  }, [orgId]);
 
   const handleOpenModal = (goal?: Goal, presetCategory?: typeof formData.category) => {
     if (goal) {
@@ -117,6 +140,13 @@ export const GoalsPage: React.FC = () => {
       return;
     }
 
+    const targetValue = positiveQuantity(formData.target_value);
+    const currentValue = nonNegativeQuantity(formData.current_value);
+    if (targetValue === null || currentValue === null) {
+      toastError('Informe uma meta maior que zero e um progresso não negativo.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       if (selectedGoal) {
@@ -124,8 +154,8 @@ export const GoalsPage: React.FC = () => {
           title: formData.title.trim(),
           description: formData.description.trim() || undefined,
           category: formData.category,
-          target_value: Number(formData.target_value) || 100,
-          current_value: Number(formData.current_value) || 0,
+          target_value: targetValue,
+          current_value: currentValue,
           unit: formData.unit || 'unidades',
           start_date: formData.start_date || undefined,
           end_date: formData.end_date || undefined,
@@ -146,8 +176,8 @@ export const GoalsPage: React.FC = () => {
           title: formData.title.trim(),
           description: formData.description.trim() || undefined,
           category: formData.category,
-          target_value: Number(formData.target_value) || 100,
-          current_value: Number(formData.current_value) || 0,
+          target_value: targetValue,
+          current_value: currentValue,
           unit: formData.unit || 'unidades',
           start_date: formData.start_date || new Date().toISOString(),
           end_date: formData.end_date || undefined,
@@ -171,12 +201,7 @@ export const GoalsPage: React.FC = () => {
   };
 
   const handleQuickIncrement = async (goal: Goal, amount: number) => {
-    const nextVal = Math.max(0, goal.current_value + amount);
-    const nextStatus = nextVal >= goal.target_value ? 'completed' : goal.status;
-    const { error } = await goalsService.update(goal.id, {
-      current_value: nextVal,
-      status: nextStatus,
-    });
+    const { error } = await goalsService.incrementAtomically(goal.id, amount);
 
     if (error) {
       toastError('Erro ao atualizar progresso: ' + error.message);
@@ -322,14 +347,18 @@ export const GoalsPage: React.FC = () => {
 
                   <div className="flex items-center gap-1 shrink-0">
                     <button
+                      type="button"
                       onClick={() => handleOpenModal(goal)}
+                      aria-label="Editar"
                       className="p-1.5 rounded text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
                       title="Editar"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleDelete(goal.id)}
+                      aria-label="Excluir"
                       className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-slate-100 transition-colors cursor-pointer"
                       title="Excluir"
                     >
@@ -480,6 +509,7 @@ export const GoalsPage: React.FC = () => {
           <div className="space-y-1.5">
             <label className="block text-xs font-medium text-slate-700">Descrição / Diretrizes</label>
             <textarea
+              aria-label="Descrição e Diretrizes"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Instruções para a equipe de campo alcançar a meta..."

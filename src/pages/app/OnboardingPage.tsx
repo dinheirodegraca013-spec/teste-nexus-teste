@@ -24,26 +24,35 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleFinish = async () => {
+    if (!orgName.trim()) {
+      toastError('Informe o nome da organização.');
+      return;
+    }
     setIsSubmitting(true);
     try {
-      if (organization?.id) {
-        await organizationsService.update(organization.id, {
-          name: orgName,
-          settings: {
-            ...organization.settings,
-            territory_type: territoryType,
-          },
-        });
+      if (!organization?.id) {
+        throw new Error('Organização indisponível. Recarregue a página e tente novamente.');
+      }
 
-        if (firstCoordinator.trim()) {
-          await coordinatorsService.create({
-            organization_id: organization.id,
-            name: firstCoordinator.trim(),
-            phone: firstPhone.trim() || undefined,
-            territory: firstTerritory.trim() || 'Região Central',
-            status: 'active',
-          });
-        }
+      const { error: organizationError } = await organizationsService.update(organization.id, {
+        name: orgName,
+        settings: {
+          ...organization.settings,
+          territory_type: territoryType,
+        },
+      });
+
+      if (organizationError) throw organizationError;
+
+      if (firstCoordinator.trim()) {
+        const { error: coordinatorError } = await coordinatorsService.create({
+          organization_id: organization.id,
+          name: firstCoordinator.trim(),
+          phone: firstPhone.trim() || undefined,
+          territory: firstTerritory.trim() || 'Região Central',
+          status: 'active',
+        });
+        if (coordinatorError) throw coordinatorError;
       }
 
       success('Configuração inicial concluída com sucesso!');

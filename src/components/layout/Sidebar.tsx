@@ -19,10 +19,11 @@ import {
   Settings, 
   User, 
   LogOut,
-  ChevronDown
+  X
 } from 'lucide-react';
 import { useAuth, normalizeRole } from '../../contexts/AuthContext';
 import { AppModule } from '../../types';
+import { getOperationalIdentity } from '../../utils/operationalIdentity';
 
 interface SidebarProps {
   currentPath: string;
@@ -38,6 +39,7 @@ interface NavGroup {
     path: string;
     icon: React.ElementType;
     module?: AppModule;
+    adminOnly?: boolean;
     highlight?: boolean;
   }[];
 }
@@ -48,8 +50,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isMobileOpen,
   onCloseMobile,
 }) => {
-  const { profile, organization, organizations, switchOrganization, signOut, hasPermission } = useAuth();
-  const [isOrgDropdownOpen, setIsOrgDropdownOpen] = React.useState(false);
+  const { user, profile, organization, signOut, hasPermission } = useAuth();
+  const operationalIdentity = getOperationalIdentity(profile, user?.email);
 
   const isLeader = normalizeRole(profile?.role) === 'leader';
 
@@ -114,7 +116,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       items: [
         { name: 'Equipe & Permissões', path: '/app/usuarios', icon: Shield, module: 'users' },
         { name: 'Organizações', path: '/app/organizacoes', icon: Building2, module: 'organizations' },
-        { name: 'Planos & Assinatura', path: '/app/planos', icon: CreditCard },
+        { name: 'Planos & Assinatura', path: '/app/planos', icon: CreditCard, adminOnly: true },
         { name: 'Configurações', path: '/app/configuracoes', icon: Settings, module: 'settings' },
       ]
     }
@@ -139,15 +141,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Sidebar container */}
       <aside
+        id="nexus-mobile-navigation"
+        aria-label="Navegação principal"
         className={`fixed top-0 bottom-0 left-0 z-50 w-64 bg-white border-r border-slate-200 flex flex-col transition-transform duration-200 ease-in-out lg:translate-x-0 ${
           isMobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         {/* Brand / Logo */}
         <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-          <div 
+          <button
+            type="button"
             onClick={() => handleItemClick('/app/dashboard')} 
-            className="flex items-center gap-2.5 cursor-pointer select-none"
+            aria-label="Ir para o dashboard do NEXUS"
+            className="flex items-center gap-2.5 cursor-pointer select-none text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 rounded-lg"
           >
             <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-black tracking-widest text-sm shadow-xs">
               N
@@ -156,61 +162,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="text-sm font-bold tracking-widest text-slate-950">NEXUS</div>
               <div className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">SaaS Operação</div>
             </div>
-          </div>
+          </button>
+          <button
+            type="button"
+            onClick={onCloseMobile}
+            aria-label="Fechar menu de navegação"
+            className="lg:hidden p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
-        {/* Multi-Tenant Organization Switcher */}
-        <div className="p-3 border-b border-slate-100 relative">
-          <button
-            onClick={() => setIsOrgDropdownOpen(!isOrgDropdownOpen)}
-            className="w-full text-left p-2 rounded-lg bg-slate-50 border border-slate-200 hover:border-slate-300 flex items-center justify-between transition-colors text-xs cursor-pointer shadow-2xs"
-          >
+        {/* Active organization. Membership changes are managed server-side. */}
+        <div className="p-3 border-b border-slate-100">
+          <div className="w-full text-left p-2 rounded-lg bg-slate-50 border border-slate-200 text-xs shadow-2xs">
             <div className="truncate pr-2">
               <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Organização Ativa</div>
               <div className="text-slate-900 font-semibold truncate mt-0.5">{organization?.name || 'Carregando...'}</div>
             </div>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-          </button>
-
-          {isOrgDropdownOpen && (
-            <div className="absolute top-full left-3 right-3 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl py-1 z-30 max-h-48 overflow-y-auto">
-              <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                Alternar Organização
-              </div>
-              {organizations.map(org => (
-                <button
-                  key={org.id}
-                  onClick={() => {
-                    switchOrganization(org.id);
-                    setIsOrgDropdownOpen(false);
-                  }}
-                  className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition-colors cursor-pointer ${
-                    org.id === organization?.id ? 'text-slate-950 font-semibold bg-slate-100/70' : 'text-slate-600'
-                  }`}
-                >
-                  <span className="truncate">{org.name}</span>
-                  {org.id === organization?.id && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />}
-                </button>
-              ))}
-              <div className="border-t border-slate-100 mt-1 pt-1">
-                <button
-                  onClick={() => {
-                    setIsOrgDropdownOpen(false);
-                    handleItemClick('/app/organizacoes');
-                  }}
-                  className="w-full text-left px-3 py-1.5 text-[11px] font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 cursor-pointer"
-                >
-                  + Nova Organização
-                </button>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
 
         {/* Navigation items */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-5 custom-scrollbar text-left">
+        <nav className="flex-1 overflow-y-auto overscroll-contain p-3 space-y-5 custom-scrollbar text-left" aria-label="Seções do aplicativo">
           {navGroups.map((group) => {
             const filteredItems = group.items.filter(item => {
+              if ((item.adminOnly || ['users', 'settings', 'organizations'].includes(item.module || '')) && !['admin', 'superadmin'].includes(normalizeRole(profile?.role))) return false;
               if (!item.module) return true;
               return hasPermission(item.module, 'view');
             });
@@ -227,6 +204,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   const isActive = currentPath === item.path || currentPath.startsWith(`${item.path}/`);
                   return (
                     <button
+                      type="button"
                       key={item.path}
                       onClick={() => handleItemClick(item.path)}
                       className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
@@ -248,25 +226,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             );
           })}
-        </div>
+        </nav>
 
         {/* User profile & Logout */}
         <div className="p-3 border-t border-slate-100 bg-white">
           <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200/80">
-            <div 
+            <button
+              type="button"
               onClick={() => handleItemClick('/app/perfil')}
-              className="flex items-center gap-2.5 min-w-0 cursor-pointer flex-1"
+              aria-label="Abrir meu perfil"
+              className="flex items-center gap-2.5 min-w-0 cursor-pointer flex-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 rounded-lg"
             >
               <div className="w-7 h-7 rounded-lg bg-slate-200 text-slate-800 flex items-center justify-center text-xs font-semibold shrink-0 border border-slate-300">
-                {profile?.full_name?.charAt(0) || <User className="w-3.5 h-3.5" />}
+                {operationalIdentity.label.charAt(0) || <User className="w-3.5 h-3.5" />}
               </div>
               <div className="truncate">
-                <div className="text-xs font-semibold text-slate-900 truncate">{profile?.full_name || 'Usuário'}</div>
+                <div className="text-xs font-semibold text-slate-900 truncate">{operationalIdentity.label}</div>
+                {operationalIdentity.restricted && <div className="text-[10px] text-slate-400 truncate">{operationalIdentity.email}</div>}
                 <div className="text-[10px] text-slate-400 capitalize font-medium">{profile?.role || 'admin'}</div>
               </div>
-            </div>
+            </button>
             <button
+              type="button"
               onClick={() => signOut()}
+              aria-label="Sair do NEXUS"
               title="Sair do NEXUS"
               className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-slate-200/60 transition-colors cursor-pointer"
             >

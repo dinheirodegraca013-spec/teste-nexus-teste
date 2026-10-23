@@ -1,0 +1,38 @@
+name: NEXUS Signed-in Tenant Smoke (manual, DEV only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_dev_only:
+        description: 'Confirmar execução somente no DEV autorizado com DUAS CONTAS SINTÉTICAS de tenants distintos'
+        required: true
+        type: choice
+        options: ['NAO', 'SIM']
+        default: 'NAO'
+
+permissions:
+  contents: read
+
+jobs:
+  signed-in-isolation:
+    if: ${{ inputs.confirm_dev_only == 'SIM' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: nexus-dev-e2e
+    env:
+      NEXUS_E2E_APPROVED: 'true'
+      NEXUS_E2E_SUPABASE_URL: ${{ secrets.NEXUS_E2E_SUPABASE_URL }}
+      NEXUS_E2E_ANON_KEY: ${{ secrets.NEXUS_E2E_ANON_KEY }}
+      NEXUS_E2E_A_EMAIL: ${{ secrets.NEXUS_E2E_A_EMAIL }}
+      NEXUS_E2E_A_PASSWORD: ${{ secrets.NEXUS_E2E_A_PASSWORD }}
+      NEXUS_E2E_B_EMAIL: ${{ secrets.NEXUS_E2E_B_EMAIL }}
+      NEXUS_E2E_B_PASSWORD: ${{ secrets.NEXUS_E2E_B_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Verify two-tenant signed-in isolation (read only)
+        run: node scripts/e2e/tenant-auth-readonly.mjs

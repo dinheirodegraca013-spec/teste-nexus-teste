@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Contact, Plus, Phone, Mail, MapPin, Tag, Edit2, Trash2, Eye, UserCheck, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -23,6 +23,7 @@ export const CrmPage: React.FC = () => {
   const [leaders, setLeaders] = useState<Leader[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const loadGenerationRef = useRef(0);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -45,19 +46,30 @@ export const CrmPage: React.FC = () => {
   });
 
   const loadData = useCallback(async () => {
-    if (!orgId) return;
+    const loadGeneration = ++loadGenerationRef.current;
+    const isCurrentLoad = () => loadGeneration === loadGenerationRef.current;
+    if (!orgId) {
+      if (!isCurrentLoad()) return;
+      setContacts([]);
+      setLeaders([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const [contactsRes, leadersRes] = await Promise.all([
         crmService.getAll(orgId),
         leadersService.getAll(orgId),
       ]);
+      if (contactsRes.error) throw contactsRes.error;
+      if (leadersRes.error) throw leadersRes.error;
+      if (!isCurrentLoad()) return;
       setContacts(contactsRes.data || []);
       setLeaders(leadersRes.data || []);
     } catch (err: any) {
-      toastError('Erro ao carregar contatos do CRM: ' + err.message);
+      if (isCurrentLoad()) toastError('Erro ao carregar contatos do CRM: ' + err.message);
     } finally {
-      setIsLoading(false);
+      if (isCurrentLoad()) setIsLoading(false);
     }
   }, [orgId, toastError]);
 
@@ -152,6 +164,8 @@ export const CrmPage: React.FC = () => {
           success('Contato cadastrado no CRM com sucesso!');
           await loadData();
           setIsModalOpen(false);
+        } else {
+          toastError('Não foi possível confirmar o cadastro do contato. Verifique a lista antes de tentar novamente.');
         }
       }
     } catch (err: any) {
@@ -330,24 +344,30 @@ export const CrmPage: React.FC = () => {
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1.5">
                     <button
+                      type="button"
                       onClick={() => {
                         setSelectedContact(contact);
                         setIsDrawerOpen(true);
                       }}
+                      aria-label="Ver detalhes"
                       title="Ver detalhes"
                       className="p-1.5 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
                     >
                       <Eye className="w-3.5 h-3.5" />
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleOpenModal(contact)}
+                      aria-label="Editar"
                       title="Editar"
                       className="p-1.5 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleDelete(contact.id)}
+                      aria-label="Excluir"
                       title="Excluir"
                       className="p-1.5 rounded text-slate-500 hover:text-rose-600 hover:bg-slate-100 transition-colors cursor-pointer"
                     >
@@ -444,6 +464,7 @@ export const CrmPage: React.FC = () => {
           <div className="space-y-1.5">
             <label className="block text-xs font-medium text-slate-700">Observações & Demandas</label>
             <textarea
+              aria-label="Observações e Demandas"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               placeholder="Anotações sobre a conversa, pedidos comunitários ou disponibilidade..."
