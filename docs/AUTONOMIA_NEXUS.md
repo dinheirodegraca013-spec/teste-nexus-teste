@@ -2081,3 +2081,10 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Execução autorizada:** migration aplicada exclusivamente no DEV `qwvbvqlzcyfkuszxrlgv`.
 - **Verificação read-only:** `leaders_read` e `coordinators_read` continuam como `SELECT` para `authenticated` e não fazem leitura direta de `private.nexus_team_memberships`.
 - **Produção/main:** não alteradas.
+
+## Melhoria visual do painel executivo — 2026-10-23
+
+- **Entregue:** `DashboardPage` recebeu layout responsivo inspirado no painel de estoque de referência, com superfície escura, cards dos quatro eixos, abas “Mapa da operação” e “Relatório”, alertas e tabela consolidada.
+- **Dados:** indicadores, territórios, metas, eventos e alertas continuam derivados exclusivamente dos serviços existentes; nenhuma métrica fictícia ou nova permissão foi criada.
+- **Validação:** `npm test` 316/316, `npm run lint`, `npm run build` e `git diff --check` aprovados.
+- **Escopo:** somente frontend na branch `fix/persist-rbac-permissions`; Supabase, produção e main não alterados.
