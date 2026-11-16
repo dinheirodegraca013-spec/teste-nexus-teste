@@ -2088,3 +2088,15 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Dados:** indicadores, territórios, metas, eventos e alertas continuam derivados exclusivamente dos serviços existentes; nenhuma métrica fictícia ou nova permissão foi criada.
 - **Validação:** `npm test` 316/316, `npm run lint`, `npm run build` e `git diff --check` aprovados.
 - **Escopo:** somente frontend na branch `fix/persist-rbac-permissions`; Supabase, produção e main não alterados.
+
+## Ciclo autônomo — 2026-11-16: remoção de anexo desabilitado
+
+- **Escopo único:** corrigir o contrato `disabled` de `src/components/ui/FileUpload.tsx`, na branch atual `fix/persist-rbac-permissions`. Estado inicial limpo; documentos operacionais da raiz (ESCOPO/BACKLOG/ESTADO/TESTES/AUDITORIA) não existem. Skills utilizadas: bug-hunter e qa-automation.
+- **Bug confirmado:** com uma foto selecionada e `disabled=true`, “Remover arquivo” continuava habilitado e disparava `onChange(null, null)` e `onFileRemoved`, alterando o formulário apesar do bloqueio. “Trocar imagem” também não expunha desabilitação nativa.
+- **Correção:** guarda no handler de remoção e `disabled` nativo nos dois botões. Não altera autorização no servidor nem políticas de Storage.
+- **REPROVADO antes da correção:** após ajustar o harness JSX do teste, `node tests/file-upload-disabled.test.mjs` reproduziu callbacks indevidos no caso desabilitado e ausência da propriedade nativa nos controles.
+- **APROVADO após correção:** o mesmo comando passou nos dois cenários (habilitado/desabilitado), executando o componente com hooks/elementos React simulados e verificando callbacks reais do handler. Nenhum arquivo ou usuário real usado.
+- **APROVADO:** `npm test` (53 arquivos de teste aprovados, zero falhas conforme resumo do runner), `npm run lint`, `npm run build` e `git diff --check`. O teste direcionado executado diretamente reportou 2/2 casos aprovados.
+- **NÃO VERIFICADO:** browser/E2E autenticado, CI remoto e comportamento do Storage no servidor; testes locais não homologam RLS. Sem bloqueador para esta correção local.
+- **Limites preservados:** sem acesso a banco, migrations, deploy, merge, workflows, credenciais ou arquivos de ambiente. Apenas componente, teste de regressão `tests/file-upload-disabled.test.mjs` e este registro alterados.
+- **Próxima ação:** homologar em navegador com contas sintéticas a seleção/remoção de evidências e o bloqueio dos controles ao perder acesso; depende de ambiente e contas de teste disponíveis. Ciclo encerrado após uma única tarefa.

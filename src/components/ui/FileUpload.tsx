@@ -165,6 +165,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
   const handleRemove = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (disabled) return;
     processGenerationRef.current += 1;
     if (inputRef.current) {
       inputRef.current.value = '';
@@ -223,6 +224,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
             <div className="flex items-center gap-2 mt-1.5">
               <button
                 type="button"
+                disabled={disabled}
                 onClick={() => { if (!disabled) inputRef.current?.click(); }}
                 className="text-[11px] font-medium text-slate-700 dark:text-zinc-300 hover:underline cursor-pointer"
               >
@@ -233,6 +235,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
           <button
             type="button"
+            disabled={disabled}
             onClick={handleRemove}
             aria-label="Remover arquivo"
             title="Remover arquivo"
