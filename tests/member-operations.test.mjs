@@ -66,6 +66,19 @@ test('invite requires a confirmed member id', async () => {
   assert.equal(result.error.code, 'INVITATION_NOT_CONFIRMED');
 });
 
+test('invite requires a valid member id and the requested organization', async () => {
+  for (const member of [
+    { id: 'invalid', organization_id: orgId },
+    { id: userId },
+    { id: userId, organization_id: scopeId },
+  ]) {
+    setup({ data: { success: true, member }, error: null });
+    const result = await membersService.invite(input);
+    assert.equal(result.data, null);
+    assert.equal(result.error.code, 'INVITATION_NOT_CONFIRMED');
+  }
+});
+
 test('invite reports success only for a confirmed created member', async () => {
   setup({ data: { success: true, member: {
     id: userId, name: 'Teste', organization_id: orgId, is_blocked: false,

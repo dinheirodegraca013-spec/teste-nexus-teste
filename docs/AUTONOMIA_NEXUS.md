@@ -2124,3 +2124,13 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **NÃO VERIFICADO:** navegador/E2E autenticado, CI remoto e RLS real. O teste direcionado informa ausência de configuração Supabase; os testes locais não precisam de conexão. Sem bloqueador para esta correção local.
 - **Arquivos alterados:** AuthContext, `tests/rbac-module-grants.test.mjs` e este documento. Sem alterações em workflows, ambientes, credenciais, SQL, banco, deploy ou merge.
 - **Próxima ação:** homologar login em ambiente de teste com liderança sintética cujo único grant seja Campo, verificando destino inicial e bloqueio após revogação. Depende de ambiente e conta de teste; ciclo encerrado após uma tarefa.
+
+## Ciclo autônomo — 2026-11-17: confirmação de convite por organização
+
+- **Tarefa única:** corrigir falso sucesso na confirmação de convites em `membersService.invite`. Branch `fix/persist-rbac-permissions`, HEAD inicial `d5617e4`, árvore inicialmente limpa. Skills: bug-hunter e qa-automation. Os documentos operacionais ESCOPO/BACKLOG/ESTADO/TESTES/AUDITORIA da raiz estão ausentes.
+- **Falha confirmada:** um ID inválido na resposta era aceito se fosse preenchido. O serviço também não comparava a organização devolvida com a solicitada. A Edge Function já seleciona `id` e `organization_id` no perfil retornado.
+- **Correção:** exigir UUID válido para o membro e organização correspondente à solicitação, comparando UUIDs sem distinção de maiúsculas. Respostas inválidas retornam `INVITATION_NOT_CONFIRMED`. Alterados `src/services/coreServices.ts` e `tests/member-operations.test.mjs`.
+- **REPROVADO antes da correção:** a regressão em `node tests/member-operations.test.mjs` recebeu um perfil com ID inválido onde esperava `data: null`.
+- **APROVADO após a correção:** teste direcionado (8/8, incluindo ID inválido, organização ausente e divergente com fixtures sintéticas e mock da Edge Function), `npm test` (53 arquivos, zero falhas), `npm run lint`, `npm run build` e `git diff --check`.
+- **NÃO VERIFICADO:** convite autenticado de ponta a ponta, entrega de e-mail, autorização no servidor e CI remoto. A correção valida a resposta no cliente. Nenhum acesso a banco ou dados reais, nenhuma migração, publicação ou merge.
+- **Próxima ação:** homologar o convite de ponta a ponta em DEV com contas sintéticas de duas organizações, verificando a emissão no tenant correto e a recusa de solicitação entre tenants. Depende de contas e ambiente de teste disponíveis.
