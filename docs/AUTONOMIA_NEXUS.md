@@ -2100,3 +2100,15 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **NÃO VERIFICADO:** browser/E2E autenticado, CI remoto e comportamento do Storage no servidor; testes locais não homologam RLS. Sem bloqueador para esta correção local.
 - **Limites preservados:** sem acesso a banco, migrations, deploy, merge, workflows, credenciais ou arquivos de ambiente. Apenas componente, teste de regressão `tests/file-upload-disabled.test.mjs` e este registro alterados.
 - **Próxima ação:** homologar em navegador com contas sintéticas a seleção/remoção de evidências e o bloqueio dos controles ao perder acesso; depende de ambiente e contas de teste disponíveis. Ciclo encerrado após uma única tarefa.
+
+## Ciclo autônomo — 2026-11-17: processamento pendente após desabilitar anexo
+
+- **Tarefa única:** corrigir processamento assíncrono obsoleto em `src/components/ui/FileUpload.tsx`. Branch atual `fix/persist-rbac-permissions`, estado inicial limpo, sem alterações humanas sobrescritas. Skills: bug-hunter e qa-automation; documentos operacionais da raiz ESCOPO/BACKLOG/ESTADO/TESTES/AUDITORIA continuam ausentes.
+- **Bug confirmado:** iniciar leitura de arquivo, desabilitar o componente e reabilitá-lo antes do término permitia que a leitura antiga disparasse `onChange`/`onFileSelected` ou atualizasse a mensagem de erro. A geração era invalidada apenas na desmontagem, remoção ou nova seleção.
+- **Correção:** o cleanup do efeito agora também invalida a geração quando `disabled` muda. Seleções novas após reabilitação continuam funcionando. Sem mudança de autorização, banco ou Storage.
+- **REPROVADO antes da correção:** `node tests/file-upload-disabled.test.mjs` reproduziu callbacks obsoletos e erro obsoleto nos dois novos cenários. Harness mantém refs entre renderizações e simula cleanup dos efeitos e FileReader; somente arquivos sintéticos em memória.
+- **APROVADO após correção:** teste direcionado, 4/4 cenários (remoção habilitada/desabilitada, sucesso/erro pendente após desabilitar e reabilitar, com nova seleção válida em ambos).
+- **APROVADO:** `npm test` (53 arquivos aprovados, zero falhas no resumo do runner), `npm run lint`, `npm run build` e `git diff --check`, todos executados localmente com saída de sucesso.
+- **NÃO VERIFICADO:** navegador/React real, E2E autenticado, CI remoto e RLS/Storage. O teste simula o ciclo de efeitos; não comprova integração com servidor. Sem bloqueador para a correção local.
+- **Arquivos:** componente, `tests/file-upload-disabled.test.mjs` e este registro. Nenhuma alteração em workflows, credenciais, ambientes, SQL, dados, deploy ou merge.
+- **Próxima ação:** homologar em navegador com contas sintéticas o bloqueio durante processamento de evidências e a retomada por nova seleção; depende de ambiente e contas de teste disponíveis. Ciclo encerrado após esta única tarefa.

@@ -37,9 +37,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Invalidate pending processing when availability changes or the form unmounts.
   useEffect(() => () => {
     processGenerationRef.current += 1;
-  }, []);
+  }, [disabled]);
 
   const compressImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
