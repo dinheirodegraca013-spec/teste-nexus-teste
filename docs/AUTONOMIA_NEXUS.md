@@ -2112,3 +2112,15 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **NÃO VERIFICADO:** navegador/React real, E2E autenticado, CI remoto e RLS/Storage. O teste simula o ciclo de efeitos; não comprova integração com servidor. Sem bloqueador para a correção local.
 - **Arquivos:** componente, `tests/file-upload-disabled.test.mjs` e este registro. Nenhuma alteração em workflows, credenciais, ambientes, SQL, dados, deploy ou merge.
 - **Próxima ação:** homologar em navegador com contas sintéticas o bloqueio durante processamento de evidências e a retomada por nova seleção; depende de ambiente e contas de teste disponíveis. Ciclo encerrado após esta única tarefa.
+
+## Ciclo autônomo — 2026-11-17: rota inicial de liderança com grant operacional
+
+- **Tarefa única:** corrigir `getDefaultRouteForUser` em `src/contexts/AuthContext.tsx`. Branch `fix/persist-rbac-permissions`, estado inicial limpo. Skills: bug-hunter e qa-automation. Documentos ESCOPO/BACKLOG/ESTADO/TESTES/AUDITORIA da raiz ausentes; registro preservado aqui.
+- **Bug confirmado:** liderança com apenas `field.can_view=true` passava em `checkUserPermission`, mas recebia `/403` como destino inicial. O retorno antecipado considerava somente CRM e Presenças, contrariando os grants explícitos já suportados.
+- **Correção:** preservar prioridade CRM/Presenças e, quando indisponíveis, percorrer os candidatos existentes com a mesma verificação de permissão. Sem concessão nova de acesso ou escrita; bloqueados, grants revogados e módulos administrativos continuam negados.
+- **REPROVADO antes da correção:** `node tests/rbac-module-grants.test.mjs` reportou 13 casos aprovados e 1 falha, com resultado `/403` em vez de `/app/campo`. `node --test tests/rbac-module-grants.test.mjs` também terminou com falha; execução direta expôs a asserção detalhada.
+- **APROVADO após correção:** `node tests/rbac-module-grants.test.mjs`, 14/14 casos; regressões cobrem Campo, Adesivos e Metas, grants revogados, conta bloqueada, prioridade CRM/Presenças e rejeição de grants administrativos. Fixtures sintéticas em memória, executando as funções reais empacotadas com esbuild.
+- **APROVADO:** `npm test` (53 arquivos aprovados, zero falhas no resumo observado), `npm run lint` e `npm run build`. Verificação final de whitespace por `git diff --check`.
+- **NÃO VERIFICADO:** navegador/E2E autenticado, CI remoto e RLS real. O teste direcionado informa ausência de configuração Supabase; os testes locais não precisam de conexão. Sem bloqueador para esta correção local.
+- **Arquivos alterados:** AuthContext, `tests/rbac-module-grants.test.mjs` e este documento. Sem alterações em workflows, ambientes, credenciais, SQL, banco, deploy ou merge.
+- **Próxima ação:** homologar login em ambiente de teste com liderança sintética cujo único grant seja Campo, verificando destino inicial e bloqueio após revogação. Depende de ambiente e conta de teste; ciclo encerrado após uma tarefa.

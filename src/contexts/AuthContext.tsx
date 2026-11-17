@@ -135,7 +135,8 @@ export function getDefaultRouteForUser(userProfile: Profile | null, perms: UserM
   const normRole = normalizeRole(userProfile.role);
   if (normRole === 'superadmin' || normRole === 'admin') return '/app/dashboard';
   if (normRole === 'leader') {
-    return hasPerm('crm', 'view') ? '/app/crm' : hasPerm('presence', 'view') ? '/app/presenca' : '/403';
+    if (hasPerm('crm', 'view')) return '/app/crm';
+    if (hasPerm('presence', 'view')) return '/app/presenca';
   }
 
   const candidateModules: Array<{ module: AppModule; route: string }> = [

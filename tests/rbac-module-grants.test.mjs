@@ -51,6 +51,21 @@ test('without any saved grants, leader defaults to forbidden route', () => {
   const profile = { role: 'leader', is_blocked: false };
   assert.equal(getDefaultRouteForUser(profile, []), '/403');
 });
+test('leader defaults to an explicitly granted module beyond CRM and presence', () => {
+  const profile = { role: 'leader', is_blocked: false };
+  for (const [module, route] of [['field', '/app/campo'], ['stickers', '/app/adesivos'], ['goals', '/app/metas']]) {
+    assert.equal(checkUserPermission(profile, [permission(module)], module), true);
+    assert.equal(getDefaultRouteForUser(profile, [permission(module)]), route);
+    assert.equal(getDefaultRouteForUser(profile, [permission(module, { can_view: false })]), '/403');
+    assert.equal(getDefaultRouteForUser({ ...profile, is_blocked: true }, [permission(module)]), '/403');
+  }
+});
+test('leader keeps CRM and presence priority and rejects administrative grants', () => {
+  const profile = { role: 'leader', is_blocked: false };
+  assert.equal(getDefaultRouteForUser(profile, [permission('field'), permission('presence'), permission('crm')]), '/app/crm');
+  assert.equal(getDefaultRouteForUser(profile, [permission('field'), permission('presence')]), '/app/presenca');
+  assert.equal(getDefaultRouteForUser(profile, ['users', 'organizations', 'settings'].map(module => permission(module))), '/403');
+});
 test('coordinator with explicit read access sees coordinator module but not unrelated module', () => {
   const profile = { role: 'coordinator', is_blocked: false };
   const perms = [permission('coordinators')];
