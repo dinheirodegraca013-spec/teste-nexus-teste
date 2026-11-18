@@ -355,7 +355,10 @@ export const goalsService = {
       p_goal_id: id,
       p_amount: amount,
     });
-    return confirmUpdatedRow(data as Goal | null, error);
+    const goal = data as Goal | null;
+    const confirmedGoal = goal && typeof goal.id === 'string' &&
+      goal.id.toLowerCase() === id.toLowerCase() ? goal : null;
+    return confirmUpdatedRow(confirmedGoal, error);
   },
 
   async delete(id: string) {

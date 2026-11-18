@@ -21,6 +21,10 @@ const artifact = await build({
       build.onLoad({ filter: /.*/, namespace: 'mock' }, () => ({
         contents: `
           export const supabase = {
+            async rpc(name, params) {
+              globalThis.__nexusUpdates.calls.push([name, params]);
+              return globalThis.__nexusUpdates.outcome;
+            },
             from(table) {
               globalThis.__nexusUpdates.calls.push(['from',table]);
               return {
@@ -102,3 +106,23 @@ for(const [label,table,operation] of operations) {
     assert.equal(Object.prototype.hasOwnProperty.call(patch,'organization_id'),false);
   });
 }
+
+test('incremento atômico exige confirmação da meta solicitada', async () => {
+  for (const data of [null, {}, { id: '20000000-0000-4000-8000-000000000002' }]) {
+    setup({ data, error: null });
+    const result = await goalsService.incrementAtomically(id, 2);
+    assert.equal(result.data, null);
+    assert.equal(result.error?.code, 'UPDATE_NOT_APPLIED');
+  }
+});
+
+test('incremento atômico preserva a linha confirmada e o erro da RPC', async () => {
+  const goal = { id, current_value: 7, status: 'in_progress' };
+  const state = setup({ data: goal, error: null });
+  assert.deepEqual(await goalsService.incrementAtomically(id, 2), { data: goal, error: null });
+  assert.deepEqual(state.calls, [['nexus_increment_goal', { p_goal_id: id, p_amount: 2 }]]);
+
+  const error = { code: '42501', message: 'Sem permissão' };
+  setup({ data: null, error });
+  assert.equal((await goalsService.incrementAtomically(id, 2)).error, error);
+});

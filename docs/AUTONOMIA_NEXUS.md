@@ -2152,3 +2152,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovado:** teste direcionado (3/3, com mock da RPC), `npm test` (53 arquivos, zero falhas), `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificado:** execução da RPC, interface autenticada e CI remoto. A validação local usou dados sintéticos, sem acesso ao banco.
 - **Próxima ação:** homologar a distribuição em DEV com estoque e contas sintéticas de duas organizações, verificando o saldo e o registro resultantes no tenant autorizado. Depende de ambiente e fixtures de teste disponíveis.
+
+## Ciclo autônomo — 2026-11-18: confirmação do incremento de metas
+
+- **Tarefa única:** corrigir falso sucesso em `goalsService.incrementAtomically`. Branch `fix/persist-rbac-permissions`, HEAD inicial `d0ba6eb`, árvore limpa. Skills bug-hunter e qa-automation. Documentos operacionais da raiz ausentes.
+- **Reprovado antes da correção:** `node tests/confirmed-updates.test.mjs` teve 45 aprovações e uma falha. O serviço aceitou um objeto vazio da RPC, embora `nexus_increment_goal` declare retorno da linha atualizada em `public.goals`.
+- **Correção:** `src/services/dataServices.ts` exige que a linha retornada identifique a meta solicitada, comparando o UUID sem distinção de caixa. Retorno sem confirmação produz `UPDATE_NOT_APPLIED` e erros da RPC são preservados.
+- **Aprovado:** teste direcionado (46/46), incluindo resposta ausente, vazia, com outra meta, sucesso e erro da RPC com fixtures sintéticas em `tests/confirmed-updates.test.mjs`. `npm test` (53 arquivos, zero falhas), `npm run lint`, `npm run build` e `git diff --check` aprovados.
+- **Não verificado:** RPC real, RLS, interface autenticada e CI remoto. Nenhuma conexão com o banco foi necessária para a regressão local.
+- **Próxima ação:** homologar em DEV, com contas e metas sintéticas de duas organizações, o incremento da meta autorizada e a recusa de acesso entre tenants. Depende da disponibilidade dessas fixtures e contas.
