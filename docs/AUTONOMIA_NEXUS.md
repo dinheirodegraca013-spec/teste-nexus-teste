@@ -2143,3 +2143,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovado:** teste direcionado (9/9), com casos de e-mail ausente, divergente e equivalente após normalização em `tests/member-operations.test.mjs`. `npm test` (53 arquivos, zero falhas), `npm run lint`, `npm run build` e `git diff --check` também passaram.
 - **Não verificado:** E2E autenticado, entrega de e-mail e CI remoto. A regressão usa dados sintéticos e simula a resposta da Edge Function. Nenhum acesso a banco ou publicação.
 - **Próxima ação:** homologar em DEV a emissão e o aceite de convite com contas sintéticas de duas organizações. Depende de ambiente e contas de teste disponíveis.
+
+## Ciclo autônomo — 2026-11-18: confirmação da distribuição de materiais
+
+- **Tarefa única:** impedir falso sucesso na distribuição atômica quando a RPC devolve um identificador malformado. Branch `fix/persist-rbac-permissions`, HEAD inicial `3aeae5c`, árvore limpa. Skills bug-hunter e qa-automation. Documentos operacionais da raiz ausentes.
+- **Reprovado antes da correção:** `node tests/material-distribution-atomic.test.mjs` falhou em 1 de 3 casos. O serviço aceitou o texto sintético `distribution-id`, embora `nexus_distribute_material` declare retorno UUID.
+- **Correção:** `src/services/dataServices.ts` reutiliza `isValidUUID` para confirmar o retorno da RPC. Identificador ausente ou malformado produz `MATERIAL_DISTRIBUTION_NOT_CONFIRMED`.
+- **Aprovado:** teste direcionado (3/3, com mock da RPC), `npm test` (53 arquivos, zero falhas), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificado:** execução da RPC, interface autenticada e CI remoto. A validação local usou dados sintéticos, sem acesso ao banco.
+- **Próxima ação:** homologar a distribuição em DEV com estoque e contas sintéticas de duas organizações, verificando o saldo e o registro resultantes no tenant autorizado. Depende de ambiente e fixtures de teste disponíveis.

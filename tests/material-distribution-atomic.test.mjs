@@ -18,11 +18,11 @@ const artifact = await build({
 const { materialsService } = await import(`data:text/javascript;base64,${Buffer.from(artifact.outputFiles[0].text).toString('base64')}`);
 
 test('material distribution uses the atomic RPC and confirms its id', async () => {
-  globalThis.__nexusMaterialRpc = { outcome: { data: 'distribution-id', error: null } };
+  globalThis.__nexusMaterialRpc = { outcome: { data: '10000000-0000-4000-8000-000000000002', error: null } };
   const result = await materialsService.distributeAtomically({
     material_id: '10000000-0000-4000-8000-000000000001', recipient_name: 'Equipe', territory: 'Centro', quantity: 2,
   });
-  assert.equal(result.data, 'distribution-id');
+  assert.equal(result.data, '10000000-0000-4000-8000-000000000002');
   assert.equal(result.error, null);
   assert.deepEqual(globalThis.__nexusMaterialRpc.args, ['nexus_distribute_material', {
     p_material_id: '10000000-0000-4000-8000-000000000001', p_recipient_name: 'Equipe', p_territory: 'Centro', p_quantity: 2,
@@ -31,6 +31,15 @@ test('material distribution uses the atomic RPC and confirms its id', async () =
 
 test('material distribution does not report success when RPC returns no id', async () => {
   globalThis.__nexusMaterialRpc = { outcome: { data: null, error: null } };
+  const result = await materialsService.distributeAtomically({
+    material_id: '10000000-0000-4000-8000-000000000001', recipient_name: 'Equipe', territory: 'Centro', quantity: 2,
+  });
+  assert.equal(result.data, null);
+  assert.equal(result.error?.code, 'MATERIAL_DISTRIBUTION_NOT_CONFIRMED');
+});
+
+test('material distribution rejects a malformed RPC id', async () => {
+  globalThis.__nexusMaterialRpc = { outcome: { data: 'distribution-id', error: null } };
   const result = await materialsService.distributeAtomically({
     material_id: '10000000-0000-4000-8000-000000000001', recipient_name: 'Equipe', territory: 'Centro', quantity: 2,
   });

@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { isValidUUID } from './coreServices';
 import { validatePhotoReference } from './photoEvidenceGuard';
 import { 
   Coordinator, 
@@ -61,7 +62,7 @@ function confirmRpcUuid(
   message: string,
 ): { data: string | null; error: { message: string; code?: string } | null } {
   if (error) return { data: null, error };
-  if (typeof data !== 'string' || !data) return { data: null, error: { code, message } };
+  if (!isValidUUID(data)) return { data: null, error: { code, message } };
   return { data, error: null };
 }
 
