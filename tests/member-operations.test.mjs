@@ -79,11 +79,22 @@ test('invite requires a valid member id and the requested organization', async (
   }
 });
 
+test('invite rejects a response without the requested email', async () => {
+  for (const email of [undefined, 'other@example.invalid']) {
+    setup({ data: { success: true, member: {
+      id: userId, organization_id: orgId, email,
+    } }, error: null });
+    const result = await membersService.invite(input);
+    assert.equal(result.error?.code, 'INVITATION_NOT_CONFIRMED');
+    assert.equal(result.data, null);
+  }
+});
+
 test('invite reports success only for a confirmed created member', async () => {
   setup({ data: { success: true, member: {
-    id: userId, name: 'Teste', organization_id: orgId, is_blocked: false,
+    id: userId, name: 'Teste', organization_id: orgId, email: input.email, is_blocked: false,
   } }, error: null });
-  const result = await membersService.invite(input);
+  const result = await membersService.invite({ ...input, email: ' SAFE@example.invalid ' });
   assert.equal(result.error, null);
   assert.equal(result.data.id, userId);
 });

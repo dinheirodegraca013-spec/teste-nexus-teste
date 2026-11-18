@@ -2134,3 +2134,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **APROVADO após a correção:** teste direcionado (8/8, incluindo ID inválido, organização ausente e divergente com fixtures sintéticas e mock da Edge Function), `npm test` (53 arquivos, zero falhas), `npm run lint`, `npm run build` e `git diff --check`.
 - **NÃO VERIFICADO:** convite autenticado de ponta a ponta, entrega de e-mail, autorização no servidor e CI remoto. A correção valida a resposta no cliente. Nenhum acesso a banco ou dados reais, nenhuma migração, publicação ou merge.
 - **Próxima ação:** homologar o convite de ponta a ponta em DEV com contas sintéticas de duas organizações, verificando a emissão no tenant correto e a recusa de solicitação entre tenants. Depende de contas e ambiente de teste disponíveis.
+
+## Ciclo autônomo — 2026-11-18: confirmação do destinatário do convite
+
+- **Tarefa única:** corrigir falso sucesso em `membersService.invite` quando a resposta traz um perfil da organização solicitada, mas com e-mail ausente ou divergente. Branch `fix/persist-rbac-permissions`, HEAD inicial `874b0a4`, árvore limpa. Skills bug-hunter e qa-automation. Documentos operacionais da raiz ausentes.
+- **Reprovado antes da correção:** `node tests/member-operations.test.mjs` acusou 1 falha em 9 casos. O serviço aceitou o perfil sem e-mail e retornou sucesso.
+- **Correção:** `src/services/coreServices.ts` exige correspondência com o e-mail solicitado, ignorando caixa e espaços nas extremidades conforme a normalização da Edge Function. O campo já faz parte da resposta da função. Ausência ou divergência retorna `INVITATION_NOT_CONFIRMED`.
+- **Aprovado:** teste direcionado (9/9), com casos de e-mail ausente, divergente e equivalente após normalização em `tests/member-operations.test.mjs`. `npm test` (53 arquivos, zero falhas), `npm run lint`, `npm run build` e `git diff --check` também passaram.
+- **Não verificado:** E2E autenticado, entrega de e-mail e CI remoto. A regressão usa dados sintéticos e simula a resposta da Edge Function. Nenhum acesso a banco ou publicação.
+- **Próxima ação:** homologar em DEV a emissão e o aceite de convite com contas sintéticas de duas organizações. Depende de ambiente e contas de teste disponíveis.

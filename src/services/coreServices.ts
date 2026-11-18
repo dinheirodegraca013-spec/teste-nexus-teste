@@ -418,11 +418,13 @@ export const membersService = {
 
     if (error) return { data: null, error };
     // Edge Functions can respond HTTP 200 with a business-level error body.
-    // Confirm that the response identifies a member of the requested organization.
+    // Confirm that the response identifies the requested recipient and organization.
     const member = data?.member;
+    const requestedEmail = params.email.trim().toLowerCase();
     if (data?.success !== true || !isValidUUID(member?.id) ||
         !isValidUUID(member.organization_id) ||
-        member.organization_id.toLowerCase() !== params.organization_id.toLowerCase()) {
+        member.organization_id.toLowerCase() !== params.organization_id.toLowerCase() ||
+        typeof member.email !== 'string' || member.email.trim().toLowerCase() !== requestedEmail) {
       return {
         data: null,
         error: { name: 'InvitationError', code: 'INVITATION_NOT_CONFIRMED',
