@@ -695,14 +695,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     invalidateUserData();
     try {
       const { error } = await supabase.auth.signOut();
+      return { error: error || null };
+    } catch (err: any) {
+      return { error: err };
+    } finally {
       setUser(null);
       setSession(null);
       setProfile(null);
       setOrganization(null);
       setPermissions([]);
-      return { error: error || null };
-    } catch (err: any) {
-      return { error: err };
     }
   };
 

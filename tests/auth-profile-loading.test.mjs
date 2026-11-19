@@ -24,7 +24,7 @@ const result = await build({
         };
         export default { useRef, createElement: (_type, props) => { if (props.value) globalThis.__authContext = props.value; return null; } };
       ` : args.path.endsWith('/supabase') ? `
-        export const supabase = { auth: { updateUser: (...args) => globalThis.__authProfileTest.updateUser(...args), resetPasswordForEmail: (...args) => globalThis.__authProfileTest.resetPassword(...args), signOut: async () => ({ error: null }), getSession: () => globalThis.__authProfileTest.session(), onAuthStateChange: callback => { globalThis.__authProfileTest.onChange = callback; return { data: { subscription: { unsubscribe() {} } } }; } }, rpc: (...args) => globalThis.__authProfileTest.rpc(...args) };
+        export const supabase = { auth: { updateUser: (...args) => globalThis.__authProfileTest.updateUser(...args), resetPasswordForEmail: (...args) => globalThis.__authProfileTest.resetPassword(...args), signOut: async () => globalThis.__authProfileTest.signOut?.() ?? { error: null }, getSession: () => globalThis.__authProfileTest.session(), onAuthStateChange: callback => { globalThis.__authProfileTest.onChange = callback; return { data: { subscription: { unsubscribe() {} } } }; } }, rpc: (...args) => globalThis.__authProfileTest.rpc(...args) };
         export const isSupabaseConfigured = true, supabaseUrl = '';
       ` : `
         export const profilesService = { getById: (...args) => globalThis.__authProfileTest.lookup(...args) };
@@ -374,6 +374,26 @@ test('password update requires Auth to return the updated user', async () => {
 
     response = { data: { user: null }, error: providerError };
     assert.equal((await updatePassword('synthetic-password')).error, providerError);
+  } finally {
+    delete globalThis.__authProfileTest;
+    delete globalThis.__authContext;
+  }
+});
+
+test('logout clears local access state when Auth throws', async () => {
+  const providerError = new Error('Synthetic logout failure');
+  globalThis.__authProfileTest = {
+    signOut: () => { throw providerError; },
+  };
+  callbacks.length = states.length = effects.length = 0;
+  try {
+    AuthProvider({ children: null });
+    for (const index of [0, 1, 2, 3]) states[index] = { id: 'synthetic' };
+    states[5] = [{ user_id: 'synthetic' }];
+
+    assert.equal((await globalThis.__authContext.signOut()).error, providerError);
+    assert.deepEqual(states.slice(0, 4), [null, null, null, null]);
+    assert.deepEqual(states[5], []);
   } finally {
     delete globalThis.__authProfileTest;
     delete globalThis.__authContext;

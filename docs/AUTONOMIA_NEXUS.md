@@ -2179,3 +2179,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovado:** teste direcionado (28/28), incluindo respostas com usuário ausente, objeto vazio, confirmação válida e erro do provedor. `npm test` (53 arquivos, zero falhas), `npm run lint`, `npm run build` e `git diff --check` aprovados.
 - **Não verificado:** Auth real, navegador e CI remoto. O teste usa respostas sintéticas do Auth. Nenhum bloqueio à validação local.
 - **Próxima ação:** validar em DEV a redefinição e o login com a nova senha de uma conta sintética. Depende de conta e ambiente de teste disponíveis.
+
+## Ciclo autônomo — 2026-11-19 — limpeza local no logout
+
+- **Tarefa única:** garantir que o logout limpe usuário, sessão, perfil, organização e permissões do contexto React mesmo quando o provedor lança uma exceção. Branch `fix/persist-rbac-permissions`, HEAD inicial `e7d22a1`, árvore limpa. Skills bug-hunter e qa-automation. Documentos operacionais da raiz ausentes.
+- **Falhou antes da correção:** `node tests/auth-profile-loading.test.mjs` registrou 28 aprovações e uma falha. A exceção sintética preservava usuário e sessão no estado local.
+- **Correção:** `src/contexts/AuthContext.tsx` executa a limpeza local no bloco `finally` de `signOut` e preserva o erro do provedor no retorno.
+- **Aprovados:** teste direcionado (29/29), `npm test` (53 arquivos, zero falhas), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificados:** logout em navegador, revogação de sessão no Supabase Auth e CI remoto. A regressão usa mocks e dados sintéticos. Nenhum bloqueio à validação local.
+- **Próxima ação:** com uma conta sintética em DEV, validar a saída sob falha de rede e verificar a sessão do navegador ao recarregar a página.
