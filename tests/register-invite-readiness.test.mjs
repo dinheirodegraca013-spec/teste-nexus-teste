@@ -12,3 +12,10 @@ test('cadastro não submete convite antes de resolver seus dados', async () => {
   assert.match(source, /pelo menos 8 caracteres/);
   assert.doesNotMatch(source, /pelo menos 6 caracteres/);
 });
+
+test('cadastro inicia com os termos desmarcados e exige aceite antes do envio', async () => {
+  const source = await readFile(new URL('../src/pages/public/RegisterPage.tsx', import.meta.url), 'utf8');
+  assert.match(source, /\[acceptTerms, setAcceptTerms\] = useState\(false\)/);
+  assert.match(source, /checked=\{acceptTerms\}\s+onChange=\{\(e\) => setAcceptTerms\(e\.target\.checked\)\}/);
+  assert.match(source, /if \(!acceptTerms\) \{[^}]*return;\s*\}[\s\S]*await signUp\(/);
+});

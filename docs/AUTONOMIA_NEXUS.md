@@ -2161,3 +2161,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovado:** teste direcionado (46/46), incluindo resposta ausente, vazia, com outra meta, sucesso e erro da RPC com fixtures sintéticas em `tests/confirmed-updates.test.mjs`. `npm test` (53 arquivos, zero falhas), `npm run lint`, `npm run build` e `git diff --check` aprovados.
 - **Não verificado:** RPC real, RLS, interface autenticada e CI remoto. Nenhuma conexão com o banco foi necessária para a regressão local.
 - **Próxima ação:** homologar em DEV, com contas e metas sintéticas de duas organizações, o incremento da meta autorizada e a recusa de acesso entre tenants. Depende da disponibilidade dessas fixtures e contas.
+
+## Ciclo autônomo — 2026-11-19: aceite explícito no cadastro
+
+- **Tarefa única:** iniciar a caixa de aceite dos Termos de Uso e da Política de Privacidade desmarcada em `src/pages/public/RegisterPage.tsx`. A validação existente bloqueia o envio até o usuário marcar a caixa, tanto no cadastro direto quanto por convite.
+- **Contexto:** branch `fix/persist-rbac-permissions`, HEAD inicial `0a6f83c`, árvore limpa. Skills bug-hunter e qa-automation. Documentos operacionais da raiz ausentes.
+- **Reprovado antes da correção:** a regressão em `tests/register-invite-readiness.test.mjs` detectou que o estado de aceite começava como verdadeiro.
+- **Aprovado após a correção:** teste direcionado (2/2), `npm test` (53 arquivos, zero falhas), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificado:** fluxo real no navegador e CI remoto. A regressão inspeciona o código do formulário. Nenhum banco ou dado real foi usado. Nenhum bloqueio à validação local.
+- **Próxima ação:** validar no navegador, com uma conta sintética em DEV, que o cadastro permanece bloqueado até marcar a caixa e prossegue após o aceite.
