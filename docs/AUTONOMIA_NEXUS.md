@@ -2170,3 +2170,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovado após a correção:** teste direcionado (2/2), `npm test` (53 arquivos, zero falhas), `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificado:** fluxo real no navegador e CI remoto. A regressão inspeciona o código do formulário. Nenhum banco ou dado real foi usado. Nenhum bloqueio à validação local.
 - **Próxima ação:** validar no navegador, com uma conta sintética em DEV, que o cadastro permanece bloqueado até marcar a caixa e prossegue após o aceite.
+
+## Ciclo autônomo — 2026-11-19: confirmação da atualização de senha
+
+- **Tarefa única:** corrigir falso sucesso em `AuthContext.updatePassword`, usado na redefinição e na tela de perfil. Branch `fix/persist-rbac-permissions`, HEAD inicial `4250072`, árvore limpa. Skills bug-hunter e qa-automation. Documentos operacionais da raiz ausentes.
+- **Reprovado antes da correção:** `node tests/auth-profile-loading.test.mjs` registrou 27 aprovações e uma falha. A operação retornou sucesso com `data.user = null` e sem erro do provedor.
+- **Correção:** `src/contexts/AuthContext.tsx` exige o identificador do usuário devolvido pelo Auth, preserva erros do provedor e registra a falha de confirmação pelo mecanismo existente.
+- **Aprovado:** teste direcionado (28/28), incluindo respostas com usuário ausente, objeto vazio, confirmação válida e erro do provedor. `npm test` (53 arquivos, zero falhas), `npm run lint`, `npm run build` e `git diff --check` aprovados.
+- **Não verificado:** Auth real, navegador e CI remoto. O teste usa respostas sintéticas do Auth. Nenhum bloqueio à validação local.
+- **Próxima ação:** validar em DEV a redefinição e o login com a nova senha de uma conta sintética. Depende de conta e ambiente de teste disponíveis.

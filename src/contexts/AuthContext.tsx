@@ -724,9 +724,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error: new Error('A senha deve possuir pelo menos 8 caracteres.') };
     }
     try {
-      const { error } = await supabase.auth.updateUser({ password });
+      const { data, error: providerError } = await supabase.auth.updateUser({ password });
+      const error = providerError || (data?.user?.id
+        ? null
+        : new Error('O servidor não confirmou a atualização da senha. Tente novamente.'));
       if (error) logAuthError('updatePassword', error);
-      return { error: error || null };
+      return { error };
     } catch (err: any) {
       logAuthError('updatePassword:catch', err);
       return { error: err };

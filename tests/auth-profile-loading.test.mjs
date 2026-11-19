@@ -24,7 +24,7 @@ const result = await build({
         };
         export default { useRef, createElement: (_type, props) => { if (props.value) globalThis.__authContext = props.value; return null; } };
       ` : args.path.endsWith('/supabase') ? `
-        export const supabase = { auth: { resetPasswordForEmail: (...args) => globalThis.__authProfileTest.resetPassword(...args), signOut: async () => ({ error: null }), getSession: () => globalThis.__authProfileTest.session(), onAuthStateChange: callback => { globalThis.__authProfileTest.onChange = callback; return { data: { subscription: { unsubscribe() {} } } }; } }, rpc: (...args) => globalThis.__authProfileTest.rpc(...args) };
+        export const supabase = { auth: { updateUser: (...args) => globalThis.__authProfileTest.updateUser(...args), resetPasswordForEmail: (...args) => globalThis.__authProfileTest.resetPassword(...args), signOut: async () => ({ error: null }), getSession: () => globalThis.__authProfileTest.session(), onAuthStateChange: callback => { globalThis.__authProfileTest.onChange = callback; return { data: { subscription: { unsubscribe() {} } } }; } }, rpc: (...args) => globalThis.__authProfileTest.rpc(...args) };
         export const isSupabaseConfigured = true, supabaseUrl = '';
       ` : `
         export const profilesService = { getById: (...args) => globalThis.__authProfileTest.lookup(...args) };
@@ -346,6 +346,35 @@ test('password recovery targets the existing reset page on the current origin', 
   } finally {
     if (previousWindow === undefined) delete globalThis.window;
     else globalThis.window = previousWindow;
+    delete globalThis.__authProfileTest;
+    delete globalThis.__authContext;
+  }
+});
+
+test('password update requires Auth to return the updated user', async () => {
+  const providerError = new Error('Synthetic provider failure');
+  let response;
+  globalThis.__authProfileTest = {
+    updateUser: async payload => {
+      assert.deepEqual(payload, { password: 'synthetic-password' });
+      return response;
+    },
+  };
+  try {
+    AuthProvider({ children: null });
+    const { updatePassword } = globalThis.__authContext;
+    response = { data: { user: null }, error: null };
+    assert.match((await updatePassword('synthetic-password')).error?.message ?? '', /não confirmou/);
+
+    response = { data: { user: {} }, error: null };
+    assert.match((await updatePassword('synthetic-password')).error?.message ?? '', /não confirmou/);
+
+    response = { data: { user: { id: 'synthetic-user' } }, error: null };
+    assert.equal((await updatePassword('synthetic-password')).error, null);
+
+    response = { data: { user: null }, error: providerError };
+    assert.equal((await updatePassword('synthetic-password')).error, providerError);
+  } finally {
     delete globalThis.__authProfileTest;
     delete globalThis.__authContext;
   }
