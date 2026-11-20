@@ -2188,3 +2188,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovados:** teste direcionado (29/29), `npm test` (53 arquivos, zero falhas), `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificados:** logout em navegador, revogação de sessão no Supabase Auth e CI remoto. A regressão usa mocks e dados sintéticos. Nenhum bloqueio à validação local.
 - **Próxima ação:** com uma conta sintética em DEV, validar a saída sob falha de rede e verificar a sessão do navegador ao recarregar a página.
+
+## Ciclo autônomo — 2026-11-20 — limpeza local após login rejeitado
+
+- **Tarefa única:** limpar o estado autenticado quando o login é rejeitado por perfil ou organização inválidos, mesmo se o logout do provedor falhar. Branch `fix/persist-rbac-permissions`, HEAD inicial `f92bf78`, árvore limpa. Skills bug-hunter e qa-automation. Documentos operacionais da raiz ausentes.
+- **Falhou antes da correção:** `node tests/auth-profile-loading.test.mjs` registrou 29 aprovações e uma falha. Uma exceção sintética no logout deixava usuário e sessão no contexto React após a rejeição do login.
+- **Correção:** `src/contexts/AuthContext.tsx` reutiliza a limpeza autenticada existente, que limpa usuário, sessão, perfil, organizações e permissões antes de solicitar logout. A mensagem de acesso bloqueado é preservada e erros do logout continuam registrados.
+- **Aprovados:** teste direcionado (30/30), `npm test` (53 arquivos, zero falhas), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificados:** navegador, revogação de sessão no Supabase Auth e CI remoto. A regressão usa dados sintéticos e mocks. Nenhum bloqueio à validação local.
+- **Próxima ação:** com conta sintética em DEV, verificar o estado após rejeição do login com falha de rede durante o logout e após recarregar a página.

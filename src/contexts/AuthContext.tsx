@@ -558,12 +558,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(data.session);
         const { profile: loadedProfile, organization: loadedOrg, permissions: loadedPerms } = await loadUserDataSafe(data.user);
         if (!loadedProfile || loadedProfile.is_blocked || !loadedOrg || loadedOrg.id !== loadedProfile.organization_id) {
-          await supabase.auth.signOut();
-          setUser(null);
-          setSession(null);
-          setProfile(null);
-          setOrganization(null);
-          setPermissions([]);
+          await clearAuthenticatedState();
           return { error: new Error('Acesso bloqueado: perfil ou organização inválidos. Solicite ao administrador a regularização da conta.') };
         }
         return { error: null, defaultRoute: getDefaultRouteForUser(loadedProfile, loadedPerms) };

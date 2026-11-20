@@ -24,7 +24,7 @@ const result = await build({
         };
         export default { useRef, createElement: (_type, props) => { if (props.value) globalThis.__authContext = props.value; return null; } };
       ` : args.path.endsWith('/supabase') ? `
-        export const supabase = { auth: { updateUser: (...args) => globalThis.__authProfileTest.updateUser(...args), resetPasswordForEmail: (...args) => globalThis.__authProfileTest.resetPassword(...args), signOut: async () => globalThis.__authProfileTest.signOut?.() ?? { error: null }, getSession: () => globalThis.__authProfileTest.session(), onAuthStateChange: callback => { globalThis.__authProfileTest.onChange = callback; return { data: { subscription: { unsubscribe() {} } } }; } }, rpc: (...args) => globalThis.__authProfileTest.rpc(...args) };
+        export const supabase = { auth: { signInWithPassword: (...args) => globalThis.__authProfileTest.signIn(...args), updateUser: (...args) => globalThis.__authProfileTest.updateUser(...args), resetPasswordForEmail: (...args) => globalThis.__authProfileTest.resetPassword(...args), signOut: async () => globalThis.__authProfileTest.signOut?.() ?? { error: null }, getSession: () => globalThis.__authProfileTest.session(), onAuthStateChange: callback => { globalThis.__authProfileTest.onChange = callback; return { data: { subscription: { unsubscribe() {} } } }; } }, rpc: (...args) => globalThis.__authProfileTest.rpc(...args) };
         export const isSupabaseConfigured = true, supabaseUrl = '';
       ` : `
         export const profilesService = { getById: (...args) => globalThis.__authProfileTest.lookup(...args) };
@@ -394,6 +394,28 @@ test('logout clears local access state when Auth throws', async () => {
     assert.equal((await globalThis.__authContext.signOut()).error, providerError);
     assert.deepEqual(states.slice(0, 4), [null, null, null, null]);
     assert.deepEqual(states[5], []);
+  } finally {
+    delete globalThis.__authProfileTest;
+    delete globalThis.__authContext;
+  }
+});
+
+test('rejected login clears local session when provider logout throws', async () => {
+  const user = { id: '11111111-1111-4111-8111-111111111111', user_metadata: {} };
+  const providerError = new Error('Synthetic logout failure');
+  globalThis.__authProfileTest = {
+    signIn: async () => ({ data: { user, session: { user } }, error: null }),
+    lookup: async () => ({ data: null, error: new Error('Synthetic profile lookup failure') }),
+    signOut: () => { throw providerError; },
+  };
+  callbacks.length = states.length = effects.length = 0;
+  try {
+    AuthProvider({ children: null });
+    const { error } = await globalThis.__authContext.signIn('test@example.invalid', 'synthetic-password');
+    assert.deepEqual(states.slice(0, 4), [null, null, null, null]);
+    assert.deepEqual(states[4], []);
+    assert.deepEqual(states[5], []);
+    assert.match(error.message, /Acesso bloqueado/);
   } finally {
     delete globalThis.__authProfileTest;
     delete globalThis.__authContext;
