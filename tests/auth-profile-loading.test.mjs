@@ -428,9 +428,10 @@ test('invited signup confirms the invited organization before reporting success'
   const otherOrgId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
   let profileOrgId = otherOrgId;
   let signOuts = 0;
+  let blocked = false;
   globalThis.__authProfileTest = {
     signUp: async () => ({ data: { user, session: { user } }, error: null }),
-    lookup: async () => ({ data: { id: user.id, organization_id: profileOrgId, role: 'viewer' }, error: null }),
+    lookup: async () => ({ data: { id: user.id, organization_id: profileOrgId, role: 'viewer', is_blocked: blocked }, error: null }),
     signOut: () => { signOuts++; },
     rpc: () => assert.fail('Invited signup must not provision an organization'),
   };
@@ -453,6 +454,13 @@ test('invited signup confirms the invited organization before reporting success'
     profileOrgId = invitedOrgId;
     assert.deepEqual(await signUp(params), { error: null, requiresConfirmation: false, user });
     assert.equal(signOuts, 1);
+
+    blocked = true;
+    const blockedSignup = await signUp(params);
+    assert.match(blockedSignup.error?.message ?? '', /bloqueado/);
+    assert.deepEqual(states.slice(0, 4), [null, null, null, null]);
+    assert.deepEqual(states[5], []);
+    assert.equal(signOuts, 2);
   } finally {
     delete globalThis.__authProfileTest;
     delete globalThis.__authContext;

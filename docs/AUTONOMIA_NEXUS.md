@@ -2206,3 +2206,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovados:** teste direcionado (31/31, com mocks e organizações sintéticas), `npm test`, `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificados:** cadastro e logout reais no navegador, autorização no servidor e CI remoto. Nenhum acesso a banco ou bloqueio à validação local.
 - **Próxima ação:** homologar em DEV o cadastro por convite e o vínculo ao tenant com contas sintéticas de duas organizações. Depende de ambiente e contas de teste disponíveis.
+
+## Ciclo autônomo — 2026-11-20 — perfil bloqueado no cadastro
+
+- **Tarefa única:** rejeitar cadastro com sessão imediata quando o perfil carregado está bloqueado. Branch `fix/persist-rbac-permissions`, HEAD inicial `70e2bd4`, árvore limpa. Skills bug-hunter e qa-automation.
+- **Falhou antes da correção:** `node tests/auth-profile-loading.test.mjs` registrou 30 aprovações e uma falha. O cenário sintético de cadastro por convite na organização correta retornou sucesso com `is_blocked=true`.
+- **Correção:** `src/contexts/AuthContext.tsx` registra o bloqueio, limpa a sessão e as permissões locais e solicita logout usando a rotina existente. A regressão verifica a mensagem, a limpeza e a chamada de logout.
+- **Aprovados:** teste direcionado (31/31), `npm test` (53 arquivos, zero falhas), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificados:** navegador, logout real no Supabase Auth e CI remoto. Teste local com mocks e dados sintéticos, sem acesso ao banco. Nenhum bloqueio à validação local.
+- **Próxima ação:** verificar em DEV, com conta sintética bloqueada, a rejeição do cadastro com sessão imediata e o estado após recarregar a página.
