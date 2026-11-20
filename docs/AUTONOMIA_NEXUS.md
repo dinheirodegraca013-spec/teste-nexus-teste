@@ -2197,3 +2197,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovados:** teste direcionado (30/30), `npm test` (53 arquivos, zero falhas), `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificados:** navegador, revogação de sessão no Supabase Auth e CI remoto. A regressão usa dados sintéticos e mocks. Nenhum bloqueio à validação local.
 - **Próxima ação:** com conta sintética em DEV, verificar o estado após rejeição do login com falha de rede durante o logout e após recarregar a página.
+
+## Ciclo autônomo — 2026-11-20 — organização no cadastro por convite
+
+- **Tarefa única:** confirmar a organização no cadastro por convite com sessão imediata. Branch `fix/persist-rbac-permissions`, HEAD inicial `01c932a`, árvore limpa. Skills bug-hunter e qa-automation.
+- **Falhou antes da correção:** `node tests/auth-profile-loading.test.mjs` registrou 30 aprovações e uma falha. O cadastro retornava sucesso mesmo com o perfil carregado em outra organização.
+- **Correção:** `src/contexts/AuthContext.tsx` compara o UUID da organização carregada com o UUID do convite, sem distinção de caixa. Em caso de divergência, registra o erro e aciona a limpeza da sessão local e a tentativa de logout.
+- **Aprovados:** teste direcionado (31/31, com mocks e organizações sintéticas), `npm test`, `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificados:** cadastro e logout reais no navegador, autorização no servidor e CI remoto. Nenhum acesso a banco ou bloqueio à validação local.
+- **Próxima ação:** homologar em DEV o cadastro por convite e o vínculo ao tenant com contas sintéticas de duas organizações. Depende de ambiente e contas de teste disponíveis.

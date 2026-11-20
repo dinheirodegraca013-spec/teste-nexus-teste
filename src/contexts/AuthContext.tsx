@@ -677,6 +677,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           await clearAuthenticatedState();
           return { error: new Error('Conta criada, mas o perfil ou a organização não está disponível. Tente entrar novamente ou contate o suporte.'), user: data.user };
         }
+        if (sanitizedOrgId && loaded.organization.id.toLowerCase() !== sanitizedOrgId.toLowerCase()) {
+          const error = new Error('A conta criada não está vinculada à organização do convite. Contate o administrador.');
+          logAuthError('signUp:organizationMismatch', error);
+          await clearAuthenticatedState();
+          return { error, user: data.user };
+        }
       }
       return { error: null, requiresConfirmation: false, user: data.user };
     } catch (err: any) {

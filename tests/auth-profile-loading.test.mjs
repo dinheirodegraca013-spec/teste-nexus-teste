@@ -24,7 +24,7 @@ const result = await build({
         };
         export default { useRef, createElement: (_type, props) => { if (props.value) globalThis.__authContext = props.value; return null; } };
       ` : args.path.endsWith('/supabase') ? `
-        export const supabase = { auth: { signInWithPassword: (...args) => globalThis.__authProfileTest.signIn(...args), updateUser: (...args) => globalThis.__authProfileTest.updateUser(...args), resetPasswordForEmail: (...args) => globalThis.__authProfileTest.resetPassword(...args), signOut: async () => globalThis.__authProfileTest.signOut?.() ?? { error: null }, getSession: () => globalThis.__authProfileTest.session(), onAuthStateChange: callback => { globalThis.__authProfileTest.onChange = callback; return { data: { subscription: { unsubscribe() {} } } }; } }, rpc: (...args) => globalThis.__authProfileTest.rpc(...args) };
+        export const supabase = { auth: { signUp: (...args) => globalThis.__authProfileTest.signUp(...args), signInWithPassword: (...args) => globalThis.__authProfileTest.signIn(...args), updateUser: (...args) => globalThis.__authProfileTest.updateUser(...args), resetPasswordForEmail: (...args) => globalThis.__authProfileTest.resetPassword(...args), signOut: async () => globalThis.__authProfileTest.signOut?.() ?? { error: null }, getSession: () => globalThis.__authProfileTest.session(), onAuthStateChange: callback => { globalThis.__authProfileTest.onChange = callback; return { data: { subscription: { unsubscribe() {} } } }; } }, rpc: (...args) => globalThis.__authProfileTest.rpc(...args) };
         export const isSupabaseConfigured = true, supabaseUrl = '';
       ` : `
         export const profilesService = { getById: (...args) => globalThis.__authProfileTest.lookup(...args) };
@@ -416,6 +416,43 @@ test('rejected login clears local session when provider logout throws', async ()
     assert.deepEqual(states[4], []);
     assert.deepEqual(states[5], []);
     assert.match(error.message, /Acesso bloqueado/);
+  } finally {
+    delete globalThis.__authProfileTest;
+    delete globalThis.__authContext;
+  }
+});
+
+test('invited signup confirms the invited organization before reporting success', async () => {
+  const user = { id: '11111111-1111-4111-8111-111111111111', user_metadata: {} };
+  const invitedOrgId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  const otherOrgId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  let profileOrgId = otherOrgId;
+  let signOuts = 0;
+  globalThis.__authProfileTest = {
+    signUp: async () => ({ data: { user, session: { user } }, error: null }),
+    lookup: async () => ({ data: { id: user.id, organization_id: profileOrgId, role: 'viewer' }, error: null }),
+    signOut: () => { signOuts++; },
+    rpc: () => assert.fail('Invited signup must not provision an organization'),
+  };
+  callbacks.length = states.length = effects.length = 0;
+  try {
+    AuthProvider({ children: null });
+    const { signUp } = globalThis.__authContext;
+    const params = {
+      name: 'Synthetic User',
+      email: 'test@example.invalid',
+      password: 'synthetic-password',
+      organizationId: invitedOrgId.toUpperCase(),
+    };
+    const rejected = await signUp(params);
+    assert.match(rejected.error?.message ?? '', /organização do convite/);
+    assert.deepEqual(states.slice(0, 4), [null, null, null, null]);
+    assert.deepEqual(states[5], []);
+    assert.equal(signOuts, 1);
+
+    profileOrgId = invitedOrgId;
+    assert.deepEqual(await signUp(params), { error: null, requiresConfirmation: false, user });
+    assert.equal(signOuts, 1);
   } finally {
     delete globalThis.__authProfileTest;
     delete globalThis.__authContext;
