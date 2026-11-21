@@ -1,4 +1,4 @@
-import React, { InputHTMLAttributes, forwardRef } from 'react';
+import React, { InputHTMLAttributes, forwardRef, useId } from 'react';
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -18,7 +18,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
   id,
   ...props
 }, ref) => {
-  const inputId = id || (label ? `input-${label.toLowerCase().replace(/\s+/g, '-')}` : undefined);
+  const generatedId = useId();
+  const inputId = id || (label || error || helperText ? `input-${generatedId.replace(/:/g, '')}` : undefined);
+  const messageId = inputId && (error || helperText) ? `${inputId}-message` : undefined;
 
   return (
     <div className="w-full space-y-1.5 text-left">
@@ -36,6 +38,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
         <input
           id={inputId}
           ref={ref}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={messageId}
           className={`w-full bg-white text-slate-900 placeholder-slate-400 text-sm rounded-lg border transition-all duration-150 py-2 px-3 focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900 shadow-2xs ${
             leftIcon ? 'pl-9' : ''
           } ${rightIcon ? 'pr-9' : ''} ${
@@ -50,9 +54,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
         )}
       </div>
       {error ? (
-        <p className="text-xs text-rose-600 font-medium">{error}</p>
+        <p id={messageId} className="text-xs text-rose-600 font-medium">{error}</p>
       ) : helperText ? (
-        <p className="text-xs text-slate-400">{helperText}</p>
+        <p id={messageId} className="text-xs text-slate-400">{helperText}</p>
       ) : null}
     </div>
   );

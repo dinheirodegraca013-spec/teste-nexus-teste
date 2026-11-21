@@ -34,6 +34,19 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react(), tailwindcss()],
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            // Keep the Supabase SDK out of the initial application bundle.
+            // Module pages are lazy-loaded by src/App.tsx.
+            if (id.replace(/\\/g, '/').includes('/node_modules/@supabase/')) {
+              return 'supabase-vendor';
+            }
+          },
+        },
+      },
+    },
     define: {
       'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(supabaseUrl),
       'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(supabaseAnonKey),

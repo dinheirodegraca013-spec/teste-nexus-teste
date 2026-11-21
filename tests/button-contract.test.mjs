@@ -1,0 +1,105 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+
+test('shared Button defaults to a non-submitting button', async () => {
+  const source = await readFile(new URL('../src/components/ui/Button.tsx', import.meta.url), 'utf8');
+  assert.match(source, /<button\s+type="button"/);
+  assert.match(source, /\.\.\.props/);
+});
+
+test('native buttons declare their submission behavior explicitly', async () => {
+  const { readdir } = await import('node:fs/promises');
+  const pages = await readdir(new URL('../src', import.meta.url), { recursive: true });
+  const sources = pages.filter((file) => file.endsWith('.tsx'));
+  const missingType = [];
+  for (const file of sources) {
+    const source = await readFile(new URL(`../src/${file}`, import.meta.url), 'utf8');
+    for (const match of source.matchAll(/<button\b[^>]*>/g)) {
+      if (!/\btype\s*=/.test(match[0])) missingType.push(file);
+    }
+  }
+  assert.deepEqual(missingType, []);
+});
+
+test('icon-only shared controls have accessible names', async () => {
+  const header = await readFile(new URL('../src/components/layout/Header.tsx', import.meta.url), 'utf8');
+  const search = await readFile(new URL('../src/components/ui/SearchInput.tsx', import.meta.url), 'utf8');
+  assert.match(header, /aria-label="Abrir menu de navegação"/);
+  assert.match(search, /aria-label="Limpar busca"/);
+});
+
+test('image preview close controls have accessible names', async () => {
+  for (const file of ['FieldPage.tsx', 'StickersPage.tsx', 'PresencePage.tsx']) {
+    const source = await readFile(new URL(`../src/pages/app/${file}`, import.meta.url), 'utf8');
+    assert.match(source, /aria-label="Fechar visualização da imagem"/);
+  }
+});
+
+test('toast close and sidebar logout controls have accessible names', async () => {
+  const toast = await readFile(new URL('../src/contexts/ToastContext.tsx', import.meta.url), 'utf8');
+  const sidebar = await readFile(new URL('../src/components/layout/Sidebar.tsx', import.meta.url), 'utf8');
+  assert.match(toast, /aria-label="Fechar aviso"/);
+  assert.match(sidebar, /aria-label="Sair do NEXUS"/);
+});
+
+test('native app text fields expose accessible names', async () => {
+  const files = {
+    'LeadersPage.tsx': 'Link exclusivo de cadastro',
+    'IntelligencePage.tsx': 'Detalhamento da Reivindicação',
+    'GoalsPage.tsx': 'Descrição e Diretrizes',
+    'CrmPage.tsx': 'Observações e Demandas',
+    'EventsPage.tsx': 'Orientações e Detalhes da Ação',
+    'MeetingsPage.tsx': 'Ata e Deliberações',
+    'CoordinatorsPage.tsx': 'Observações Estratégicas',
+  };
+  for (const [file, label] of Object.entries(files)) {
+    const source = await readFile(new URL(`../src/pages/app/${file}`, import.meta.url), 'utf8');
+    assert.match(source, new RegExp(`aria-label="${label}"`));
+  }
+});
+
+test('shared search input exposes an accessible name', async () => {
+  const source = await readFile(new URL('../src/components/ui/SearchInput.tsx', import.meta.url), 'utf8');
+  assert.match(source, /aria-label=\{placeholder \|\| 'Buscar'\}/);
+});
+
+test('shared Input generates unique label associations', async () => {
+  const source = await readFile(new URL('../src/components/ui/Input.tsx', import.meta.url), 'utf8');
+  assert.match(source, /useId/);
+  assert.match(source, /generatedId\.replace/);
+});
+
+test('shared Select generates unique label associations', async () => {
+  const source = await readFile(new URL('../src/components/ui/Select.tsx', import.meta.url), 'utf8');
+  assert.match(source, /useId/);
+  assert.match(source, /generatedId\.replace/);
+});
+
+test('shared fields associate validation messages with controls', async () => {
+  const input = await readFile(new URL('../src/components/ui/Input.tsx', import.meta.url), 'utf8');
+  const select = await readFile(new URL('../src/components/ui/Select.tsx', import.meta.url), 'utf8');
+  for (const source of [input, select]) {
+    assert.match(source, /aria-invalid=\{error \? true : undefined\}/);
+    assert.match(source, /aria-describedby=\{messageId\}/);
+    assert.match(source, /id=\{messageId\}/);
+  }
+});
+
+test('public authentication fields declare autocomplete intent', async () => {
+  const files = {
+    'LoginPage.tsx': ['current-password', 'username'],
+    'RegisterPage.tsx': ['new-password', 'email'],
+    'ResetPasswordPage.tsx': ['new-password'],
+    'ForgotPasswordPage.tsx': ['email'],
+  };
+  for (const [file, values] of Object.entries(files)) {
+    const source = await readFile(new URL(`../src/pages/public/${file}`, import.meta.url), 'utf8');
+    for (const value of values) assert.match(source, new RegExp(`autoComplete="${value}"`));
+  }
+});
+
+test('profile password fields declare new-password autocomplete', async () => {
+  const source = await readFile(new URL('../src/pages/app/ProfilePage.tsx', import.meta.url), 'utf8');
+  assert.equal((source.match(/autoComplete="new-password"/g) || []).length, 2);
+});

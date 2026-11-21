@@ -21,12 +21,15 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        aria-label={placeholder || 'Buscar'}
         placeholder={placeholder}
         className="w-full bg-white text-slate-900 text-xs sm:text-sm rounded-lg border border-slate-200 hover:border-slate-300 pl-9 pr-8 py-2 focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900 placeholder-slate-400 transition-all shadow-2xs"
       />
       {value && (
         <button
+          type="button"
           onClick={() => onChange('')}
+          aria-label="Limpar busca"
           className="absolute right-2.5 text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
         >
           <X className="w-3.5 h-3.5" />
