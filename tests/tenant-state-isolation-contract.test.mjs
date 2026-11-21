@@ -153,9 +153,9 @@ test('Storage policy migration is pinned to the current DEV project', async () =
   assert.equal((source.match(/CREATE POLICY nexus_private_evidence_/g) || []).length, 3);
 });
 
-test('signUp fails closed when Supabase does not return a user', async () => {
+test('signUp fails closed when Supabase does not return a user ID', async () => {
   const source = await readFile(new URL('../src/contexts/AuthContext.tsx', import.meta.url), 'utf8');
-  assert.match(source, /if \(!data\?\.user\)/);
+  assert.match(source, /if \(!data\?\.user\?\.id\)/);
   assert.match(source, /signUp:unconfirmed/);
   assert.match(source, /O servidor não confirmou a criação da conta/);
 });

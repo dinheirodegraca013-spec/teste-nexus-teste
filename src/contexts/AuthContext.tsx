@@ -637,7 +637,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logAuthError('signUp:supabaseAuth', error);
         return { error };
       }
-      if (!data?.user) {
+      if (!data?.user?.id) {
         const confirmationError = new Error('O servidor não confirmou a criação da conta. Tente novamente ou contate o suporte.');
         logAuthError('signUp:unconfirmed', confirmationError);
         return { error: confirmationError };

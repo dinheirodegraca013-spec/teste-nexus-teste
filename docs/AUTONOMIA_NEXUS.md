@@ -2224,3 +2224,13 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovados:** teste direcionado (3/3), `npm test` (53 arquivos, zero falhas), `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificados:** navegador, Supabase Auth e CI remoto. A regressão combina inspeção das chamadas com testes do leitor usando parâmetros sintéticos. Nenhum bloqueio à validação local.
 - **Próxima ação:** abrir um convite sintético em `/#/cadastro?convite=lider&...` com uma sessão de teste ativa em DEV e verificar que o formulário oferece a troca de conta em vez de redirecionar. Depende de sessão sintética em DEV.
+
+## Ciclo autônomo — 2026-11-21 — confirmação do cadastro exige ID de usuário
+
+- **Tarefa única:** evitar confirmação falsa de cadastro quando o Supabase Auth devolve um objeto de usuário sem ID. Branch `fix/persist-rbac-permissions`, HEAD inicial `b0caabf`, árvore limpa. Skills bug-hunter e qa-automation.
+- **Falhou antes da correção:** `node tests/auth-profile-loading.test.mjs` teve 31 aprovações e uma falha. A resposta sintética com usuário vazio e sessão ausente retornava `requiresConfirmation: true`.
+- **Correção:** `src/contexts/AuthContext.tsx` exige o ID do usuário e reutiliza o erro de cadastro sem confirmação. A regressão cobre a resposta incompleta e a resposta com ID válido.
+- **Falhou na primeira rodada de integração:** `npm test` teve 52 arquivos aprovados e um com falha porque `tenant-state-isolation-contract.test.mjs` esperava a expressão anterior. A asserção foi ajustada para exigir o ID.
+- **Aprovados:** teste direcionado (32/32), `npm test` após o ajuste (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificados:** navegador, entrega de e-mail pelo Supabase Auth e CI remoto. Nenhum bloqueio à validação local. Os testes usaram mocks e dados sintéticos.
+- **Próxima ação:** verificar em DEV, com uma conta sintética, o cadastro com confirmação por e-mail habilitada e o acesso após confirmar o endereço.

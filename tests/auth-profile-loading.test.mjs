@@ -466,3 +466,31 @@ test('invited signup confirms the invited organization before reporting success'
     delete globalThis.__authContext;
   }
 });
+
+test('signup requires a user ID before reporting that confirmation was sent', async () => {
+  const user = { id: '11111111-1111-4111-8111-111111111111' };
+  let returnedUser = {};
+  globalThis.__authProfileTest = {
+    signUp: async () => ({ data: { user: returnedUser, session: null }, error: null }),
+  };
+  callbacks.length = states.length = effects.length = 0;
+  try {
+    AuthProvider({ children: null });
+    const { signUp } = globalThis.__authContext;
+    const params = {
+      name: 'Synthetic User',
+      email: 'test@example.invalid',
+      password: 'synthetic-password',
+    };
+
+    const rejected = await signUp(params);
+    assert.match(rejected.error?.message ?? '', /não confirmou a criação da conta/);
+    assert.equal(rejected.requiresConfirmation, undefined);
+
+    returnedUser = user;
+    assert.deepEqual(await signUp(params), { error: null, requiresConfirmation: true, user });
+  } finally {
+    delete globalThis.__authProfileTest;
+    delete globalThis.__authContext;
+  }
+});
