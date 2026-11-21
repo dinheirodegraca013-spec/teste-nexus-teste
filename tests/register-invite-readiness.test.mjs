@@ -35,3 +35,9 @@ test('roteador e cadastro reconhecem os mesmos convites na query e no hash', asy
   }
   assert.equal(readRegistrationInvite({ search: '?outro_convite=lider', hash: '' }).type, null);
 });
+
+test('cadastro sem sessão orienta a consultar o e-mail sem garantir a criação da conta', async () => {
+  const source = await readFile(new URL('../src/pages/public/RegisterPage.tsx', import.meta.url), 'utf8');
+  assert.doesNotMatch(source, /Conta Criada com Sucesso|Enviamos (um link|uma mensagem)/i);
+  assert.match(source, /Se receber uma mensagem de confirmação/);
+});

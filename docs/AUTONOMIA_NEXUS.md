@@ -2234,3 +2234,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovados:** teste direcionado (32/32), `npm test` após o ajuste (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificados:** navegador, entrega de e-mail pelo Supabase Auth e CI remoto. Nenhum bloqueio à validação local. Os testes usaram mocks e dados sintéticos.
 - **Próxima ação:** verificar em DEV, com uma conta sintética, o cadastro com confirmação por e-mail habilitada e o acesso após confirmar o endereço.
+
+## Ciclo autônomo — 2026-11-21 — mensagem do cadastro sem sessão
+
+- **Tarefa única:** corrigir a confirmação exibida quando o cadastro exige confirmação por e-mail. Branch `fix/persist-rbac-permissions`, HEAD inicial `c272e27`, árvore limpa. Skills bug-hunter e qa-automation.
+- **Falhou antes da correção:** a regressão em `tests/register-invite-readiness.test.mjs` detectou que a tela afirmava a criação da conta e o envio do e-mail, embora o retorno de Auth só indique que o fluxo requer confirmação. A primeira execução isolada via runner reportou falha genérica do arquivo. A execução direta identificou a asserção de regressão.
+- **Correção:** `src/pages/public/RegisterPage.tsx` orienta a verificar a caixa de entrada e o spam, com instrução condicional para abrir o link. Removido o aviso de sucesso desse ramo.
+- **Aprovados:** `node tests/register-invite-readiness.test.mjs` (4/4), `npm test` (53/53 arquivos), `NODE_OPTIONS=--test-isolation=none npm test` (335/335), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificados:** navegador, entrega de e-mail pelo Supabase Auth e CI remoto. Nenhum bloqueio à validação local.
+- **Próxima ação:** em DEV, com endereço sintético e confirmação de e-mail habilitada, verificar a tela após o cadastro, a mensagem recebida e o acesso depois de abrir o link.
