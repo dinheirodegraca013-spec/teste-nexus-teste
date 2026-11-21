@@ -7,6 +7,8 @@ import { Input } from '../../components/ui/Input';
 import { organizationsService, coordinatorsService } from '../../services';
 import { isSupabaseConfigured } from '../../lib/supabase';
 
+import { readRegistrationInvite } from '../../utils/registrationInvite';
+
 interface RegisterPageProps {
   onNavigate: (path: string) => void;
 }
@@ -41,19 +43,15 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
     async function loadInviteDetails() {
       setInviteDetailsReady(false);
       try {
-        let searchStr = window.location.search || '';
-        if (!searchStr && window.location.hash && window.location.hash.includes('?')) {
-          searchStr = window.location.hash.slice(window.location.hash.indexOf('?'));
-        }
-        
-        const urlParams = new URLSearchParams(searchStr);
-        const conviteType = urlParams.get('convite');
-        const paramLeaderId = urlParams.get('lider_id');
-        const paramCoordId = urlParams.get('coord_id') || urlParams.get('coord');
-        const paramOrgId = urlParams.get('org') || urlParams.get('org_id');
-        const paramNome = urlParams.get('nome');
-        const paramEmail = urlParams.get('email');
-        const paramTerritorio = urlParams.get('territorio');
+        const {
+          type: conviteType,
+          leaderId: paramLeaderId,
+          coordinatorId: paramCoordId,
+          organizationId: paramOrgId,
+          name: paramNome,
+          email: paramEmail,
+          territory: paramTerritorio,
+        } = readRegistrationInvite(window.location);
 
         if (conviteType === 'coordenador') {
           setIsInvite(true);
@@ -72,7 +70,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
               setInviteOrgId(foundOrg.id);
             }
           }
-        } else if (conviteType === 'lider' || paramLeaderId || paramCoordId) {
+        } else if (conviteType === 'lider') {
           setIsInvite(true);
           setInviteType('lider');
           if (paramNome) setName(paramNome);

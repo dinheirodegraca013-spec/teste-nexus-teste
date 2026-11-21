@@ -1,3 +1,4 @@
+import { readRegistrationInvite } from './utils/registrationInvite';
 import React, { useState, useEffect } from 'react';
 import { ToastProvider } from './contexts/ToastContext';
 import { AuthProvider, useAuth, getDefaultRouteForUser, canAccessPrivilegedRoute } from './contexts/AuthContext';
@@ -108,7 +109,7 @@ function MainRouter() {
 
   const isAppRoute = currentPath.startsWith('/app');
   const isAuthRoute = currentPath === '/login' || currentPath === '/cadastro' || currentPath === '/recuperar-senha';
-  const hasInviteParam = typeof window !== 'undefined' && window.location.search.includes('convite=');
+  const hasInviteParam = currentPath === '/cadastro' && Boolean(readRegistrationInvite(window.location).type);
 
   console.log('[NEXUS FLOW] APP_RENDER', {
     currentPath,

@@ -2215,3 +2215,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovados:** teste direcionado (31/31), `npm test` (53 arquivos, zero falhas), `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificados:** navegador, logout real no Supabase Auth e CI remoto. Teste local com mocks e dados sintéticos, sem acesso ao banco. Nenhum bloqueio à validação local.
 - **Próxima ação:** verificar em DEV, com conta sintética bloqueada, a rejeição do cadastro com sessão imediata e o estado após recarregar a página.
+
+## Ciclo autônomo — 2026-11-21 — convites em rotas com hash
+
+- **Tarefa única:** alinhar o reconhecimento de convites entre o roteador e o cadastro. Branch `fix/persist-rbac-permissions`, HEAD inicial `aab7f34`, árvore limpa. Skills bug-hunter e qa-automation. Os documentos operacionais previstos na raiz estavam ausentes.
+- **Falhou antes da correção:** `node tests/register-invite-readiness.test.mjs` registrou duas aprovações e uma falha de contrato. O roteador verificava só a query principal, embora o formulário lesse convites no hash. Com sessão ativa, isso acionava o redirecionamento de uma visita comum ao cadastro.
+- **Correção:** `App.tsx` e `RegisterPage.tsx` usam o mesmo leitor em `src/utils/registrationInvite.ts`. Quando uma rota com hash tem query própria, essa query prevalece sobre a externa. A exceção ao redirecionamento vale apenas em `/cadastro`.
+- **Aprovados:** teste direcionado (3/3), `npm test` (53 arquivos, zero falhas), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificados:** navegador, Supabase Auth e CI remoto. A regressão combina inspeção das chamadas com testes do leitor usando parâmetros sintéticos. Nenhum bloqueio à validação local.
+- **Próxima ação:** abrir um convite sintético em `/#/cadastro?convite=lider&...` com uma sessão de teste ativa em DEV e verificar que o formulário oferece a troca de conta em vez de redirecionar. Depende de sessão sintética em DEV.
