@@ -400,6 +400,36 @@ test('logout clears local access state when Auth throws', async () => {
   }
 });
 
+test('login rejects a session for a different user before loading a profile', async () => {
+  const user = { id: '11111111-1111-4111-8111-111111111111' };
+  const sessionUser = { id: '22222222-2222-4222-8222-222222222222' };
+  let lookups = 0;
+  let logouts = 0;
+  globalThis.__authProfileTest = {
+    signIn: async () => ({ data: { user, session: { user: sessionUser } }, error: null }),
+    lookup: async () => {
+      lookups++;
+      return { data: null, error: null };
+    },
+    signOut: async () => {
+      logouts++;
+      return { error: null };
+    },
+  };
+  callbacks.length = states.length = effects.length = 0;
+  try {
+    AuthProvider({ children: null });
+    const result = await globalThis.__authContext.signIn('test@example.invalid', 'synthetic-password');
+    assert.equal(lookups, 0);
+    assert.match(result.error?.message, /sessão válida/);
+    assert.equal(logouts, 1);
+    assert.deepEqual(states.slice(0, 4), [null, null, null, null]);
+  } finally {
+    delete globalThis.__authProfileTest;
+    delete globalThis.__authContext;
+  }
+});
+
 test('rejected login clears local session when provider logout throws', async () => {
   const user = { id: '11111111-1111-4111-8111-111111111111', user_metadata: {} };
   const providerError = new Error('Synthetic logout failure');

@@ -553,17 +553,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logAuthError('signIn', error);
         return { error };
       }
-      if (data.user) {
-        setUser(data.user);
-        setSession(data.session);
-        const { profile: loadedProfile, organization: loadedOrg, permissions: loadedPerms } = await loadUserDataSafe(data.user);
-        if (!loadedProfile || loadedProfile.is_blocked || !loadedOrg || loadedOrg.id !== loadedProfile.organization_id) {
-          await clearAuthenticatedState();
-          return { error: new Error('Acesso bloqueado: perfil ou organização inválidos. Solicite ao administrador a regularização da conta.') };
-        }
-        return { error: null, defaultRoute: getDefaultRouteForUser(loadedProfile, loadedPerms) };
+      if (!data?.user?.id || data.session?.user?.id !== data.user.id) {
+        const sessionError = new Error('Falha na autenticação: o servidor não retornou uma sessão válida.');
+        logAuthError('signIn:invalidSession', sessionError);
+        if (data?.session) await clearAuthenticatedState();
+        return { error: sessionError };
       }
-      return { error: new Error('Falha na autenticação: o servidor não retornou um usuário válido.') };
+      setUser(data.user);
+      setSession(data.session);
+      const { profile: loadedProfile, organization: loadedOrg, permissions: loadedPerms } = await loadUserDataSafe(data.user);
+      if (!loadedProfile || loadedProfile.is_blocked || !loadedOrg || loadedOrg.id !== loadedProfile.organization_id) {
+        await clearAuthenticatedState();
+        return { error: new Error('Acesso bloqueado: perfil ou organização inválidos. Solicite ao administrador a regularização da conta.') };
+      }
+      return { error: null, defaultRoute: getDefaultRouteForUser(loadedProfile, loadedPerms) };
     } catch (err: any) {
       logAuthError('signIn:catch', err);
       return { error: err };

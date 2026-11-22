@@ -2262,3 +2262,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovados** — `node tests/auth-profile-loading.test.mjs` (32/32), `npm test` após o ajuste (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificados** — navegador, Supabase Auth em DEV e CI remoto. A regressão usou mocks e IDs sintéticos, sem chamadas ao Supabase. Nenhum bloqueio à validação local.
 - **Próxima ação** — homologar em DEV o cadastro por convite com conta sintética e sessão imediata, conferindo o usuário e a organização após recarregar a página. Depende de conta e ambiente de teste disponíveis.
+
+## Ciclo autônomo — 2026-11-22 — identidade da sessão no login
+
+- **Tarefa única** — validar a sessão retornada no login por senha antes de carregar o perfil. Branch `fix/persist-rbac-permissions`, HEAD inicial `353da86`, árvore limpa. Skills bug-hunter e qa-automation. Os cinco documentos operacionais indicados na raiz pelo OBRAMAXAUTO estavam ausentes.
+- **Falhou antes da correção** — a regressão em `tests/auth-profile-loading.test.mjs` observou uma consulta de perfil com IDs sintéticos divergentes entre usuário e sessão (32 aprovados, 1 falhou).
+- **Correção** — `src/contexts/AuthContext.tsx` exige uma sessão com o mesmo ID do usuário retornado. Se houver sessão inválida, limpa o estado local e solicita logout antes de carregar o perfil.
+- **Aprovados** — teste direcionado (33/33), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificados** — navegador, Supabase Auth em DEV e CI remoto. A regressão usou mocks e dados sintéticos. Nenhum bloqueio à validação local.
+- **Próxima ação** — homologar em DEV o login por senha com conta sintética e confirmar a organização após recarregar a página, quando houver conta de teste disponível.
