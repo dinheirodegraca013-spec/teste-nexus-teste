@@ -467,14 +467,16 @@ test('invited signup confirms the invited organization before reporting success'
   }
 });
 
-test('signup requires a user ID before reporting that confirmation was sent', async () => {
+test('signup requires a user ID consistent with any returned session', async () => {
   const user = { id: '11111111-1111-4111-8111-111111111111' };
   let returnedUser = {};
   let session = null;
   let signOuts = 0;
+  let provisioningCalls = 0;
   globalThis.__authProfileTest = {
     signUp: async () => ({ data: { user: returnedUser, session }, error: null }),
     signOut: () => { signOuts++; },
+    rpc: async () => { provisioningCalls++; return { data: null, error: null }; },
   };
   callbacks.length = states.length = effects.length = 0;
   try {
@@ -494,6 +496,13 @@ test('signup requires a user ID before reporting that confirmation was sent', as
     const rejectedWithSession = await signUp(params);
     assert.match(rejectedWithSession.error?.message ?? '', /não confirmou a criação da conta/);
     assert.equal(signOuts, 1);
+    assert.deepEqual(states.slice(0, 4), [null, null, null, null]);
+
+    returnedUser = { id: '22222222-2222-4222-8222-222222222222' };
+    const rejectedMismatch = await signUp(params);
+    assert.equal(provisioningCalls, 0);
+    assert.match(rejectedMismatch.error?.message ?? '', /não confirmou a criação da conta/);
+    assert.equal(signOuts, 2);
     assert.deepEqual(states.slice(0, 4), [null, null, null, null]);
 
     session = null;

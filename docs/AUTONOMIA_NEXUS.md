@@ -2252,3 +2252,13 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovados** — `node tests/auth-profile-loading.test.mjs` (32/32), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificados** — navegador, logout real no Supabase Auth e CI remoto. O cenário de resposta incompleta foi validado com mock e dados sintéticos. Nenhum bloqueio à validação local.
 - **Próxima ação** — homologar o cadastro por convite em DEV com conta sintética e verificar a sessão e a organização após recarregar a página. Depende de conta e ambiente de teste disponíveis.
+
+## Ciclo autônomo — 2026-11-22 — identidade da sessão no cadastro
+
+- **Tarefa única** — validar a identidade da sessão imediata do cadastro. Branch `fix/persist-rbac-permissions`, HEAD inicial `76cf2e4`, árvore limpa. Skills bug-hunter e qa-automation. Os documentos operacionais listados na raiz pelo OBRAMAXAUTO estavam ausentes.
+- **Falhou antes da correção** — com IDs sintéticos distintos no usuário e na sessão, o teste de regressão observou uma chamada à RPC de provisionamento, quando esperava zero (31 aprovados, 1 falhou).
+- **Correção** — `src/contexts/AuthContext.tsx` rejeita o cadastro se a sessão retornada não corresponder ao ID do usuário, limpa o estado local e solicita logout antes que o fluxo prossiga para o provisionamento ou carregue o perfil.
+- **Falhou na primeira rodada de integração** — o teste de contrato exigia a forma textual anterior da condição. A asserção foi ajustada para continuar exigindo a validação do ID.
+- **Aprovados** — `node tests/auth-profile-loading.test.mjs` (32/32), `npm test` após o ajuste (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificados** — navegador, Supabase Auth em DEV e CI remoto. A regressão usou mocks e IDs sintéticos, sem chamadas ao Supabase. Nenhum bloqueio à validação local.
+- **Próxima ação** — homologar em DEV o cadastro por convite com conta sintética e sessão imediata, conferindo o usuário e a organização após recarregar a página. Depende de conta e ambiente de teste disponíveis.
