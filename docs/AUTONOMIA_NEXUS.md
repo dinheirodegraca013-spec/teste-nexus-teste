@@ -2243,3 +2243,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovados:** `node tests/register-invite-readiness.test.mjs` (4/4), `npm test` (53/53 arquivos), `NODE_OPTIONS=--test-isolation=none npm test` (335/335), `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificados:** navegador, entrega de e-mail pelo Supabase Auth e CI remoto. Nenhum bloqueio à validação local.
 - **Próxima ação:** em DEV, com endereço sintético e confirmação de e-mail habilitada, verificar a tela após o cadastro, a mensagem recebida e o acesso depois de abrir o link.
+
+## Ciclo autônomo — 2026-11-22 — sessão na resposta incompleta de cadastro
+
+- **Tarefa única** — limpar a sessão local e solicitar logout quando o cadastro devolve uma sessão sem confirmar o ID do usuário. Branch `fix/persist-rbac-permissions`, HEAD inicial `73f6275`, árvore limpa. Skills bug-hunter e qa-automation.
+- **Falhou antes da correção** — o teste direcionado teve 31 aprovações e uma falha. A resposta sintética com sessão e usuário sem ID retornou o erro esperado, mas registrou zero chamadas de logout.
+- **Correção** — `src/contexts/AuthContext.tsx` usa a rotina de limpeza existente quando a resposta incompleta inclui uma sessão. A regressão em `tests/auth-profile-loading.test.mjs` verifica o erro, a limpeza local e a chamada de logout.
+- **Aprovados** — `node tests/auth-profile-loading.test.mjs` (32/32), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificados** — navegador, logout real no Supabase Auth e CI remoto. O cenário de resposta incompleta foi validado com mock e dados sintéticos. Nenhum bloqueio à validação local.
+- **Próxima ação** — homologar o cadastro por convite em DEV com conta sintética e verificar a sessão e a organização após recarregar a página. Depende de conta e ambiente de teste disponíveis.

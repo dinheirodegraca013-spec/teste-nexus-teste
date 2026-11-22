@@ -640,6 +640,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!data?.user?.id) {
         const confirmationError = new Error('O servidor não confirmou a criação da conta. Tente novamente ou contate o suporte.');
         logAuthError('signUp:unconfirmed', confirmationError);
+        if (data?.session) await clearAuthenticatedState();
         return { error: confirmationError };
       }
       if (data.user && !data.session) {

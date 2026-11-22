@@ -470,8 +470,11 @@ test('invited signup confirms the invited organization before reporting success'
 test('signup requires a user ID before reporting that confirmation was sent', async () => {
   const user = { id: '11111111-1111-4111-8111-111111111111' };
   let returnedUser = {};
+  let session = null;
+  let signOuts = 0;
   globalThis.__authProfileTest = {
-    signUp: async () => ({ data: { user: returnedUser, session: null }, error: null }),
+    signUp: async () => ({ data: { user: returnedUser, session }, error: null }),
+    signOut: () => { signOuts++; },
   };
   callbacks.length = states.length = effects.length = 0;
   try {
@@ -487,6 +490,13 @@ test('signup requires a user ID before reporting that confirmation was sent', as
     assert.match(rejected.error?.message ?? '', /não confirmou a criação da conta/);
     assert.equal(rejected.requiresConfirmation, undefined);
 
+    session = { user };
+    const rejectedWithSession = await signUp(params);
+    assert.match(rejectedWithSession.error?.message ?? '', /não confirmou a criação da conta/);
+    assert.equal(signOuts, 1);
+    assert.deepEqual(states.slice(0, 4), [null, null, null, null]);
+
+    session = null;
     returnedUser = user;
     assert.deepEqual(await signUp(params), { error: null, requiresConfirmation: true, user });
   } finally {
