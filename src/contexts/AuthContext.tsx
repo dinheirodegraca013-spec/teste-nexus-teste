@@ -414,7 +414,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data, error } = await withTimeout(supabase.auth.getSession(), 7000, 'Tempo limite excedido ao recuperar sessão do Supabase');
         // A newer auth event is authoritative over this initial snapshot.
         if (!isMounted || hasNewAuthEvent) return;
-        if (error) setInitializationError(error.message);
+        if (error) throw error;
         if (isMounted) {
           const currentSession = data?.session || null;
           setSession(currentSession);

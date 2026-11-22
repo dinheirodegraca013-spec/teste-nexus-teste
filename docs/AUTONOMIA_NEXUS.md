@@ -2271,3 +2271,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovados** — teste direcionado (33/33), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificados** — navegador, Supabase Auth em DEV e CI remoto. A regressão usou mocks e dados sintéticos. Nenhum bloqueio à validação local.
 - **Próxima ação** — homologar em DEV o login por senha com conta sintética e confirmar a organização após recarregar a página, quando houver conta de teste disponível.
+
+## Ciclo autônomo — 2026-11-22 — erro na recuperação inicial da sessão
+
+- **Tarefa única** — interromper a inicialização de perfil quando `getSession` retorna erro. Branch `fix/persist-rbac-permissions`, HEAD inicial `2a549f4`, árvore limpa. Skills bug-hunter e qa-automation. Os cinco documentos operacionais indicados na raiz pelo OBRAMAXAUTO estavam ausentes.
+- **Falhou antes da correção** — o teste em `tests/auth-profile-loading.test.mjs` observou uma consulta de perfil quando o mock devolveu erro e sessão na mesma resposta.
+- **Correção** — `src/contexts/AuthContext.tsx` encaminha o erro ao tratamento existente antes de restaurar usuário, sessão ou perfil.
+- **Aprovados** — teste direcionado (34/34), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificados** — navegador, Supabase Auth em DEV e CI remoto. O cenário foi exercitado com mock e dados sintéticos. Nenhum bloqueio à validação local.
+- **Próxima ação** — quando houver conta sintética em DEV, testar a recuperação da sessão após recarregar a página e confirmar o perfil e a organização.
