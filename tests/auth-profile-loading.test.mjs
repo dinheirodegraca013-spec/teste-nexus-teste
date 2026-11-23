@@ -213,6 +213,43 @@ for (const event of ['SIGNED_OUT', 'SIGNED_IN']) {
   }
 }
 
+test('a stale auth event cannot end loading for the current session', async () => {
+  let resolveOldProfile, resolveCurrentProfile;
+  const oldProfile = new Promise(resolve => { resolveOldProfile = resolve; });
+  const currentProfile = new Promise(resolve => { resolveCurrentProfile = resolve; });
+  globalThis.__authProfileTest = {
+    session: async () => ({ data: { session: null }, error: null }),
+    lookup: id => id === 'user-a' ? oldProfile : currentProfile,
+  };
+  callbacks.length = states.length = effects.length = 0;
+  AuthProvider({ children: null });
+  const cleanup = effects[0]();
+  try {
+    await new Promise(resolve => setImmediate(resolve));
+    const { onChange } = globalThis.__authProfileTest;
+    const oldEvent = onChange('SIGNED_IN', { user: { id: 'user-a' } });
+    const currentEvent = onChange('SIGNED_IN', { user: { id: 'user-b' } });
+    resolveOldProfile({ data: null, error: null });
+    await oldEvent;
+
+    assert.equal(states[0]?.id, 'user-b');
+    assert.equal(states[6], true);
+
+    resolveCurrentProfile({
+      data: { id: 'user-b', organization_id: 'tenant-b', role: 'viewer' },
+      error: null,
+    });
+    await currentEvent;
+    assert.equal(states[2]?.id, 'user-b');
+    assert.equal(states[6], false);
+  } finally {
+    cleanup();
+    resolveCurrentProfile({ data: null, error: null });
+    delete globalThis.__authProfileTest;
+    delete globalThis.__authContext;
+  }
+});
+
 test('initial session error prevents loading the returned session', async () => {
   const lookups = [];
   globalThis.__authProfileTest = {

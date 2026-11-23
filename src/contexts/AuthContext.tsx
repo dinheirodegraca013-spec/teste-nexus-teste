@@ -396,7 +396,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     let isMounted = true;
-    let hasNewAuthEvent = false;
+    let authEventVersion = 0;
     const watchdog = setTimeout(() => {
       if (isMounted) {
         setIsLoading((currentLoading) => currentLoading ? false : false);
@@ -413,7 +413,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const { data, error } = await withTimeout(supabase.auth.getSession(), 7000, 'Tempo limite excedido ao recuperar sessão do Supabase');
         // A newer auth event is authoritative over this initial snapshot.
-        if (!isMounted || hasNewAuthEvent) return;
+        if (!isMounted || authEventVersion !== 0) return;
         if (error) throw error;
         if (isMounted) {
           const currentSession = data?.session || null;
@@ -422,10 +422,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (currentSession?.user) await loadUserDataSafe(currentSession.user);
         }
       } catch (err: any) {
-        if (isMounted && !hasNewAuthEvent) setInitializationError(err?.message || 'Falha ao inicializar a autenticação.');
+        if (isMounted && authEventVersion === 0) setInitializationError(err?.message || 'Falha ao inicializar a autenticação.');
       } finally {
         clearTimeout(watchdog);
-        if (isMounted && !hasNewAuthEvent) setIsLoading(false);
+        if (isMounted && authEventVersion === 0) setIsLoading(false);
       }
     }
 
@@ -433,7 +433,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       // The initial snapshot is handled by initAuth, including recovery errors.
       if (!isMounted || event === 'INITIAL_SESSION') return;
-      hasNewAuthEvent = true;
+      const eventVersion = ++authEventVersion;
       clearTimeout(watchdog);
       if (isSigningInRef.current) {
         if (newSession?.user) {
@@ -454,9 +454,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setProfileError(null);
         }
       } catch (authChangeErr: any) {
-        if (isMounted) setInitializationError(authChangeErr?.message || 'Erro ao sincronizar sessão.');
+        if (isMounted && eventVersion === authEventVersion) setInitializationError(authChangeErr?.message || 'Erro ao sincronizar sessão.');
       } finally {
-        if (isMounted) setIsLoading(false);
+        if (isMounted && eventVersion === authEventVersion) setIsLoading(false);
       }
     });
 

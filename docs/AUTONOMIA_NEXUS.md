@@ -2298,3 +2298,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovados** — teste direcionado (36/36), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificados** — navegador, Supabase Auth em DEV e CI remoto. A regressão usa mocks e dados sintéticos. Nenhum bloqueio à validação local.
 - **Próxima ação** — com uma conta sintética em DEV, confirmar no navegador que um login posterior à falha de recuperação abre a organização esperada.
+
+## Ciclo autônomo — 2026-11-23 — carregamento entre eventos de autenticação
+
+- **Tarefa única** — corrigir o encerramento prematuro do carregamento ao receber eventos de sessão concorrentes. Branch `fix/persist-rbac-permissions`, HEAD inicial `968a2b3`, árvore limpa. Skills bug-hunter e qa-automation. Os cinco documentos operacionais de raiz indicados no OBRAMAXAUTO estavam ausentes.
+- **Falhou antes da correção** — `node tests/auth-profile-loading.test.mjs` registrou 36 aprovações e uma falha. O evento da sessão anterior definiu `isLoading=false` enquanto o perfil da sessão atual ainda estava pendente.
+- **Correção** — em `src/contexts/AuthContext.tsx`, a conclusão assíncrona só atualiza o erro e o carregamento quando pertence ao evento mais recente. A regressão usa dois usuários sintéticos e consultas de perfil controladas no teste.
+- **Aprovados** — teste direcionado (37/37), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificados** — navegador, Supabase Auth em DEV e CI remoto. As verificações locais usaram mocks e dados sintéticos no cenário de regressão. Nenhum bloqueio à validação local.
+- **Próxima ação** — quando houver contas sintéticas em DEV, verificar no navegador a transição entre sessões com a consulta de perfil lenta e confirmar a organização exibida.
