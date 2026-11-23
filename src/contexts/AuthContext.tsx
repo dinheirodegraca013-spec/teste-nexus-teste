@@ -431,19 +431,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     initAuth();
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
-      if (!isMounted) return;
-      if (event !== 'INITIAL_SESSION') {
-        hasNewAuthEvent = true;
-        clearTimeout(watchdog);
-      }
+      // The initial snapshot is handled by initAuth, including recovery errors.
+      if (!isMounted || event === 'INITIAL_SESSION') return;
+      hasNewAuthEvent = true;
+      clearTimeout(watchdog);
       if (isSigningInRef.current) {
-        if (newSession?.user) {
-          setUser(newSession.user);
-          setSession(newSession);
-        }
-        return;
-      }
-      if (event === 'INITIAL_SESSION') {
         if (newSession?.user) {
           setUser(newSession.user);
           setSession(newSession);

@@ -242,6 +242,36 @@ test('initial session error prevents loading the returned session', async () => 
   }
 });
 
+test('initial session event cannot restore access when session recovery fails', async () => {
+  const lookups = [];
+  globalThis.__authProfileTest = {
+    session: async () => ({
+      data: { session: { user: { id: 'user-a' } } },
+      error: new Error('Session recovery failed'),
+    }),
+    lookup: async id => {
+      lookups.push(id);
+      return { data: { id, organization_id: 'tenant-a', role: 'viewer' }, error: null };
+    },
+  };
+  callbacks.length = states.length = effects.length = 0;
+  AuthProvider({ children: null });
+  const cleanup = effects[0]();
+  try {
+    await globalThis.__authProfileTest.onChange('INITIAL_SESSION', { user: { id: 'user-a' } });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.deepEqual(lookups, []);
+    assert.equal(states[0], null);
+    assert.equal(states[1], null);
+    assert.equal(states[6], false);
+    assert.equal(states[8], 'Session recovery failed');
+  } finally {
+    cleanup();
+    delete globalThis.__authProfileTest;
+    delete globalThis.__authContext;
+  }
+});
+
 test('initial session without a newer event still loads access', async () => {
   globalThis.__authProfileTest = {
     session: async () => ({ data: { session: { user: { id: 'user-a' } } }, error: null }),

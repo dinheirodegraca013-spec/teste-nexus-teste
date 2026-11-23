@@ -2280,3 +2280,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovados** — teste direcionado (34/34), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificados** — navegador, Supabase Auth em DEV e CI remoto. O cenário foi exercitado com mock e dados sintéticos. Nenhum bloqueio à validação local.
 - **Próxima ação** — quando houver conta sintética em DEV, testar a recuperação da sessão após recarregar a página e confirmar o perfil e a organização.
+
+## Ciclo autônomo — 2026-11-23 — evento de sessão na inicialização
+
+- **Tarefa única** — impedir que o evento `INITIAL_SESSION` preencha o estado autenticado quando a recuperação inicial falha. Branch `fix/persist-rbac-permissions`, HEAD inicial `a8fb2ab`, árvore limpa. Skills bug-hunter e qa-automation. Os cinco documentos operacionais indicados na raiz pelo OBRAMAXAUTO estavam ausentes.
+- **Falhou antes da correção** — `node tests/auth-profile-loading.test.mjs` registrou 34 aprovações e uma falha. Com erro em `getSession()`, o evento sintético deixou o usuário no estado local.
+- **Correção** — `src/contexts/AuthContext.tsx` centraliza a restauração inicial em `initAuth`. A regressão em `tests/auth-profile-loading.test.mjs` cobre o erro de recuperação junto com a emissão de `INITIAL_SESSION` e verifica usuário, sessão e consultas de perfil.
+- **Aprovados** — teste direcionado (35/35), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificados** — navegador, Supabase Auth em DEV e CI remoto. O teste usou mocks e dados sintéticos. Nenhum bloqueio às verificações locais.
+- **Próxima ação** — com uma conta sintética em DEV, homologar a restauração após recarregar a página e verificar o estado quando a recuperação da sessão falhar.
