@@ -445,13 +445,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         setSession(newSession);
         setUser(newSession?.user || null);
+        setInitializationError(null);
         if (newSession?.user) {
           setIsLoading(true);
           await loadUserDataSafe(newSession.user);
         } else {
           invalidateUserData();
           setProfileError(null);
-          setInitializationError(null);
         }
       } catch (authChangeErr: any) {
         if (isMounted) setInitializationError(authChangeErr?.message || 'Erro ao sincronizar sessão.');

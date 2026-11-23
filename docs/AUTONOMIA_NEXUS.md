@@ -2289,3 +2289,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovados** — teste direcionado (35/35), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificados** — navegador, Supabase Auth em DEV e CI remoto. O teste usou mocks e dados sintéticos. Nenhum bloqueio às verificações locais.
 - **Próxima ação** — com uma conta sintética em DEV, homologar a restauração após recarregar a página e verificar o estado quando a recuperação da sessão falhar.
+
+## Ciclo autônomo — 2026-11-23 — recuperação após falha de sessão inicial
+
+- **Tarefa única** — remover o erro de inicialização obsoleto quando um evento de autenticação posterior restaura a sessão. Branch `fix/persist-rbac-permissions`, HEAD inicial `5480528`, árvore limpa. Skills bug-hunter e qa-automation. Os cinco documentos operacionais indicados na raiz pelo OBRAMAXAUTO estavam ausentes.
+- **Falhou antes da correção** — em `tests/auth-profile-loading.test.mjs`, após erro sintético de `getSession()` e posterior `SIGNED_IN`, o perfil era consultado, mas o erro persistia e o App continuava exibindo a tela de falha.
+- **Correção** — `src/contexts/AuthContext.tsx` limpa o erro anterior ao processar a nova sessão e mantém o tratamento de erros da sincronização atual.
+- **Aprovados** — teste direcionado (36/36), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificados** — navegador, Supabase Auth em DEV e CI remoto. A regressão usa mocks e dados sintéticos. Nenhum bloqueio à validação local.
+- **Próxima ação** — com uma conta sintética em DEV, confirmar no navegador que um login posterior à falha de recuperação abre a organização esperada.
