@@ -669,3 +669,36 @@ test('signup requires a user ID consistent with any returned session', async () 
     delete globalThis.__authContext;
   }
 });
+
+test('successful session restoration clears the initialization watchdog error', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  let resolveSession, resolveProfile;
+  const session = new Promise(resolve => { resolveSession = resolve; });
+  const profile = new Promise(resolve => { resolveProfile = resolve; });
+  const user = { id: 'user-a' };
+  globalThis.__authProfileTest = { session: () => session, lookup: () => profile };
+  callbacks.length = states.length = effects.length = 0;
+  AuthProvider({ children: null });
+  const cleanup = effects[0]();
+  try {
+    t.mock.timers.tick(6000);
+    resolveSession({ data: { session: { user } }, error: null });
+    await new Promise(resolve => setImmediate(resolve));
+
+    t.mock.timers.tick(4000);
+    assert.match(states[8], /Tempo limite excedido/);
+
+    resolveProfile({
+      data: { id: user.id, organization_id: 'tenant-a', role: 'viewer' },
+      error: null,
+    });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(states[2]?.id, user.id);
+    assert.equal(states[6], false);
+    assert.equal(states[8], null);
+  } finally {
+    cleanup();
+    delete globalThis.__authProfileTest;
+    delete globalThis.__authContext;
+  }
+});

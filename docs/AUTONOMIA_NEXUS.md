@@ -2307,3 +2307,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovados** — teste direcionado (37/37), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificados** — navegador, Supabase Auth em DEV e CI remoto. As verificações locais usaram mocks e dados sintéticos no cenário de regressão. Nenhum bloqueio à validação local.
 - **Próxima ação** — quando houver contas sintéticas em DEV, verificar no navegador a transição entre sessões com a consulta de perfil lenta e confirmar a organização exibida.
+
+## Ciclo autônomo — 2026-11-24 — aviso de tempo esgotado após restaurar a sessão
+
+- **Tarefa única** — remover o aviso de inicialização quando a restauração da sessão termina após o limite global de 10 segundos. Branch `fix/persist-rbac-permissions`, HEAD inicial `1ae1300`, árvore limpa. Skills bug-hunter e qa-automation. Os cinco documentos operacionais indicados no OBRAMAXAUTO estavam ausentes.
+- **Falhou antes da correção** — o teste direcionado registrou 37 aprovações e uma falha. Com relógio simulado e dados sintéticos, o perfil foi carregado, mas o erro de tempo esgotado permaneceu.
+- **Correção** — `src/contexts/AuthContext.tsx` limpa o aviso quando a inicialização termina e nenhum evento de autenticação mais recente assumiu o fluxo. `tests/auth-profile-loading.test.mjs` cobre a conclusão tardia.
+- **Aprovados** — `node tests/auth-profile-loading.test.mjs` (38/38), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificados** — navegador, Supabase Auth em DEV e CI remoto. Nenhum bloqueio à validação local.
+- **Próxima ação** — com uma conta sintética em DEV, reproduzir no navegador uma restauração lenta e confirmar que o aviso desaparece quando o acesso à organização é restaurado.

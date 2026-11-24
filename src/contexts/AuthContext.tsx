@@ -420,6 +420,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setSession(currentSession);
           setUser(currentSession?.user || null);
           if (currentSession?.user) await loadUserDataSafe(currentSession.user);
+          if (isMounted && authEventVersion === 0) setInitializationError(null);
         }
       } catch (err: any) {
         if (isMounted && authEventVersion === 0) setInitializationError(err?.message || 'Falha ao inicializar a autenticação.');
