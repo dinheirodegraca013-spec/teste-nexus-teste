@@ -397,10 +397,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let isMounted = true;
     let authEventVersion = 0;
+    const watchdogError = 'Tempo limite excedido ao sincronizar com o banco de dados. Verifique sua conexão e tente novamente.';
     const watchdog = setTimeout(() => {
       if (isMounted) {
         setIsLoading((currentLoading) => currentLoading ? false : false);
-        setInitializationError('Tempo limite excedido ao sincronizar com o banco de dados. Verifique sua conexão e tente novamente.');
+        setInitializationError(watchdogError);
       }
     }, 10000);
 
@@ -420,7 +421,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setSession(currentSession);
           setUser(currentSession?.user || null);
           if (currentSession?.user) await loadUserDataSafe(currentSession.user);
-          if (isMounted && authEventVersion === 0) setInitializationError(null);
+          if (isMounted && authEventVersion === 0) {
+            setInitializationError(current => current === watchdogError ? null : current);
+          }
         }
       } catch (err: any) {
         if (isMounted && authEventVersion === 0) setInitializationError(err?.message || 'Falha ao inicializar a autenticação.');

@@ -2316,3 +2316,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovados** — `node tests/auth-profile-loading.test.mjs` (38/38), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificados** — navegador, Supabase Auth em DEV e CI remoto. Nenhum bloqueio à validação local.
 - **Próxima ação** — com uma conta sintética em DEV, reproduzir no navegador uma restauração lenta e confirmar que o aviso desaparece quando o acesso à organização é restaurado.
+
+## Ciclo autônomo — 2026-11-24 — erro de perfil durante a restauração da sessão
+
+- **Tarefa única** — preservar a falha de consulta do perfil ao concluir a restauração inicial. Branch `fix/persist-rbac-permissions`, HEAD inicial `9db010c`, árvore limpa. Skills bug-hunter e qa-automation. Os cinco documentos operacionais indicados no OBRAMAXAUTO estavam ausentes.
+- **Falhou antes da correção** — `node tests/auth-profile-loading.test.mjs` registrou 38 aprovações e uma falha. Com relógio simulado e dados sintéticos, a consulta falhou após o aviso de tempo esgotado e a inicialização apagou a mensagem específica da falha.
+- **Correção** — `src/contexts/AuthContext.tsx` limpa somente o aviso de tempo esgotado da inicialização. `tests/auth-profile-loading.test.mjs` cobre sucesso e falha tardios.
+- **Aprovados** — teste direcionado (39/39), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificados** — navegador, Supabase Auth em DEV e CI remoto. Nenhum bloqueio às verificações locais.
+- **Próxima ação** — com uma conta sintética em DEV, verificar no navegador a mensagem exibida quando a consulta do perfil falha após o aviso de tempo esgotado.

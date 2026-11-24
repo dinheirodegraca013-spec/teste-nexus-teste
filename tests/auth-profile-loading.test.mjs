@@ -20,7 +20,7 @@ const result = await build({
         export const useRef = value => ({ current: value });
         export const useState = value => {
           const index = states.push(value) - 1;
-          return [value, next => { states[index] = next; }];
+          return [value, next => { states[index] = typeof next === 'function' ? next(states[index]) : next; }];
         };
         export default { useRef, createElement: (_type, props) => { if (props.value) globalThis.__authContext = props.value; return null; } };
       ` : args.path.endsWith('/supabase') ? `
@@ -670,35 +670,40 @@ test('signup requires a user ID consistent with any returned session', async () 
   }
 });
 
-test('successful session restoration clears the initialization watchdog error', async t => {
-  t.mock.timers.enable({ apis: ['setTimeout'] });
-  let resolveSession, resolveProfile;
-  const session = new Promise(resolve => { resolveSession = resolve; });
-  const profile = new Promise(resolve => { resolveProfile = resolve; });
-  const user = { id: 'user-a' };
-  globalThis.__authProfileTest = { session: () => session, lookup: () => profile };
-  callbacks.length = states.length = effects.length = 0;
-  AuthProvider({ children: null });
-  const cleanup = effects[0]();
-  try {
-    t.mock.timers.tick(6000);
-    resolveSession({ data: { session: { user } }, error: null });
-    await new Promise(resolve => setImmediate(resolve));
+for (const [outcome, error] of [
+  ['successful', null],
+  ['failed', new Error('Profile lookup unavailable')],
+]) {
+  test(`late session restoration with a ${outcome} profile lookup clears only the watchdog error`, async t => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    let resolveSession, resolveProfile;
+    const session = new Promise(resolve => { resolveSession = resolve; });
+    const profile = new Promise(resolve => { resolveProfile = resolve; });
+    const user = { id: 'user-a' };
+    globalThis.__authProfileTest = { session: () => session, lookup: () => profile };
+    callbacks.length = states.length = effects.length = 0;
+    AuthProvider({ children: null });
+    const cleanup = effects[0]();
+    try {
+      t.mock.timers.tick(6000);
+      resolveSession({ data: { session: { user } }, error: null });
+      await new Promise(resolve => setImmediate(resolve));
 
-    t.mock.timers.tick(4000);
-    assert.match(states[8], /Tempo limite excedido/);
+      t.mock.timers.tick(4000);
+      assert.match(states[8], /Tempo limite excedido/);
 
-    resolveProfile({
-      data: { id: user.id, organization_id: 'tenant-a', role: 'viewer' },
-      error: null,
-    });
-    await new Promise(resolve => setImmediate(resolve));
-    assert.equal(states[2]?.id, user.id);
-    assert.equal(states[6], false);
-    assert.equal(states[8], null);
-  } finally {
-    cleanup();
-    delete globalThis.__authProfileTest;
-    delete globalThis.__authContext;
-  }
-});
+      resolveProfile({
+        data: error ? null : { id: user.id, organization_id: 'tenant-a', role: 'viewer' },
+        error,
+      });
+      await new Promise(resolve => setImmediate(resolve));
+      assert.equal(states[2]?.id, error ? undefined : user.id);
+      assert.equal(states[6], false);
+      assert.equal(states[8], error?.message ?? null);
+    } finally {
+      cleanup();
+      delete globalThis.__authProfileTest;
+      delete globalThis.__authContext;
+    }
+  });
+}
