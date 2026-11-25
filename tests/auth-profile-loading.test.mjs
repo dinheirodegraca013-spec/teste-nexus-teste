@@ -744,3 +744,38 @@ test('a late invitation claim failure does not overwrite a newer session', async
     delete globalThis.__authContext;
   }
 });
+
+test('an invited account stops loading when the claimed profile lookup stalls', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const user = { id: 'user-a', user_metadata: { role: 'viewer' } };
+  let lookups = 0;
+  globalThis.__authProfileTest = {
+    session: async () => ({ data: { session: null }, error: null }),
+    lookup: async () => {
+      lookups++;
+      if (lookups === 2) await new Promise(() => {});
+      return { data: null, error: null };
+    },
+    rpc: async () => ({ data: true, error: null }),
+  };
+  callbacks.length = states.length = effects.length = 0;
+  AuthProvider({ children: null });
+  const cleanup = effects[0]();
+  try {
+    await new Promise(resolve => setImmediate(resolve));
+    const loading = globalThis.__authProfileTest.onChange('SIGNED_IN', { user });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(lookups, 2);
+    assert.equal(states[6], true);
+
+    t.mock.timers.tick(8000);
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(states[6], false);
+    assert.match(states[8], /perfil ainda não foi provisionado/);
+    await loading;
+  } finally {
+    cleanup();
+    delete globalThis.__authProfileTest;
+    delete globalThis.__authContext;
+  }
+});

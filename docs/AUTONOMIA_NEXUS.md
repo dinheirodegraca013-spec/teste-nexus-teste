@@ -2334,3 +2334,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovados** — teste direcionado (40/40), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificados** — navegador, Supabase Auth em DEV e CI remoto. O teste usou mocks e dados sintéticos. Nenhum bloqueio às verificações locais.
 - **Próxima ação** — com contas sintéticas em DEV, verificar no navegador a troca de sessão enquanto o vínculo por convite está pendente e confirmar o perfil e a organização exibidos após a falha.
+
+## Ciclo autônomo — 2026-11-25 — consulta de perfil após vínculo por convite
+
+- **Tarefa única** — limitar a espera pela consulta de perfil após o vínculo por convite. Branch `fix/persist-rbac-permissions`, HEAD inicial `22ebc4f`, árvore limpa. Skills bug-hunter e qa-automation. Os cinco documentos operacionais de raiz indicados no OBRAMAXAUTO estavam ausentes.
+- **Falhou antes da correção** — `node tests/auth-profile-loading.test.mjs` registrou 40 aprovações e uma falha. Com relógio simulado e uma conta sintética, o vínculo retornou sucesso, mas a segunda consulta de perfil ficou pendente e o carregamento continuou ativo.
+- **Correção** — `src/contexts/AuthContext.tsx` aplica à consulta de perfil o limite de 8 segundos, igual ao da solicitação de vínculo. Ao expirar, o fluxo encerra o carregamento e exibe o aviso existente de perfil indisponível para a conta convidada.
+- **Aprovados** — teste direcionado (41/41), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificados** — navegador, Supabase Auth em DEV e CI remoto. A regressão usa mocks e dados sintéticos. Nenhum bloqueio às verificações locais.
+- **Próxima ação** — com uma conta sintética em DEV, simular a demora da consulta após o vínculo no navegador e confirmar que a interface sai do carregamento e mantém o acesso bloqueado até obter o perfil.

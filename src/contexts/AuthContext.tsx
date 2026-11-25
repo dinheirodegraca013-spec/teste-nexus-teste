@@ -225,7 +225,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             );
             if (!isCurrent()) return empty;
             if (!claimError && claimed === true) {
-              const { data: claimedProfile, error: claimedProfileError } = await profilesService.getById(authUser.id);
+              const { data: claimedProfile, error: claimedProfileError } = await withTimeout(
+                profilesService.getById(authUser.id),
+                8000,
+                'Tempo limite ao consultar perfil após vínculo por convite'
+              );
               if (!isCurrent()) return empty;
               if (!claimedProfileError && claimedProfile) {
                 activeProfile = claimedProfile;
