@@ -2325,3 +2325,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovados** — teste direcionado (39/39), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificados** — navegador, Supabase Auth em DEV e CI remoto. Nenhum bloqueio às verificações locais.
 - **Próxima ação** — com uma conta sintética em DEV, verificar no navegador a mensagem exibida quando a consulta do perfil falha após o aviso de tempo esgotado.
+
+## Ciclo autônomo — 2026-11-25 — rejeição tardia do vínculo por convite
+
+- **Tarefa única** — preservar o acesso da sessão atual quando a solicitação de vínculo de um usuário anterior falha. Branch `fix/persist-rbac-permissions`, HEAD inicial `d99c94f`, árvore limpa. Skills bug-hunter e qa-automation. Os cinco documentos operacionais de raiz indicados no OBRAMAXAUTO estavam ausentes.
+- **Falhou antes da correção** — `node tests/auth-profile-loading.test.mjs` registrou 39 aprovações e uma falha. Com duas sessões sintéticas, a rejeição do vínculo da primeira apagou o perfil da segunda.
+- **Correção** — `src/contexts/AuthContext.tsx` valida a sessão vigente também no tratamento da rejeição do vínculo. O teste verifica a preservação do usuário, perfil e organização atuais e a ausência de erro de inicialização.
+- **Aprovados** — teste direcionado (40/40), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificados** — navegador, Supabase Auth em DEV e CI remoto. O teste usou mocks e dados sintéticos. Nenhum bloqueio às verificações locais.
+- **Próxima ação** — com contas sintéticas em DEV, verificar no navegador a troca de sessão enquanto o vínculo por convite está pendente e confirmar o perfil e a organização exibidos após a falha.

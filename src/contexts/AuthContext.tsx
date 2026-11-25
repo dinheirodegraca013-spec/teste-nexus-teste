@@ -232,6 +232,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               }
             }
           } catch (claimError) {
+            if (!isCurrent()) return empty;
             console.error('[NEXUS AUTH] preapproved-claim:error', summarizeAuthError(claimError));
           }
           if (!activeProfile) {

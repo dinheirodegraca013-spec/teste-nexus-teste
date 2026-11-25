@@ -707,3 +707,40 @@ for (const [outcome, error] of [
     }
   });
 }
+
+test('a late invitation claim failure does not overwrite a newer session', async () => {
+  let rejectClaim;
+  const claim = new Promise((_, reject) => { rejectClaim = reject; });
+  const invitedUser = { id: 'user-a', user_metadata: { role: 'viewer' } };
+  const activeUser = { id: 'user-b' };
+  const lookups = [];
+  globalThis.__authProfileTest = {
+    session: async () => ({ data: { session: { user: invitedUser } }, error: null }),
+    lookup: async id => {
+      lookups.push(id);
+      return { data: id === activeUser.id ? { id, organization_id: 'tenant-b', role: 'viewer' } : null, error: null };
+    },
+    rpc: name => {
+      assert.equal(name, 'nexus_claim_preapproved_team_membership');
+      return claim;
+    },
+  };
+  callbacks.length = states.length = effects.length = 0;
+  AuthProvider({ children: null });
+  const cleanup = effects[0]();
+  try {
+    await new Promise(resolve => setImmediate(resolve));
+    await globalThis.__authProfileTest.onChange('SIGNED_IN', { user: activeUser });
+    rejectClaim(new Error('Invitation claim unavailable'));
+    await new Promise(resolve => setImmediate(resolve));
+    assert.deepEqual(lookups, ['user-a', 'user-b']);
+    assert.equal(states[0]?.id, 'user-b');
+    assert.equal(states[2]?.id, 'user-b');
+    assert.equal(states[3]?.id, 'tenant-b');
+    assert.equal(states[8], null);
+  } finally {
+    cleanup();
+    delete globalThis.__authProfileTest;
+    delete globalThis.__authContext;
+  }
+});
