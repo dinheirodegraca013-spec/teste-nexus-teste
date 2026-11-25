@@ -296,8 +296,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
-      setProfile(activeProfile || null);
-
       let loadedOrg: Organization | null = null;
       if (activeProfile?.organization_id) {
         try {
@@ -307,12 +305,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             'Tempo limite ao carregar organização ativa'
           );
           if (!isCurrent()) return empty;
-          if (!orgErr && orgData) loadedOrg = orgData;
-        } catch (orgEx: any) {
+          if (orgErr) throw orgErr;
+          if (!orgData) throw new Error('Organização ativa não encontrada.');
+          loadedOrg = orgData;
+        } catch (orgEx) {
           if (!isCurrent()) return empty;
           console.warn('[NEXUS AUTH] organization:warn', summarizeAuthError(orgEx));
+          throw orgEx;
         }
       }
+      setProfile(activeProfile || null);
       setOrganization(loadedOrg);
 
       try {
@@ -348,8 +350,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { profile: activeProfile || null, organization: loadedOrg, permissions: loadedPerms };
     } catch (err: any) {
       if (!isCurrent()) return empty;
-      // A failed lookup does not establish that the profile is absent.
-      // Clear cached access and never provision a tenant on this path.
+      // Clear access when the profile or its active organization could not be loaded.
       setProfile(null);
       setOrganization(null);
       setOrganizations([]);

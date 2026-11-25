@@ -779,3 +779,30 @@ test('an invited account stops loading when the claimed profile lookup stalls', 
     delete globalThis.__authContext;
   }
 });
+
+for (const outcome of ['missing', 'error']) {
+  test(`session restoration blocks access when the active organization lookup returns ${outcome}`, async () => {
+    const user = { id: 'user-a' };
+    const error = outcome === 'error' ? new Error('Organization lookup unavailable') : null;
+    globalThis.__authProfileTest = {
+      session: async () => ({ data: { session: { user } }, error: null }),
+      lookup: async () => ({ data: { id: user.id, organization_id: 'tenant-a', role: 'viewer' }, error: null }),
+      organization: async () => ({ data: null, error }),
+    };
+    callbacks.length = states.length = effects.length = 0;
+    AuthProvider({ children: null });
+    const cleanup = effects[0]();
+    try {
+      await new Promise(resolve => setImmediate(resolve));
+      assert.equal(states[6], false);
+      assert.equal(states[2], null);
+      assert.equal(states[3], null);
+      assert.deepEqual(states[5], []);
+      assert.equal(states[8], error?.message ?? 'Organização ativa não encontrada.');
+    } finally {
+      cleanup();
+      delete globalThis.__authProfileTest;
+      delete globalThis.__authContext;
+    }
+  });
+}

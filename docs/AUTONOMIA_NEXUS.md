@@ -2343,3 +2343,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovados** — teste direcionado (41/41), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificados** — navegador, Supabase Auth em DEV e CI remoto. A regressão usa mocks e dados sintéticos. Nenhum bloqueio às verificações locais.
 - **Próxima ação** — com uma conta sintética em DEV, simular a demora da consulta após o vínculo no navegador e confirmar que a interface sai do carregamento e mantém o acesso bloqueado até obter o perfil.
+
+## Ciclo autônomo — 2026-11-25 — organização ativa na restauração da sessão
+
+- **Tarefa única** — exigir que a organização indicada pelo perfil seja carregada antes de disponibilizar o perfil. Branch `fix/persist-rbac-permissions`, HEAD inicial `bb00446`, árvore limpa. Skills bug-hunter e qa-automation. Os cinco documentos operacionais de raiz indicados no OBRAMAXAUTO estavam ausentes.
+- **Falhou antes da correção** — `node tests/auth-profile-loading.test.mjs` registrou 41 aprovações e duas falhas. A restauração mantinha o perfil ativo quando a consulta da organização retornava erro ou nenhuma linha.
+- **Correção** — `src/contexts/AuthContext.tsx` publica o perfil após carregar a organização indicada. Falhas nessa consulta usam o tratamento existente que limpa o acesso local e exibe a opção de tentar novamente. A primeira execução da suíte completa falhou no contrato de sanitização de logs. A versão final preserva o log sanitizado da consulta.
+- **Aprovados** — teste direcionado (43/43), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificados** — navegador, Supabase Auth em DEV e CI remoto. Os testes de regressão usaram mocks e contas sintéticas. Nenhum bloqueio à validação local.
+- **Próxima ação** — com uma conta sintética em DEV, simular uma falha transitória na consulta da organização ao restaurar a sessão e verificar que a opção de tentar novamente recupera o acesso somente após a consulta bem-sucedida.
