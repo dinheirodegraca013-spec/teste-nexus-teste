@@ -19,7 +19,9 @@ const result = await build({
         export const useCallback = fn => { callbacks.push(fn); return fn; };
         export const useRef = value => ({ current: value });
         export const useState = value => {
-          const index = states.push(value) - 1;
+          const index = states.length;
+          value = globalThis.__authProfileTest.initialStates?.[index] ?? value;
+          states.push(value);
           return [value, next => { states[index] = typeof next === 'function' ? next(states[index]) : next; }];
         };
         export default { useRef, createElement: (_type, props) => { if (props.value) globalThis.__authContext = props.value; return null; } };
@@ -31,7 +33,7 @@ const result = await build({
         export const organizationsService = {
           getById: async id => globalThis.__authProfileTest.organization ? globalThis.__authProfileTest.organization(id) : ({ data: { id }, error: null }),
           getAll: async () => ({ data: [], error: null }),
-        }, permissionsService = { getByUserId: async id => ({ data: [{ user_id: id, module: 'crm', can_view: true }], error: null }) };
+        }, permissionsService = { getByUserId: async id => globalThis.__authProfileTest.permissions ? globalThis.__authProfileTest.permissions(id) : ({ data: [{ user_id: id, module: 'crm', can_view: true }], error: null }) };
         export const isValidUUID = value => typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
       `,
     }));
@@ -806,3 +808,43 @@ for (const outcome of ['missing', 'error']) {
     }
   });
 }
+
+test('permission synchronization retries on focus after a stalled request', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 10000 });
+  const user = { id: 'user-a' };
+  const revoked = [];
+  let calls = 0;
+  let focus;
+  let release;
+  const stalled = new Promise(resolve => { release = resolve; });
+  globalThis.__authProfileTest = {
+    initialStates: [user, null, { id: user.id, role: 'viewer' }],
+    permissions: async () => ++calls === 1 ? stalled : { data: revoked, error: null },
+  };
+  globalThis.window = {
+    addEventListener: (_event, listener) => { focus = listener; },
+    removeEventListener() {},
+  };
+  globalThis.document = { visibilityState: 'visible', addEventListener() {}, removeEventListener() {} };
+  callbacks.length = states.length = effects.length = 0;
+  AuthProvider({ children: null });
+  const cleanup = effects[1]();
+  try {
+    assert.equal(calls, 1);
+    t.mock.timers.tick(7000);
+    await new Promise(resolve => setImmediate(resolve));
+    focus();
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(calls, 2);
+    assert.equal(states[5], revoked);
+    release({ data: [{ user_id: user.id, module: 'crm', can_view: true }], error: null });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(states[5], revoked);
+  } finally {
+    cleanup();
+    delete globalThis.window;
+    delete globalThis.document;
+    delete globalThis.__authProfileTest;
+    delete globalThis.__authContext;
+  }
+});

@@ -494,7 +494,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       lastChecked = now;
       pending = true;
       try {
-        const { data, error } = await permissionsService.getByUserId(user.id);
+        const { data, error } = await withTimeout(
+          permissionsService.getByUserId(user.id),
+          7000,
+          'Tempo limite ao sincronizar permissões'
+        );
         if (active && !error && data) setPermissions(data);
         if (error) console.error('[NEXUS AUTH] permission-sync:error', summarizeAuthError(error));
       } catch (error) {

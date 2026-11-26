@@ -2352,3 +2352,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovados** — teste direcionado (43/43), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificados** — navegador, Supabase Auth em DEV e CI remoto. Os testes de regressão usaram mocks e contas sintéticas. Nenhum bloqueio à validação local.
 - **Próxima ação** — com uma conta sintética em DEV, simular uma falha transitória na consulta da organização ao restaurar a sessão e verificar que a opção de tentar novamente recupera o acesso somente após a consulta bem-sucedida.
+
+## Ciclo autônomo — 2026-11-26 — sincronização de permissões ao retornar à aba
+
+- **Tarefa única** — recuperar a sincronização de permissões após uma consulta pendente. Branch `fix/persist-rbac-permissions`, HEAD inicial `748926f`, árvore limpa. Skills bug-hunter e qa-automation. Os cinco documentos operacionais de raiz indicados no OBRAMAXAUTO estavam ausentes.
+- **Falhou antes da correção** — `node tests/auth-profile-loading.test.mjs` registrou 43 aprovações e uma falha. Com relógio simulado, a consulta pendente impediu a segunda tentativa ao retornar à aba.
+- **Correção** — `src/contexts/AuthContext.tsx` limita a espera a sete segundos e permite nova tentativa no próximo evento de foco ou visibilidade. O teste em `tests/auth-profile-loading.test.mjs` confirma que a lista vazia da segunda consulta é aplicada e que a resposta tardia da primeira não restaura a permissão revogada.
+- **Aprovados** — teste direcionado (44/44), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificados** — navegador, Supabase Auth em DEV e CI remoto. A regressão usou mocks e dados sintéticos. Nenhum bloqueio às verificações locais.
+- **Próxima ação** — em um navegador com conta sintética em DEV, atrasar a consulta de permissões e confirmar que o retorno à aba dispara nova consulta após sete segundos.
