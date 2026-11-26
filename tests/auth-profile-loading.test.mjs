@@ -848,3 +848,35 @@ test('permission synchronization retries on focus after a stalled request', asyn
     delete globalThis.__authContext;
   }
 });
+
+test('signup with an immediate session stops waiting for stalled organization provisioning', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const user = { id: 'user-a' };
+  let result;
+  let signOutCalls = 0;
+  globalThis.__authProfileTest = {
+    signUp: async () => ({ data: { user, session: { user } }, error: null }),
+    rpc: () => new Promise(() => {}),
+    signOut: async () => { signOutCalls++; return { error: null }; },
+  };
+  callbacks.length = states.length = effects.length = 0;
+  AuthProvider({ children: null });
+  try {
+    void globalThis.__authContext.signUp({
+      name: 'Synthetic User',
+      email: 'test@example.invalid',
+      password: 'synthetic-password',
+    }).then(value => { result = value; });
+    await new Promise(resolve => setImmediate(resolve));
+
+    t.mock.timers.tick(8000);
+    await new Promise(resolve => setImmediate(resolve));
+    assert.match(result?.error?.message ?? '', /falha ao configurar a organização/);
+    assert.equal(signOutCalls, 1);
+    assert.equal(states[0], null);
+    assert.equal(states[1], null);
+  } finally {
+    delete globalThis.__authProfileTest;
+    delete globalThis.__authContext;
+  }
+});

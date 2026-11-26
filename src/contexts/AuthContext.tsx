@@ -664,12 +664,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const orgName = organizationName?.trim() || `Campanha de ${name.trim().split(' ')[0]}`;
           const orgSlug = orgName.toLowerCase().replace(/[^a-z0-9]/g, '-');
           try {
-            const { data: rpcOrgId, error: rpcErr } = await supabase.rpc('provision_new_user', {
-              p_org_name: orgName,
-              p_org_slug: orgSlug,
-              p_campaign_type: 'DEPUTADO_FEDERAL',
-              p_profile_name: name.trim(),
-            });
+            const { data: rpcOrgId, error: rpcErr } = await withTimeout(
+              supabase.rpc('provision_new_user', {
+                p_org_name: orgName,
+                p_org_slug: orgSlug,
+                p_campaign_type: 'DEPUTADO_FEDERAL',
+                p_profile_name: name.trim(),
+              }),
+              8000,
+              'Tempo limite ao provisionar usuário via RPC'
+            );
             if (rpcErr || !isValidUUID(rpcOrgId)) {
               console.error('[NEXUS PROVISION] Erro na RPC provision_new_user no signUp:', summarizeAuthError(rpcErr));
               await clearAuthenticatedState();

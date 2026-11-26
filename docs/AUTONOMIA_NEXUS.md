@@ -2361,3 +2361,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovados** — teste direcionado (44/44), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificados** — navegador, Supabase Auth em DEV e CI remoto. A regressão usou mocks e dados sintéticos. Nenhum bloqueio às verificações locais.
 - **Próxima ação** — em um navegador com conta sintética em DEV, atrasar a consulta de permissões e confirmar que o retorno à aba dispara nova consulta após sete segundos.
+
+## Ciclo autônomo — 2026-11-26 — prazo para configurar organização no cadastro
+
+- **Tarefa única** — encerrar a espera pelo provisionamento de uma organização no cadastro com sessão imediata. Branch `fix/persist-rbac-permissions`, HEAD inicial `0d15212`, árvore limpa. Skills bug-hunter e qa-automation. Os cinco documentos operacionais de raiz indicados no OBRAMAXAUTO estavam ausentes.
+- **Falhou antes da correção** — `node tests/auth-profile-loading.test.mjs` registrou 44 aprovações e uma falha. Com relógio simulado e RPC pendente, o cadastro ainda não tinha retornado após oito segundos.
+- **Correção** — `src/contexts/AuthContext.tsx` usa o prazo de oito segundos já adotado no carregamento do perfil. Ao expirar, o cadastro segue o tratamento existente, limpa o estado de autenticação local, solicita o encerramento da sessão e orienta a tentar entrar novamente. O teste usa mocks e dados sintéticos.
+- **Aprovados** — teste direcionado (45/45), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificados** — navegador, Supabase DEV e CI remoto. O prazo limita a espera no cliente. A RPC ainda pode concluir no servidor.
+- **Próxima ação** — em DEV, com cadastro sintético, atrasar a resposta do provisionamento e verificar a recuperação pelo login quando a RPC concluir após o prazo.
