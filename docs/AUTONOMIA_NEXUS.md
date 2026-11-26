@@ -2370,3 +2370,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovados** — teste direcionado (45/45), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificados** — navegador, Supabase DEV e CI remoto. O prazo limita a espera no cliente. A RPC ainda pode concluir no servidor.
 - **Próxima ação** — em DEV, com cadastro sintético, atrasar a resposta do provisionamento e verificar a recuperação pelo login quando a RPC concluir após o prazo.
+
+## Ciclo autônomo — 2026-11-26 — encerramento de sessão inválida no login
+
+- **Tarefa única** — limitar a espera pela limpeza de uma sessão rejeitada. Branch `fix/persist-rbac-permissions`, HEAD inicial `98f41d2`, árvore limpa. Skills bug-hunter e qa-automation. Os cinco documentos operacionais indicados no OBRAMAXAUTO estavam ausentes.
+- **Falhou antes da correção** — `node tests/auth-profile-loading.test.mjs` registrou 45 aprovações e uma falha. Com contas sintéticas e relógio simulado, o login ainda estava pendente após oito segundos porque o encerramento da sessão aguardava o provedor.
+- **Correção** — `src/contexts/AuthContext.tsx` preserva a limpeza imediata do estado local e limita a espera pelo encerramento no provedor a oito segundos. Se o prazo expirar, registra a falha com log sanitizado e mantém o erro original do login.
+- **Aprovados** — teste direcionado (46/46), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificados** — navegador, Supabase DEV e CI remoto. O prazo limita a espera da interface. O encerramento no provedor pode concluir mais tarde. Nenhum bloqueio às verificações locais.
+- **Próxima ação** — com conta sintética em DEV, atrasar a resposta do encerramento durante um login rejeitado e verificar o erro exibido, o estado da sessão e a recuperação no login seguinte.

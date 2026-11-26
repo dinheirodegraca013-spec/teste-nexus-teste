@@ -880,3 +880,28 @@ test('signup with an immediate session stops waiting for stalled organization pr
     delete globalThis.__authContext;
   }
 });
+
+test('login returns an error when cleanup of an invalid session stalls', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  let result;
+  globalThis.__authProfileTest = {
+    signIn: async () => ({ data: { user: { id: 'user-a' }, session: { user: { id: 'user-b' } } }, error: null }),
+    signOut: () => new Promise(() => {}),
+  };
+  callbacks.length = states.length = effects.length = 0;
+  AuthProvider({ children: null });
+  try {
+    void globalThis.__authContext.signIn('test@example.invalid', 'synthetic-password')
+      .then(value => { result = value; });
+    await new Promise(resolve => setImmediate(resolve));
+
+    t.mock.timers.tick(8000);
+    await new Promise(resolve => setImmediate(resolve));
+    assert.match(result?.error?.message ?? '', /sessão válida/);
+    assert.equal(states[0], null);
+    assert.equal(states[1], null);
+  } finally {
+    delete globalThis.__authProfileTest;
+    delete globalThis.__authContext;
+  }
+});
