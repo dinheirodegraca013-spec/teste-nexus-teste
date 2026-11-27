@@ -906,7 +906,7 @@ test('login returns an error when cleanup of an invalid session stalls', async t
   }
 });
 
-test('logout clears local access after the provider timeout', async t => {
+test('logout clears local access before the provider responds', async t => {
   t.mock.timers.enable({ apis: ['setTimeout'] });
   globalThis.__authProfileTest = {
     signOut: () => new Promise(() => {}),
@@ -919,6 +919,9 @@ test('logout clears local access after the provider timeout', async t => {
 
     let result;
     void globalThis.__authContext.signOut().then(value => { result = value; });
+    assert.deepEqual(states.slice(0, 4), [null, null, null, null]);
+    assert.deepEqual(states[5], []);
+
     t.mock.timers.tick(8000);
     await new Promise(resolve => setImmediate(resolve));
 

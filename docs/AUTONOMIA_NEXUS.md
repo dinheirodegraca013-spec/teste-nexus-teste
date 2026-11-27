@@ -2388,3 +2388,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovados** — teste direcionado (47/47), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificados** — navegador, Supabase DEV e CI remoto. O prazo limita a espera local. O encerramento no provedor pode concluir mais tarde. Nenhum bloqueio às verificações locais.
 - **Próxima ação** — em navegador com conta sintética em DEV, atrasar a resposta do logout e conferir o estado de acesso local após o prazo e após recarregar a página.
+
+## Ciclo autônomo — 2026-11-27 — limpeza local imediata no logout
+
+- **Tarefa única** — limpar usuário e sessão assim que o logout é solicitado. Branch `fix/persist-rbac-permissions`, HEAD inicial `30cf142`, árvore limpa. Skills bug-hunter e qa-automation. Os cinco documentos operacionais de raiz indicados no OBRAMAXAUTO estavam ausentes.
+- **Falhou antes da correção** — a regressão em `tests/auth-profile-loading.test.mjs` observou usuário e sessão ainda presentes enquanto o provedor simulado aguardava.
+- **Correção** — `src/contexts/AuthContext.tsx` limpa usuário e sessão junto com perfil, organização e permissões antes de aguardar o provedor. A regressão verifica a limpeza imediata e o erro após o prazo de oito segundos.
+- **Aprovados** — teste direcionado (47/47), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificados** — navegador, Supabase DEV e CI remoto. A regressão usou mocks e dados sintéticos. Nenhum bloqueio local.
+- **Próxima ação** — com conta sintética em DEV, atrasar a resposta do logout e verificar a transição imediata da interface e o estado após recarregar a página.
