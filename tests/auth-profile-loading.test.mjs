@@ -905,3 +905,28 @@ test('login returns an error when cleanup of an invalid session stalls', async t
     delete globalThis.__authContext;
   }
 });
+
+test('logout clears local access after the provider timeout', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  globalThis.__authProfileTest = {
+    signOut: () => new Promise(() => {}),
+  };
+  callbacks.length = states.length = effects.length = 0;
+  try {
+    AuthProvider({ children: null });
+    for (const index of [0, 1, 2, 3]) states[index] = { id: 'synthetic' };
+    states[5] = [{ user_id: 'synthetic' }];
+
+    let result;
+    void globalThis.__authContext.signOut().then(value => { result = value; });
+    t.mock.timers.tick(8000);
+    await new Promise(resolve => setImmediate(resolve));
+
+    assert.equal(result?.error?.name, 'TimeoutError');
+    assert.deepEqual(states.slice(0, 4), [null, null, null, null]);
+    assert.deepEqual(states[5], []);
+  } finally {
+    delete globalThis.__authProfileTest;
+    delete globalThis.__authContext;
+  }
+});

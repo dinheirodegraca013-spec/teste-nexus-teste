@@ -2379,3 +2379,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovados** — teste direcionado (46/46), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificados** — navegador, Supabase DEV e CI remoto. O prazo limita a espera da interface. O encerramento no provedor pode concluir mais tarde. Nenhum bloqueio às verificações locais.
 - **Próxima ação** — com conta sintética em DEV, atrasar a resposta do encerramento durante um login rejeitado e verificar o erro exibido, o estado da sessão e a recuperação no login seguinte.
+
+## Ciclo autônomo — 2026-11-27 — prazo para logout manual
+
+- **Tarefa única** — limitar a espera pelo Supabase Auth no logout manual. Branch `fix/persist-rbac-permissions`, HEAD inicial `05ab54d`, árvore limpa. Skills bug-hunter e qa-automation. Os cinco documentos operacionais de raiz indicados no OBRAMAXAUTO estavam ausentes.
+- **Falhou antes da correção** — `node tests/auth-profile-loading.test.mjs` (46 aprovados, 1 falhou). Com relógio simulado e provedor pendente, o logout não retornava após oito segundos e a limpeza local ficava pendente.
+- **Correção** — `src/contexts/AuthContext.tsx` aplica o prazo de oito segundos já adotado na limpeza de uma sessão inválida. Ao expirar, registra o erro sanitizado, retorna o erro de prazo e limpa usuário, sessão, perfil, organização ativa e permissões. A regressão usa apenas mocks e dados sintéticos.
+- **Aprovados** — teste direcionado (47/47), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificados** — navegador, Supabase DEV e CI remoto. O prazo limita a espera local. O encerramento no provedor pode concluir mais tarde. Nenhum bloqueio às verificações locais.
+- **Próxima ação** — em navegador com conta sintética em DEV, atrasar a resposta do logout e conferir o estado de acesso local após o prazo e após recarregar a página.

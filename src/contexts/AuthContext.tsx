@@ -719,9 +719,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isSigningInRef.current = false;
     invalidateUserData();
     try {
-      const { error } = await supabase.auth.signOut();
+      const { error } = await withTimeout(
+        supabase.auth.signOut(),
+        8000,
+        'Tempo limite ao encerrar a sessão',
+      );
       return { error: error || null };
     } catch (err: any) {
+      logAuthError('signOut', err);
       return { error: err };
     } finally {
       setUser(null);
