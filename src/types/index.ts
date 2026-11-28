@@ -1,4 +1,4 @@
-export type UserRole = 'superadmin' | 'admin' | 'manager' | 'coordinator' | 'leader' | 'operator' | 'viewer';
+export type UserRole = 'superadmin' | 'admin' | 'manager' | 'coordinator' | 'controller' | 'leader' | 'operator' | 'viewer';
 
 export interface Organization {
   id: string;
@@ -39,6 +39,7 @@ export interface Profile {
   status?: 'active' | 'pending' | 'inactive';
   avatar_url?: string;
   is_active?: boolean;
+  is_blocked?: boolean;
   created_at: string;
 }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Users, Plus, Clock, MapPin, FileText, CheckSquare, Edit2, Trash2, CheckCircle2, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -21,6 +21,7 @@ export const MeetingsPage: React.FC = () => {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const loadGenerationRef = useRef(0);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -37,15 +38,24 @@ export const MeetingsPage: React.FC = () => {
   });
 
   const loadData = useCallback(async () => {
-    if (!orgId) return;
+    const loadGeneration = ++loadGenerationRef.current;
+    const isCurrentLoad = () => loadGeneration === loadGenerationRef.current;
+    if (!orgId) {
+      if (!isCurrentLoad()) return;
+      setMeetings([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
-      const { data } = await meetingsService.getAll(orgId);
+      const { data, error } = await meetingsService.getAll(orgId);
+      if (error) throw error;
+      if (!isCurrentLoad()) return;
       setMeetings(data || []);
     } catch (err: any) {
-      toastError('Erro ao carregar reuniões: ' + err.message);
+      if (isCurrentLoad()) toastError('Erro ao carregar reuniões: ' + err.message);
     } finally {
-      setIsLoading(false);
+      if (isCurrentLoad()) setIsLoading(false);
     }
   }, [orgId, toastError]);
 
@@ -236,14 +246,18 @@ export const MeetingsPage: React.FC = () => {
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1.5">
                     <button
+                      type="button"
                       onClick={() => handleOpenModal(m)}
+                      aria-label="Editar"
                       className="p-1.5 rounded text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
                       title="Editar"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleDelete(m.id)}
+                      aria-label="Excluir"
                       className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-slate-100 transition-colors cursor-pointer"
                       title="Excluir"
                     >
@@ -320,6 +334,7 @@ export const MeetingsPage: React.FC = () => {
           <div className="space-y-1.5">
             <label className="block text-xs font-medium text-slate-700">Ata / Deliberações & Encaminhamentos</label>
             <textarea
+              aria-label="Ata e Deliberações"
               value={formData.minutes}
               onChange={(e) => setFormData({ ...formData, minutes: e.target.value })}
               placeholder="Pontos acordados, metas combinadas, distribuição de materiais..."

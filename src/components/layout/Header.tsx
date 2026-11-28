@@ -6,9 +6,10 @@ import { isSupabaseConfigured, supabaseUrl } from '../../lib/supabase';
 interface HeaderProps {
   onOpenMobileMenu: () => void;
   currentPath: string;
+  isMobileMenuOpen?: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu, currentPath }) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu, currentPath, isMobileMenuOpen = false }) => {
   const { organization, profile } = useAuth();
 
   const getPageTitle = (path: string) => {
@@ -41,8 +42,12 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu, currentPath })
     <header className="h-14 border-b border-slate-200 bg-white/85 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30">
       <div className="flex items-center gap-3">
         <button
+          type="button"
           onClick={onOpenMobileMenu}
-          className="lg:hidden p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+          aria-label="Abrir menu de navegação"
+          aria-expanded={isMobileMenuOpen}
+          aria-controls="nexus-mobile-navigation"
+          className="lg:hidden min-w-10 min-h-10 p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 transition-colors cursor-pointer"
         >
           <Menu className="w-5 h-5" />
         </button>
@@ -59,14 +64,14 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu, currentPath })
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* Supabase Real Connection Status */}
+        {/* Supabase configuration status; connectivity is verified by service calls. */}
         <div
           className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-white border border-slate-200 text-slate-700 shadow-2xs select-none"
-          title={isSupabaseConfigured ? `Conectado ao Supabase: ${supabaseUrl}` : 'Supabase: configure VITE_SUPABASE_URL'}
+          title={isSupabaseConfigured ? `Supabase configurado: ${supabaseUrl}` : 'Supabase não configurado: defina VITE_SUPABASE_URL'}
         >
           <Database className="w-3.5 h-3.5 text-slate-500" />
           <span className="hidden xs:inline">
-            {isSupabaseConfigured ? 'Supabase Conectado' : 'Supabase Desconectado'}
+            {isSupabaseConfigured ? 'Supabase Configurado' : 'Supabase Não Configurado'}
           </span>
           <span
             className={`w-1.5 h-1.5 rounded-full ${

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { UserCheck, Plus, Clock, Trash2, CheckCircle2, FileDown, Image as ImageIcon, Eye, X, Loader2, Camera } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -13,9 +13,10 @@ import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { FileUpload } from '../../components/ui/FileUpload';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { uploadPrivateEvidenceDataUrl } from '../../services/privateEvidenceStorage';
 
 export const PresencePage: React.FC = () => {
-  const { organization } = useAuth();
+  const { organization, profile } = useAuth();
   const { success, error: toastError } = useToast();
   const orgId = organization?.id || '';
 
@@ -24,6 +25,7 @@ export const PresencePage: React.FC = () => {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const loadGenerationRef = useRef(0);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -39,7 +41,16 @@ export const PresencePage: React.FC = () => {
   });
 
   const loadData = useCallback(async () => {
-    if (!orgId) return;
+    const loadGeneration = ++loadGenerationRef.current;
+    const isCurrentLoad = () => loadGeneration === loadGenerationRef.current;
+    if (!orgId) {
+      if (!isCurrentLoad()) return;
+      setPresenceLogs([]);
+      setEvents([]);
+      setMeetings([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const [logsRes, eventsRes, meetingsRes] = await Promise.all([
@@ -47,13 +58,17 @@ export const PresencePage: React.FC = () => {
         eventsService.getAll(orgId),
         meetingsService.getAll(orgId),
       ]);
+      if (logsRes.error) throw logsRes.error;
+      if (eventsRes.error) throw eventsRes.error;
+      if (meetingsRes.error) throw meetingsRes.error;
+      if (!isCurrentLoad()) return;
       setPresenceLogs(logsRes.data || []);
       setEvents(eventsRes.data || []);
       setMeetings(meetingsRes.data || []);
     } catch (err: any) {
-      toastError('Erro ao carregar presença: ' + err.message);
+      if (isCurrentLoad()) toastError('Erro ao carregar presença: ' + err.message);
     } finally {
-      setIsLoading(false);
+      if (isCurrentLoad()) setIsLoading(false);
     }
   }, [orgId, toastError]);
 
@@ -70,12 +85,19 @@ export const PresencePage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
+      const uploadedPhoto = formData.photo_url
+        ? await uploadPrivateEvidenceDataUrl(orgId, 'presences', formData.photo_url)
+        : { data: null, error: null };
+      if (formData.photo_url && (uploadedPhoto.error || !uploadedPhoto.data)) {
+        toastError(uploadedPhoto.error?.message || 'Não foi possível enviar a foto privada.');
+        return;
+      }
       const { error } = await presenceService.createLog({
         organization_id: orgId,
         name: formData.name.trim(),
         phone: formData.phone.trim() || undefined,
         reference_name: formData.reference_name,
-        photo_url: formData.photo_url || undefined,
+        photo_url: uploadedPhoto.data?.path || undefined,
         attachment_name: formData.attachment_name || undefined,
         status: formData.status,
       });
@@ -215,7 +237,9 @@ export const PresencePage: React.FC = () => {
                 </TableCell>
                 <TableCell className="text-right">
                   <button
+                    type="button"
                     onClick={() => handleDelete(log.id)}
+                    aria-label="Excluir"
                     className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-slate-100 transition-colors cursor-pointer"
                     title="Excluir"
                   >
@@ -266,6 +290,8 @@ export const PresencePage: React.FC = () => {
               <span>Upload de Imagem: Foto da Presença / Lista Assinada</span>
             </label>
             <FileUpload
+              disabled={!profile || profile.is_blocked === true}
+              value={formData.photo_url}
               accept="image/*"
               maxSizeMB={10}
               onFileSelected={(file, dataUrl) => {
@@ -307,6 +333,7 @@ export const PresencePage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setPreviewImage(null)}
+                aria-label="Fechar visualização da imagem"
                 className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 cursor-pointer"
               >
                 <X className="w-4 h-4" />

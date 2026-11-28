@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Tag, Plus, Car, Home, Phone, MapPin, Trash2, Edit2, CheckCircle2, Image as ImageIcon, Eye, X, Loader2, Camera } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -13,9 +13,10 @@ import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { FileUpload } from '../../components/ui/FileUpload';
+import { uploadPrivateEvidenceDataUrl } from '../../services/privateEvidenceStorage';
 
 export const StickersPage: React.FC = () => {
-  const { organization } = useAuth();
+  const { organization, profile } = useAuth();
   const { success, error: toastError } = useToast();
   const orgId = organization?.id || '';
 
@@ -23,6 +24,7 @@ export const StickersPage: React.FC = () => {
   const [houseStickers, setHouseStickers] = useState<HouseSticker[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const loadGenerationRef = useRef(0);
 
   const [activeTab, setActiveTab] = useState<'cars' | 'houses'>('cars');
   const [searchTerm, setSearchTerm] = useState('');
@@ -54,25 +56,47 @@ export const StickersPage: React.FC = () => {
   const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
 
   const loadData = useCallback(async () => {
-    if (!orgId) return;
+    const loadGeneration = ++loadGenerationRef.current;
+    const isCurrentLoad = () => loadGeneration === loadGenerationRef.current;
+    if (!orgId) {
+      if (!isCurrentLoad()) return;
+      setCarStickers([]);
+      setHouseStickers([]);
+      setIsLoading(false);
+      return;
+    }
+    if (isCurrentLoad()) {
+      // Nunca exibe registros da organização anterior enquanto o novo tenant carrega.
+      setCarStickers([]);
+      setHouseStickers([]);
+    }
     setIsLoading(true);
     try {
       const [carsRes, housesRes] = await Promise.all([
         stickersService.getCarStickers(orgId),
         stickersService.getHouseStickers(orgId),
       ]);
+      if (carsRes.error) throw carsRes.error;
+      if (housesRes.error) throw housesRes.error;
+      if (!isCurrentLoad()) return;
       setCarStickers(carsRes.data || []);
       setHouseStickers(housesRes.data || []);
     } catch (err: any) {
-      toastError('Erro ao carregar adesivagens: ' + err.message);
+      if (isCurrentLoad()) toastError('Erro ao carregar adesivagens: ' + err.message);
     } finally {
-      setIsLoading(false);
+      if (isCurrentLoad()) setIsLoading(false);
     }
   }, [orgId, toastError]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    setIsCarModalOpen(false);
+    setIsHouseModalOpen(false);
+    setPreviewImage(null);
+  }, [orgId]);
 
   const handleSaveCar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,6 +107,13 @@ export const StickersPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
+      const uploadedPhoto = carForm.photo_url
+        ? await uploadPrivateEvidenceDataUrl(orgId, 'cars', carForm.photo_url)
+        : { data: null, error: null };
+      if (carForm.photo_url && (uploadedPhoto.error || !uploadedPhoto.data)) {
+        toastError(uploadedPhoto.error?.message || 'Não foi possível enviar a foto privada.');
+        return;
+      }
       const { error } = await stickersService.createCarSticker({
         organization_id: orgId,
         plate: carForm.plate.trim().toUpperCase() || undefined,
@@ -90,7 +121,7 @@ export const StickersPage: React.FC = () => {
         owner_name: carForm.owner_name.trim(),
         owner_phone: carForm.owner_phone.trim() || undefined,
         territory: carForm.territory.trim() || 'Geral',
-        photo_url: carForm.photo_url || undefined,
+        photo_url: uploadedPhoto.data?.path || undefined,
         attachment_name: carForm.attachment_name || undefined,
         status: carForm.status,
       });
@@ -120,6 +151,13 @@ export const StickersPage: React.FC = () => {
     try {
       const finalAddress = houseForm.address.trim() || houseForm.territory.trim() || 'Residência autorizada';
       const finalTerritory = houseForm.territory.trim() || 'Geral';
+      const uploadedPhoto = houseForm.photo_url
+        ? await uploadPrivateEvidenceDataUrl(orgId, 'houses', houseForm.photo_url)
+        : { data: null, error: null };
+      if (houseForm.photo_url && (uploadedPhoto.error || !uploadedPhoto.data)) {
+        toastError(uploadedPhoto.error?.message || 'Não foi possível enviar a foto privada.');
+        return;
+      }
 
       const { error } = await stickersService.createHouseSticker({
         organization_id: orgId,
@@ -127,7 +165,7 @@ export const StickersPage: React.FC = () => {
         phone: houseForm.phone.trim() || undefined,
         address: finalAddress,
         territory: finalTerritory,
-        photo_url: houseForm.photo_url || undefined,
+        photo_url: uploadedPhoto.data?.path || undefined,
         attachment_name: houseForm.attachment_name || undefined,
         status: houseForm.status,
       });
@@ -351,7 +389,9 @@ export const StickersPage: React.FC = () => {
                   </TableCell>
                   <TableCell className="text-right">
                     <button
+                      type="button"
                       onClick={() => handleDeleteCar(car.id)}
+                      aria-label="Excluir"
                       className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-slate-100 transition-colors cursor-pointer"
                       title="Excluir"
                     >
@@ -421,7 +461,9 @@ export const StickersPage: React.FC = () => {
                   </TableCell>
                   <TableCell className="text-right">
                     <button
+                      type="button"
                       onClick={() => handleDeleteHouse(house.id)}
+                      aria-label="Excluir"
                       className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-slate-100 transition-colors cursor-pointer"
                       title="Excluir"
                     >
@@ -487,6 +529,8 @@ export const StickersPage: React.FC = () => {
               <span>Foto do Veículo Adesivado</span>
             </label>
             <FileUpload
+              disabled={!profile || profile.is_blocked === true}
+              value={carForm.photo_url}
               accept="image/*"
               maxSizeMB={8}
               onFileSelected={(file, dataUrl) => {
@@ -564,6 +608,8 @@ export const StickersPage: React.FC = () => {
               <span>Foto da Fachada com a Placa / Adesivo</span>
             </label>
             <FileUpload
+              disabled={!['admin', 'superadmin'].includes(profile?.role || '')}
+              value={houseForm.photo_url}
               accept="image/*"
               maxSizeMB={8}
               onFileSelected={(file, dataUrl) => {
@@ -605,6 +651,7 @@ export const StickersPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setPreviewImage(null)}
+                aria-label="Fechar visualização da imagem"
                 className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 cursor-pointer"
               >
                 <X className="w-4 h-4" />

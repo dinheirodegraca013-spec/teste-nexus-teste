@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 
@@ -15,6 +15,20 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsMobileMenuOpen(false);
+    };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [isMobileMenuOpen]);
+
   return (
     <div className="min-h-screen bg-[#F9FAFB] text-slate-900 flex flex-col font-sans">
       <Sidebar
@@ -29,8 +43,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         <Header
           currentPath={currentPath}
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
+          isMobileMenuOpen={isMobileMenuOpen}
         />
-        <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 min-w-0 p-3 sm:p-6 md:p-8 max-w-7xl w-full mx-auto">
           {children}
         </main>
       </div>

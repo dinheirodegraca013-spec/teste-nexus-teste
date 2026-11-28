@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { UserCheck, Plus, Phone, Mail, MapPin, Edit2, Trash2, Eye, Target, Contact, Share2, Copy, Check, MessageSquare, Car, Home, Users, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -13,6 +13,7 @@ import { Drawer } from '../../components/ui/Drawer';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { nonNegativeQuantity, positiveQuantity } from '../../utils/materialQuantities';
 
 export const LeadersPage: React.FC = () => {
   const { organization } = useAuth();
@@ -24,6 +25,7 @@ export const LeadersPage: React.FC = () => {
   const [contacts, setContacts] = useState<CrmContact[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const loadGenerationRef = useRef(0);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [coordFilter, setCoordFilter] = useState('all');
@@ -54,7 +56,16 @@ export const LeadersPage: React.FC = () => {
   });
 
   const loadData = useCallback(async () => {
-    if (!orgId) return;
+    const loadGeneration = ++loadGenerationRef.current;
+    const isCurrentLoad = () => loadGeneration === loadGenerationRef.current;
+    if (!orgId) {
+      if (!isCurrentLoad()) return;
+      setLeaders([]);
+      setCoordinators([]);
+      setContacts([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const [leadsRes, coordsRes, contactsRes] = await Promise.all([
@@ -62,13 +73,17 @@ export const LeadersPage: React.FC = () => {
         coordinatorsService.getAll(orgId),
         crmService.getAll(orgId),
       ]);
+      if (leadsRes.error) throw leadsRes.error;
+      if (coordsRes.error) throw coordsRes.error;
+      if (contactsRes.error) throw contactsRes.error;
+      if (!isCurrentLoad()) return;
       setLeaders(leadsRes.data || []);
       setCoordinators(coordsRes.data || []);
       setContacts(contactsRes.data || []);
     } catch (err: any) {
-      toastError('Erro ao carregar lideranças: ' + err.message);
+      if (isCurrentLoad()) toastError('Erro ao carregar lideranças: ' + err.message);
     } finally {
-      setIsLoading(false);
+      if (isCurrentLoad()) setIsLoading(false);
     }
   }, [orgId, toastError]);
 
@@ -85,10 +100,15 @@ export const LeadersPage: React.FC = () => {
       nome: lead.name,
       coord_id: lead.coordinator_id || '',
     });
+    if (lead.email?.trim()) params.set('email', lead.email.trim());
     return `${origin}/cadastro?${params.toString()}`;
   };
 
   const handleOpenShare = (lead: Leader) => {
+    if (!lead.email?.trim()) {
+      toastError('Cadastre o e-mail da liderança antes de gerar o convite. Sem ele, o acesso não pode ser vinculado com segurança.');
+      return;
+    }
     setShareLeader(lead);
     setCopiedLink(false);
     setIsShareModalOpen(true);
@@ -114,7 +134,7 @@ export const LeadersPage: React.FC = () => {
       ? `https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${encodeURIComponent(text)}`
       : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
 
-    window.open(waUrl, '_blank');
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handleOpenModal = (leader?: Leader) => {
@@ -161,6 +181,16 @@ export const LeadersPage: React.FC = () => {
       return;
     }
 
+    const goalTarget = positiveQuantity(formData.goal_target);
+    const goalReached = nonNegativeQuantity(formData.goal_reached);
+    const goalCars = nonNegativeQuantity(formData.goal_cars);
+    const goalHouses = nonNegativeQuantity(formData.goal_houses);
+    const goalPresence = nonNegativeQuantity(formData.goal_presence);
+    if (goalTarget === null || goalReached === null || goalCars === null || goalHouses === null || goalPresence === null) {
+      toastError('Informe metas válidas e não negativas. A meta de apoiadores deve ser maior que zero.');
+      return;
+    }
+
     setIsSubmitting(true);
     const assignedCoord = coordinators.find(c => c.id === formData.coordinator_id);
 
@@ -174,11 +204,11 @@ export const LeadersPage: React.FC = () => {
           phone: formData.phone.trim() || undefined,
           territory: formData.territory.trim(),
           neighborhood: formData.neighborhood.trim() || undefined,
-          goal_target: Number(formData.goal_target) || 0,
-          goal_reached: Number(formData.goal_reached) || 0,
-          goal_cars: Number(formData.goal_cars) || 0,
-          goal_houses: Number(formData.goal_houses) || 0,
-          goal_presence: Number(formData.goal_presence) || 0,
+          goal_target: goalTarget,
+          goal_reached: goalReached,
+          goal_cars: goalCars,
+          goal_houses: goalHouses,
+          goal_presence: goalPresence,
           status: formData.status,
         });
 
@@ -199,11 +229,11 @@ export const LeadersPage: React.FC = () => {
           phone: formData.phone.trim() || undefined,
           territory: formData.territory.trim(),
           neighborhood: formData.neighborhood.trim() || undefined,
-          goal_target: Number(formData.goal_target) || 10,
-          goal_reached: Number(formData.goal_reached) || 0,
-          goal_cars: Number(formData.goal_cars) || 50,
-          goal_houses: Number(formData.goal_houses) || 30,
-          goal_presence: Number(formData.goal_presence) || 20,
+          goal_target: goalTarget,
+          goal_reached: goalReached,
+          goal_cars: goalCars,
+          goal_houses: goalHouses,
+          goal_presence: goalPresence,
           status: formData.status,
         });
 
@@ -216,6 +246,8 @@ export const LeadersPage: React.FC = () => {
           setTimeout(() => {
             handleOpenShare(created);
           }, 300);
+        } else {
+          toastError('Não foi possível confirmar o cadastro da liderança. Verifique a lista antes de tentar novamente.');
         }
       }
     } catch (err: any) {
@@ -413,31 +445,39 @@ export const LeadersPage: React.FC = () => {
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1.5">
                       <button
+                        type="button"
                         onClick={() => handleOpenShare(lead)}
+                        aria-label="Enviar convite"
                         title="Enviar convite"
                         className="p-1.5 rounded text-emerald-600 hover:text-emerald-700 hover:bg-slate-100 transition-colors cursor-pointer"
                       >
                         <Share2 className="w-3.5 h-3.5" />
                       </button>
                       <button
+                        type="button"
                         onClick={() => {
                           setSelectedLeader(lead);
                           setIsDrawerOpen(true);
                         }}
+                        aria-label="Ver detalhes"
                         title="Ver detalhes"
                         className="p-1.5 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
                       >
                         <Eye className="w-3.5 h-3.5" />
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleOpenModal(lead)}
+                        aria-label="Editar"
                         title="Editar"
                         className="p-1.5 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleDelete(lead.id)}
+                        aria-label="Excluir"
                         title="Excluir"
                         className="p-1.5 rounded text-slate-500 hover:text-rose-600 hover:bg-slate-100 transition-colors cursor-pointer"
                       >
@@ -486,6 +526,7 @@ export const LeadersPage: React.FC = () => {
                 <input
                   type="text"
                   readOnly
+                  aria-label="Link exclusivo de cadastro"
                   value={getInviteLink(shareLeader)}
                   className="flex-1 bg-white border border-slate-200 rounded-lg p-2.5 text-xs text-slate-800 font-mono focus:outline-none"
                 />
