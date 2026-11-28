@@ -2397,3 +2397,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovados** — teste direcionado (47/47), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificados** — navegador, Supabase DEV e CI remoto. A regressão usou mocks e dados sintéticos. Nenhum bloqueio local.
 - **Próxima ação** — com conta sintética em DEV, atrasar a resposta do logout e verificar a transição imediata da interface e o estado após recarregar a página.
+
+## Ciclo autônomo — retorno ao login após erro de inicialização
+
+- **Tarefa única** — corrigir “Voltar ao Login” na tela de erro de inicialização. Branch `fix/persist-rbac-permissions`, HEAD inicial `96dff1c`, árvore limpa. Os cinco documentos operacionais de raiz indicados no OBRAMAXAUTO estavam ausentes.
+- **Falhou antes da correção** — `node tests/auth-profile-loading.test.mjs` (46 aprovados, 1 falhou). O erro de inicialização continuava presente ao solicitar logout com o provedor pendente. O App prioriza a tela desse erro.
+- **Correção** — `src/contexts/AuthContext.tsx` limpa o erro de inicialização antes de aguardar o Supabase. A regressão em `tests/auth-profile-loading.test.mjs` verifica a limpeza imediata e após o prazo de oito segundos, com dados sintéticos e relógio simulado.
+- **Aprovados** — teste direcionado (47/47), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificados** — navegador, Supabase DEV e CI remoto. Nenhum bloqueio nas verificações locais.
+- **Próxima ação** — reproduzir o erro de inicialização no navegador em DEV com uma sessão sintética e confirmar que “Voltar ao Login” exibe o formulário enquanto o logout aguarda o provedor.

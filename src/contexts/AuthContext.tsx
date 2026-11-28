@@ -720,6 +720,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     invalidateUserData();
     setUser(null);
     setSession(null);
+    setInitializationError(null);
     try {
       const { error } = await withTimeout(
         supabase.auth.signOut(),

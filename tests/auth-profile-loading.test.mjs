@@ -916,11 +916,13 @@ test('logout clears local access before the provider responds', async t => {
     AuthProvider({ children: null });
     for (const index of [0, 1, 2, 3]) states[index] = { id: 'synthetic' };
     states[5] = [{ user_id: 'synthetic' }];
+    states[8] = 'Falha sintética ao inicializar a sessão';
 
     let result;
     void globalThis.__authContext.signOut().then(value => { result = value; });
     assert.deepEqual(states.slice(0, 4), [null, null, null, null]);
     assert.deepEqual(states[5], []);
+    assert.equal(states[8], null);
 
     t.mock.timers.tick(8000);
     await new Promise(resolve => setImmediate(resolve));
@@ -928,6 +930,7 @@ test('logout clears local access before the provider responds', async t => {
     assert.equal(result?.error?.name, 'TimeoutError');
     assert.deepEqual(states.slice(0, 4), [null, null, null, null]);
     assert.deepEqual(states[5], []);
+    assert.equal(states[8], null);
   } finally {
     delete globalThis.__authProfileTest;
     delete globalThis.__authContext;
