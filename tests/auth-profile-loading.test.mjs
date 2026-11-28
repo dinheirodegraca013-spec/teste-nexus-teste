@@ -936,3 +936,25 @@ test('logout clears local access before the provider responds', async t => {
     delete globalThis.__authContext;
   }
 });
+
+test('password recovery releases the form when the provider stays pending', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const previousWindow = globalThis.window;
+  globalThis.window = { location: { origin: 'https://nexus-test.invalid' } };
+  globalThis.__authProfileTest = { resetPassword: () => new Promise(() => {}) };
+  callbacks.length = states.length = effects.length = 0;
+  AuthProvider({ children: null });
+  try {
+    let result;
+    const recovery = globalThis.__authContext.resetPassword('test@example.invalid');
+    void recovery.then((value) => { result = value; });
+    t.mock.timers.tick(8000);
+    await new Promise(setImmediate);
+    assert.equal(result?.error?.name, 'TimeoutError');
+  } finally {
+    if (previousWindow === undefined) delete globalThis.window;
+    else globalThis.window = previousWindow;
+    delete globalThis.__authProfileTest;
+    delete globalThis.__authContext;
+  }
+});

@@ -2406,3 +2406,12 @@ Há uma automação recorrente do ChatGPT configurada para retomar o diagnóstic
 - **Aprovados** — teste direcionado (47/47), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
 - **Não verificados** — navegador, Supabase DEV e CI remoto. Nenhum bloqueio nas verificações locais.
 - **Próxima ação** — reproduzir o erro de inicialização no navegador em DEV com uma sessão sintética e confirmar que “Voltar ao Login” exibe o formulário enquanto o logout aguarda o provedor.
+
+## Ciclo autônomo — 2026-11-28 — prazo na recuperação de senha
+
+- **Tarefa única** — liberar o formulário de recuperação quando o Supabase Auth permanece pendente. Branch `fix/persist-rbac-permissions`, HEAD inicial `883a987`, árvore limpa. Skills bug-hunter e qa-automation. Os cinco documentos operacionais de raiz indicados no OBRAMAXAUTO estavam ausentes.
+- **Falhou antes da correção** — `node tests/auth-profile-loading.test.mjs` (47 aprovados, 1 falhou). Com relógio simulado, a solicitação ainda não retornava após oito segundos.
+- **Correção** — `src/contexts/AuthContext.tsx` aplica o prazo de oito segundos usado em outros fluxos de autenticação. O formulário recebe o erro pelo tratamento existente e informa que o email ainda pode chegar.
+- **Aprovados** — teste direcionado (48/48), `npm test` (53/53 arquivos), `npm run lint`, `npm run build` e `git diff --check`.
+- **Não verificados** — navegador, Supabase DEV e CI remoto. A regressão usou mocks e endereço sintético. Nenhum bloqueio local.
+- **Próxima ação** — simular atraso na resposta de recuperação no navegador e confirmar a mensagem e a reativação do botão após o prazo.

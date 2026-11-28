@@ -742,9 +742,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resetPassword = async (email: string) => {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/redefinir-senha`,
-      });
+      const { error } = await withTimeout(
+        supabase.auth.resetPasswordForEmail(email.trim(), {
+          redirectTo: `${window.location.origin}/redefinir-senha`,
+        }),
+        8000,
+        'Tempo limite ao solicitar a recuperação de senha. O email ainda pode chegar.',
+      );
       if (error) logAuthError('resetPassword', error);
       return { error: error || null };
     } catch (err: any) {
